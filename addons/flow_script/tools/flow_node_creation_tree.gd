@@ -57,7 +57,8 @@ func _reload_types() -> void:
 	var root_item: TreeItem = create_item()
 	root_item.set_text(0, "Nodes")
 	root_item.set_selectable(0, false)
-	root_item.set_icon(0, get_theme_icon(&"GraphElement", &"EditorIcons"))
+	# TODO: Find a better icon for the root
+	#root_item.set_icon(0, get_theme_icon(&"GraphElement", &"EditorIcons"))
 	
 	
 	var type_list: Array[FlowNodeTypeInfo] = FlowNodeTypeDB.get_type_list()
@@ -94,6 +95,10 @@ func _reload_types() -> void:
 
 
 func _create_category_if_needed(p_category_path: String) -> void:
+	if p_category_path.strip_edges().is_empty():
+		_category_map[p_category_path] = get_root()
+		return
+	
 	var categories: PackedStringArray = p_category_path.split("/")
 	
 	for current_category_depth: int in categories.size():
@@ -104,8 +109,11 @@ func _create_category_if_needed(p_category_path: String) -> void:
 			
 			var parent_item: TreeItem = null
 			
-			for previous_category_depth in range(current_category_depth - 2, -1, -1):
-				var previous_category_name: String = "/".join(categories.slice(0, previous_category_depth))
+			var previous_category_range: Array = range(current_category_depth - 1, -1, -1)
+			
+			for previous_category_depth: int in previous_category_range:
+				var previous_category_name: String = "/".join(categories.slice(0, previous_category_depth + 1))
+				
 				if _category_map.has(previous_category_name):
 					parent_item = _category_map[previous_category_name] as TreeItem
 					break

@@ -252,7 +252,17 @@ func on_node_updated() -> void:
 	__edit_safe = false
 	
 	set_name(__flow_node.get_id())
-	set_title("%s (%s)" % [ __flow_node.get_type_name(), __flow_node.get_id() ])
+	
+	# No need to show the ID if the node's ID isn't editable.
+	# If it is editable, then priority is given to the ID, the type is less important.
+	if __flow_node.is_id_editable():
+		set_title("%s (%s)" % [ __flow_node.get_id(), __flow_node.get_type_name() ])
+	else:
+		set_title(__flow_node.get_type_name())
+	
+	# Still, show it all in the tooltip.
+	set_tooltip_text("Type: %s\nID: %s" % [ __flow_node.get_type_name(), __flow_node.get_id() ])
+	
 	__update_position()
 	
 	_on_node_updated()

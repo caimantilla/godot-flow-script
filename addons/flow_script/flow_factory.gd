@@ -76,7 +76,7 @@ static func instantiate_node_from_type(p_type_id: String) -> FlowNode:
 			if base_script == null:
 				return null
 			
-			var instance: Object = node_script.new(type_info.get_id(), type_info.get_name())
+			var instance: Object = node_script.new(type_info.get_id(), type_info.get_name(), not type_info.is_id_automatically_assigned())
 			
 			if instance is FlowNode:
 				return instance as FlowNode

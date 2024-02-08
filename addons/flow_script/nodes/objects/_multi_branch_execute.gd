@@ -11,7 +11,7 @@ const MAX_STACK_SIZE: int = 9
 var next_node_id: String: set = set_next_node_id, get = get_next_node_id
 
 ## The list of nodes to start.
-var execution_stack: PackedStringArray: get = get_execution_stack
+var execution_stack: PackedStringArray: set = set_execution_stack, get = get_execution_stack
 
 
 var _next_node_id: String = ""
@@ -110,6 +110,12 @@ func get_next_node_id() -> String:
 	return _next_node_id
 
 
+func set_execution_stack(p_stack_arr: PackedStringArray) -> void:
+	if p_stack_arr != _execution_stack:
+		_execution_stack = p_stack_arr
+		emit_changed()
+
+
 func get_execution_stack() -> PackedStringArray:
 	return _execution_stack
 
@@ -162,3 +168,5 @@ func _resize_execution_stack(p_new_size: int, p_emit: bool) -> void:
 		
 		if p_emit:
 			emit_changed()
+		
+		notify_property_list_changed()

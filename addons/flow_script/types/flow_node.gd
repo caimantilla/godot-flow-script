@@ -40,6 +40,7 @@ var graph_position_y: int: set = set_graph_position_y, get = get_graph_position_
 
 var _type: String
 var _type_name: String
+var _id_editable: bool
 var _id: String = ""
 var _graph_position := Vector2i.ZERO
 
@@ -50,9 +51,10 @@ var _graph_position := Vector2i.ZERO
 # Overrides
 
 
-func _init(p_type_id: String, p_type_name: String) -> void:
+func _init(p_type_id: String, p_type_name: String, p_id_editable: bool) -> void:
 	_type = p_type_id
 	_type_name = p_type_name
+	_id_editable = p_id_editable
 
 
 
@@ -99,12 +101,6 @@ func _execute(p_state: FlowNodeState) -> void:
 
 
 ## Virtual.
-## Returns whether or not the ID for this type of node is editable.
-func _is_id_editable() -> bool:
-	return false
-
-
-## Virtual.
 ## Returns whether or not a string property is a reference to another node.
 func _is_property_flow_node_reference(p_property_name: StringName) -> bool:
 	return false
@@ -136,12 +132,6 @@ func execute(p_state: FlowNodeState) -> void:
 	_execute(p_state)
 
 
-## If true, the node's ID is visible in the graph and is editable.
-## When creating a new node, a dialog prompting its ID will be shown.
-func is_id_editable() -> bool:
-	return _is_id_editable()
-
-
 ## Returns whether or not a property is a reference to another node.
 ## This is used by the inspector plugin to turn a String FlowNode reference into a node selection menu.
 func is_property_flow_node_reference(p_property_name: StringName) -> bool:
@@ -152,6 +142,10 @@ func is_property_flow_node_reference(p_property_name: StringName) -> bool:
 ## This enables connections to be updated.
 func on_external_node_renamed(p_from_id: String, p_to_id: String) -> void:
 	_on_external_node_renamed(p_from_id, p_to_id)
+
+
+func is_id_editable() -> bool:
+	return _id_editable
 
 
 ## Called when generating a translation template for a FlowScript.

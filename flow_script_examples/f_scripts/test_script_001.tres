@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="FlowScript" load_steps=2 format=3 uid="uid://cs285vucypkqw"]
+
+[ext_resource type="Script" path="res://addons/flow_script/types/flow_script.gd" id="1_a05ct"]
+
+[resource]
+script = ExtResource("1_a05ct")
+data = {
+"pages": [{
+"data": {
+"nodes": [{
+"graph_position_x": 578,
+"graph_position_y": -102,
+"id": "LHpEAl",
+"type": "while_expression_loop"
+}, {
+"graph_position_x": 34,
+"graph_position_y": -28,
+"id": "Proc1",
+"next_node_id": "SvyXev",
+"type": "procedure"
+}, {
+"expression": "false",
+"graph_position_x": 1210,
+"graph_position_y": 118,
+"id": "aAAJRf",
+"type": "return"
+}, {
+"expression_string": "penis_bitten == true",
+"graph_position_x": 668,
+"graph_position_y": 116,
+"id": "rN7gpQ",
+"next_node_id_false": "",
+"next_node_id_true": "LHpEAl",
+"type": "expression_branch"
+}, {
+"execution_stack": PackedStringArray("aAAJRf", "rN7gpQ"),
+"graph_position_x": 236,
+"graph_position_y": 74,
+"id": "SvyXev",
+"next_node_id": "LHpEAl",
+"type": "sequential_branch_execute"
+}, {
+"execution_stack": PackedStringArray("SvyXev"),
+"graph_position_x": -100,
+"graph_position_y": 106,
+"id": "iAyrWE",
+"next_node_id": "LHpEAl",
+"type": "simultaneous_branch_execute"
+}]
+},
+"id": "TestPage001"
+}, {
+"data": {
+"nodes": []
+},
+"id": "TestPage002"
+}]
+}
