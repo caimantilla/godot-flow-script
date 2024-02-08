@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=3 uid="uid://ggd4sj6ebrob"]
+
+[ext_resource type="Script" path="res://addons/flow_script/nodes/editors/while_expression_loop.gd" id="1_uyh4h"]
+
+[node name="While Expression Loop" type="GraphNode"]
+title = "While Expression Loop"
+slot/0/left_enabled = false
+slot/0/left_type = 0
+slot/0/left_color = Color(1, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = true
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+slot/1/left_enabled = true
+slot/1/left_type = 0
+slot/1/left_color = Color(1, 1, 1, 1)
+slot/1/left_icon = null
+slot/1/right_enabled = false
+slot/1/right_type = 0
+slot/1/right_color = Color(1, 1, 1, 1)
+slot/1/right_icon = null
+slot/1/draw_stylebox = true
+slot/2/left_enabled = false
+slot/2/left_type = 0
+slot/2/left_color = Color(1, 1, 1, 1)
+slot/2/left_icon = null
+slot/2/right_enabled = true
+slot/2/right_type = 0
+slot/2/right_color = Color(1, 1, 1, 1)
+slot/2/right_icon = null
+slot/2/draw_stylebox = true
+script = ExtResource("1_uyh4h")
+
+[node name="Loop" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="While" type="Label" parent="Loop"]
+layout_mode = 2
+text = "While"
+
+[node name="Expression Box" type="CodeEdit" parent="Loop"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(384, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Write the expression..."
+wrap_mode = 1
+scroll_fit_content_height = true
+caret_blink = true
+
+[node name="Execute" type="Label" parent="Loop"]
+layout_mode = 2
+text = "is true, execute:"
+
+[node name="HSeparator" type="HSeparator" parent="."]
+layout_mode = 2
+
+[node name="Break" type="Label" parent="."]
+layout_mode = 2
+text = "Once false, break out to:"
+horizontal_alignment = 2
+
+[connection signal="text_changed" from="Loop/Expression Box" to="." method="_on_expression_box_text_changed"]
