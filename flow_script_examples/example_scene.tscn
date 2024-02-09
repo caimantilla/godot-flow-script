@@ -19,3 +19,7 @@ texture = ExtResource("1_kgbcl")
 script = ExtResource("3_k4y3i")
 flow_object_type = ExtResource("4_poaxd")
 flow_script = ExtResource("5_j0kxd")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0

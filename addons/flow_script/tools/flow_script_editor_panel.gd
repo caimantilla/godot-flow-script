@@ -150,7 +150,7 @@ func _init() -> void:
 	
 	_editor_page_list = FlowScriptEditorPageList.new()
 	_editor_page_list.set_name("Pages")
-	_editor_page_list.set_h_size_flags(SIZE_EXPAND_FILL)
+	_editor_page_list.set_h_size_flags(SIZE_FILL)
 	_editor_page_list.set_v_size_flags(SIZE_EXPAND_FILL)
 	_editor_page_list.page_selected.connect(_on_page_selected)
 	_editor_page_list.page_creation_requested.connect(show_page_creation_dialog)
