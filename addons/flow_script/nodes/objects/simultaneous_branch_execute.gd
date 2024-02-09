@@ -3,7 +3,7 @@ extends "_multi_branch_execute.gd"
 
 
 func _execute(p_state: FlowNodeState) -> void:
-	p_state.resumed.connect(_on_state_resumed, CONNECT_ONE_SHOT)
+	p_state.resumed.connect(_on_state_resumed.bind(p_state), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
 	p_state.request_new_threads(get_execution_stack().duplicate(), true)
 
 

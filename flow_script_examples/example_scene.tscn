@@ -9,7 +9,7 @@
 [node name="Example Scene" type="Node" node_paths=PackedStringArray("flow_controller")]
 script = ExtResource("1_kc1tf")
 flow_controller = NodePath("Flow Controller")
-test_procedure_id = "SpriteMovementTest"
+test_procedure_id = "SimultaneousBranchTest"
 
 [node name="Godotito" type="Sprite2D" parent="."]
 position = Vector2(234, 180)
@@ -19,7 +19,3 @@ texture = ExtResource("1_kgbcl")
 script = ExtResource("3_k4y3i")
 flow_object_type = ExtResource("4_poaxd")
 flow_script = ExtResource("5_j0kxd")
-
-[node name="HSplitContainer" type="HSplitContainer" parent="."]
-offset_right = 40.0
-offset_bottom = 40.0

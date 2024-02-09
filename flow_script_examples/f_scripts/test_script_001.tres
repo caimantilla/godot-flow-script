@@ -8,61 +8,6 @@ data = {
 "pages": [{
 "data": {
 "nodes": [{
-"expression": "not is_penis_bitten()",
-"graph_position_x": 578,
-"graph_position_y": -102,
-"id": "LHpEAl",
-"next_node_id_false": "aAAJRf",
-"next_node_id_true": "rN7gpQ",
-"type": "while_expression_loop"
-}, {
-"graph_position_x": 34,
-"graph_position_y": -28,
-"id": "Proc1",
-"next_node_id": "ZAMYyh",
-"type": "procedure"
-}, {
-"expression": "false",
-"graph_position_x": 1210,
-"graph_position_y": 118,
-"id": "aAAJRf",
-"type": "return"
-}, {
-"expression_string": "penis_bitten == true",
-"graph_position_x": 668,
-"graph_position_y": 116,
-"id": "rN7gpQ",
-"next_node_id_false": "",
-"next_node_id_true": "LHpEAl",
-"type": "expression_branch"
-}, {
-"execution_stack": PackedStringArray("aAAJRf", "rN7gpQ"),
-"graph_position_x": 236,
-"graph_position_y": 74,
-"id": "SvyXev",
-"next_node_id": "LHpEAl",
-"type": "sequential_branch_execute"
-}, {
-"execution_stack": PackedStringArray("SvyXev"),
-"graph_position_x": -21,
-"graph_position_y": 133,
-"id": "iAyrWE",
-"next_node_id": "LHpEAl",
-"type": "simultaneous_branch_execute"
-}, {
-"format_expressions": "",
-"graph_position_x": -561,
-"graph_position_y": 129,
-"id": "ZAMYyh",
-"message_string": "There are millions",
-"next_node_id": "iAyrWE",
-"type": "console_print"
-}]
-},
-"id": "TestPage001"
-}, {
-"data": {
-"nodes": [{
 "destination": Vector2(500, 500),
 "graph_position_x": -400,
 "graph_position_y": 12,
@@ -108,6 +53,148 @@ data = {
 "next_node_id": "hOEI8x",
 "seconds": 2.5,
 "type": "wait_seconds"
+}, {
+"graph_position_x": -1980,
+"graph_position_y": 30,
+"id": "SequentialBranchTest",
+"next_node_id": "eVizBr",
+"type": "procedure"
+}, {
+"execution_stack": PackedStringArray("jNp9KG", "Mv8cz7", "TOyZZY"),
+"graph_position_x": -1537,
+"graph_position_y": 46,
+"id": "CdjGOA",
+"next_node_id": "xKx93O",
+"type": "sequential_branch_execute"
+}, {
+"format_expressions": "",
+"graph_position_x": -1176,
+"graph_position_y": 209,
+"id": "jNp9KG",
+"message_string": "Branch 1...",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -1169,
+"graph_position_y": 394,
+"id": "Mv8cz7",
+"message_string": "Branch 2...",
+"next_node_id": "FwXBY5",
+"type": "console_print"
+}, {
+"graph_position_x": -780,
+"graph_position_y": 305,
+"id": "FwXBY5",
+"next_node_id": "",
+"seconds": 7.0,
+"type": "wait_seconds"
+}, {
+"format_expressions": "",
+"graph_position_x": -1167,
+"graph_position_y": 588,
+"id": "TOyZZY",
+"message_string": "Branch 3...",
+"next_node_id": "o5EdE2",
+"type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -1177,
+"graph_position_y": 12,
+"id": "xKx93O",
+"message_string": "Done.",
+"next_node_id": "lQOyou",
+"type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -2098,
+"graph_position_y": 157,
+"id": "eVizBr",
+"message_string": "Testing sequential branches in 3 seconds...",
+"next_node_id": "Uy7t8h",
+"type": "console_print"
+}, {
+"graph_position_x": -1704,
+"graph_position_y": 281,
+"id": "Uy7t8h",
+"next_node_id": "CdjGOA",
+"seconds": 3.0,
+"type": "wait_seconds"
+}, {
+"destination": Vector2(600, 80),
+"graph_position_x": -786,
+"graph_position_y": 91,
+"id": "lQOyou",
+"next_node_id": "",
+"speed": 600.0,
+"sprite_name": "Godotito",
+"type": "move_sprite_to_point"
+}, {
+"graph_position_x": -2509,
+"graph_position_y": 769,
+"id": "SimultaneousBranchTest",
+"next_node_id": "Vmeckq",
+"type": "procedure"
+}, {
+"execution_stack": PackedStringArray("SeJ76t", "hPZcjP", "AZmlYB"),
+"graph_position_x": -2125,
+"graph_position_y": 762,
+"id": "Vmeckq",
+"next_node_id": "TGiaFs",
+"type": "simultaneous_branch_execute"
+}, {
+"graph_position_x": -1688,
+"graph_position_y": 843,
+"id": "SeJ76t",
+"next_node_id": "FmGqJK",
+"seconds": 5.0,
+"type": "wait_seconds"
+}, {
+"format_expressions": "",
+"graph_position_x": -1727,
+"graph_position_y": 643,
+"id": "TGiaFs",
+"message_string": "All branches finished.",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -1273,
+"graph_position_y": 817,
+"id": "FmGqJK",
+"message_string": "Branch 1 finished.",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"graph_position_x": -1684,
+"graph_position_y": 966,
+"id": "hPZcjP",
+"next_node_id": "xOFekp",
+"seconds": 1.0,
+"type": "wait_seconds"
+}, {
+"format_expressions": "",
+"graph_position_x": -1265,
+"graph_position_y": 1032,
+"id": "xOFekp",
+"message_string": "Branch 2 finished.",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"graph_position_x": -1673,
+"graph_position_y": 1147,
+"id": "AZmlYB",
+"next_node_id": "o9y23Z",
+"seconds": 3.0,
+"type": "wait_seconds"
+}, {
+"format_expressions": "",
+"graph_position_x": -1269,
+"graph_position_y": 1231,
+"id": "o9y23Z",
+"message_string": "Branch 3 finished.",
+"next_node_id": "",
+"type": "console_print"
 }]
 },
 "id": "TestPage002"
