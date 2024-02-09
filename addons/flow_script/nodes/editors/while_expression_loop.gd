@@ -9,8 +9,7 @@ const WhileNode := preload("../objects/while_expression_loop.gd")
 
 
 func _initialize() -> void:
-	if Engine.is_editor_hint():
-		expression_box.set_custom_minimum_size( (expression_box.get_custom_minimum_size() * EditorInterface.get_editor_scale()).floor() )
+	expression_box.set_custom_minimum_size( (expression_box.get_custom_minimum_size() * get_editor_scale()).floor() )
 
 
 func _on_node_updated() -> void:

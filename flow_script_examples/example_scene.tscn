@@ -1,0 +1,21 @@
+[gd_scene load_steps=6 format=3 uid="uid://cwq2rmmwc1od8"]
+
+[ext_resource type="Script" path="res://flow_script_examples/example_scene.gd" id="1_kc1tf"]
+[ext_resource type="Texture2D" uid="uid://csgnuhsb33ubh" path="res://icon.svg" id="1_kgbcl"]
+[ext_resource type="Script" path="res://addons/flow_script/types/flow_controller.gd" id="3_k4y3i"]
+[ext_resource type="Script" path="res://flow_script_examples/example_flow_object.gd" id="4_poaxd"]
+[ext_resource type="Resource" uid="uid://cs285vucypkqw" path="res://flow_script_examples/f_scripts/test_script_001.tres" id="5_j0kxd"]
+
+[node name="Example Scene" type="Node" node_paths=PackedStringArray("flow_controller")]
+script = ExtResource("1_kc1tf")
+flow_controller = NodePath("Flow Controller")
+test_procedure_id = "SpriteMovementTest"
+
+[node name="Godotito" type="Sprite2D" parent="."]
+position = Vector2(234, 180)
+texture = ExtResource("1_kgbcl")
+
+[node name="Flow Controller" type="Node" parent="."]
+script = ExtResource("3_k4y3i")
+flow_object_type = ExtResource("4_poaxd")
+flow_script = ExtResource("5_j0kxd")

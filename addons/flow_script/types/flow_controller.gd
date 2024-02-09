@@ -1,24 +1,31 @@
-@tool
+
 class_name FlowController
-extends Object
+extends Node
 ## Controls execution of a FlowScript.
 
 
 signal finished()
-signal thread_finished(p_thread_id: String)
+signal thread_finished(return_value: Variant, thread_id: String)
 
 
 ## The number of threads cannot exceed this.
 const MAX_THREADS: int = 999
 
 
+## The script of the object type to instantiate.
+## It script must extend FlowObject in order to be valid.
+@export var flow_object_type: GDScript: set = set_flow_object_type, get = get_flow_object_type
+
+## The FlowScript assigned to the controller.
+## A reference to it is passed to each thread.
+@export var flow_script: FlowScript: set = set_flow_script, get = get_flow_script
+
 ## The FlowController's FlowObject where local state and stuff is stored.
 var flow_object: FlowObject: get = get_flow_object
 
-## The script assigned to the FlowController.
-var flow_script: FlowScript: get = get_flow_script
 
 
+var _flow_object_type: GDScript = null
 var _flow_object: FlowObject = null
 var _flow_script: FlowScript = null
 var _flow_thread_map: Dictionary = {}
@@ -26,21 +33,55 @@ var _flow_thread_map: Dictionary = {}
 
 ## Initializes the FlowController.
 ## A FlowObject type is required.
-func _init(p_flow_object_type: GDScript, p_flow_script: FlowScript) -> void:
-	assert(p_flow_object_type != null, "FlowObject script cannot be null!")
+#func _init(p_flow_object_type: GDScript, p_flow_script: FlowScript) -> void:
+	#assert(p_flow_object_type != null, "FlowObject script cannot be null!")
+	#
+	## The first script checked shouldn't be the one passed, since FlowObject should be treated as an abstract class. There are methods which aren't implemented in it, like the ones to interact with global variables.
+	#var obj_base_script: Script = p_flow_object_type.get_base_script()
+	#while obj_base_script != null:
+		#if obj_base_script == FlowObject:
+			#break
+		#obj_base_script = obj_base_script.get_base_script()
+	#
+	#assert(obj_base_script == FlowObject, "Script passed doesn't extend FlowObject!")
+	#
+	#
+	#_flow_object = p_flow_object_type.new()
+	#_flow_script = p_flow_script
+
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
 	
-	# The first script checked shouldn't be the one passed, since FlowObject should be treated as an abstract class. There are methods which aren't implemented in it, like the ones to interact with global variables.
-	var obj_base_script: Script = p_flow_object_type.get_base_script()
+	_initialize_flow_object()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		kill()
+
+
+func set_flow_object_type(p_type_script: GDScript) -> void:
+	var obj_base_script := p_type_script.get_base_script()
+	
 	while obj_base_script != null:
 		if obj_base_script == FlowObject:
 			break
 		obj_base_script = obj_base_script.get_base_script()
 	
-	assert(obj_base_script == FlowObject, "Script passed doesn't extend FlowObject!")
-	
-	
-	_flow_object = p_flow_object_type.new()
-	_flow_script = p_flow_script
+	if obj_base_script == FlowObject:
+		_flow_object_type = p_type_script
+	else:
+		_flow_object_type = null
+
+
+func get_flow_object_type() -> GDScript:
+	return _flow_object_type
+
+
+func set_flow_script(p_script: FlowScript) -> void:
+	_flow_script = p_script
 
 
 func get_flow_script() -> FlowScript:
@@ -48,6 +89,8 @@ func get_flow_script() -> FlowScript:
 
 
 func get_flow_object() -> FlowObject:
+	if _flow_object == null:
+		_initialize_flow_object()
 	return _flow_object
 
 
@@ -79,6 +122,10 @@ func get_thread_list() -> Array:
 	return _flow_thread_map.values()
 
 
+func get_thread_id_list() -> Array:
+	return _flow_thread_map.keys()
+
+
 func is_finished() -> bool:
 	for thread: FlowThread in get_thread_list():
 		if thread != null and not thread.is_finished():
@@ -88,7 +135,23 @@ func is_finished() -> bool:
 
 
 func kill() -> void:
-	pass
+	for thread_id: String in get_thread_id_list().duplicate(false):
+		_delete_thread(thread_id)
+	
+	if _flow_object != null:
+		_flow_object.kill()
+		_flow_object.call_deferred(&"free")
+		_flow_object = null
+
+
+func execute(p_procedure_id: String) -> void:
+	_create_new_thread(p_procedure_id)
+
+
+func _initialize_flow_object() -> void:
+	if _flow_object == null and _flow_object_type != null:
+		_flow_object = _flow_object_type.new() as FlowObject
+		_flow_object.flow_thread_creation_requested.connect(_on_flow_object_new_thread_requested)
 
 
 func _on_thread_new_threads_creation_request(p_initial_node_ids: PackedStringArray, p_wait_completion: bool, p_calling_thread_id: String) -> void:
@@ -104,7 +167,7 @@ func _on_thread_new_threads_creation_request(p_initial_node_ids: PackedStringArr
 		calling_thread.add_resume_dependent_thread(new_thread_id)
 
 
-func _on_thread_finished(p_thread_id: String) -> void:
+func _on_thread_finished(p_return_value: Variant, p_thread_id: String) -> void:
 	# Don't do anything unless thread deletion is successful... Not sure why it shouldn't be, but yeah !!
 	if _delete_thread(p_thread_id):
 		# Duplicate the thread list to make sure that the same array as any potential future calls is not being used.
@@ -122,7 +185,8 @@ func _on_thread_finished(p_thread_id: String) -> void:
 				# I guess I'll figure it out as the edge cases show themselves... It probably wouldn't matter for a game I make, but it could for some game which involves many different threads.
 				other_thread.on_external_thread_finished.call_deferred(p_thread_id)
 		
-		thread_finished.emit(p_thread_id)
+		thread_finished.emit(p_return_value, p_thread_id)
+		get_flow_object().notify_thread_finished(p_thread_id)
 
 
 func _delete_thread(p_thread_id: String) -> bool:
@@ -130,7 +194,7 @@ func _delete_thread(p_thread_id: String) -> bool:
 	
 	if thread != null:
 		thread.kill()
-		thread.free()
+		thread.call_deferred(&"free")
 		_flow_thread_map.erase(p_thread_id)
 		return true
 	
@@ -147,7 +211,7 @@ func _create_new_thread(p_from_node_id: String) -> FlowThread:
 	var new_thread := FlowThread.new(new_thread_id, _flow_object, _flow_script)
 	_flow_thread_map[new_thread_id] = new_thread
 	
-	new_thread.finished.connect(_on_thread_finished)
+	new_thread.finished.connect(_on_thread_finished.bind(new_thread_id))
 	new_thread.new_threads_requested.connect(_on_thread_new_threads_creation_request.bind(new_thread_id))
 	
 	new_thread.start(p_from_node_id)
@@ -156,3 +220,10 @@ func _create_new_thread(p_from_node_id: String) -> FlowThread:
 
 func _generate_new_thread_id() -> String:
 	return "THREAD_" + str(randi())
+
+
+func _on_flow_object_new_thread_requested(p_from_node_id: String) -> void:
+	var thread: FlowThread = _create_new_thread(p_from_node_id)
+	var thread_id: String = thread.get_thread_id() if thread != null else ""
+	
+	get_flow_object().set_last_created_thread_id(thread_id)

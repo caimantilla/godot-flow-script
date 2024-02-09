@@ -1,0 +1,70 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8vj8wdx8j7sf"]
+
+[ext_resource type="Script" path="res://addons/flow_script/nodes/editors/console_print.gd" id="1_cgrqo"]
+
+[node name="Console Print" type="GraphNode"]
+title = "Console Print"
+slot/0/left_enabled = true
+slot/0/left_type = 0
+slot/0/left_color = Color(1, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = true
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+slot/1/left_enabled = false
+slot/1/left_type = 0
+slot/1/left_color = Color(1, 1, 1, 1)
+slot/1/left_icon = null
+slot/1/right_enabled = false
+slot/1/right_type = 0
+slot/1/right_color = Color(1, 1, 1, 1)
+slot/1/right_icon = null
+slot/1/draw_stylebox = true
+script = ExtResource("1_cgrqo")
+
+[node name="Message" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Message"]
+layout_mode = 2
+text = "Message:"
+
+[node name="Box Region" type="HBoxContainer" parent="Message"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="Message/Box Region"]
+layout_mode = 2
+
+[node name="Message Box" type="TextEdit" parent="Message/Box Region"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+wrap_mode = 1
+scroll_fit_content_height = true
+
+[node name="Format" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Format"]
+layout_mode = 2
+text = "Format Expressions:"
+
+[node name="Box Region" type="HBoxContainer" parent="Format"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="Format/Box Region"]
+layout_mode = 2
+
+[node name="Format Box" type="CodeEdit" parent="Format/Box Region"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+wrap_mode = 1
+scroll_fit_content_height = true
+
+[connection signal="text_changed" from="Message/Box Region/Message Box" to="." method="_on_message_box_text_changed"]
+[connection signal="text_changed" from="Format/Box Region/Format Box" to="." method="_on_format_box_text_changed"]

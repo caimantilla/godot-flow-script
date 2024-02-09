@@ -18,6 +18,34 @@ var _next_node_id_true: String = ""
 var _next_node_id_false: String = ""
 
 
+func _get_property_list() -> Array[Dictionary]:
+	var properties: Array[Dictionary] = [
+		{
+			"name": get_type_name(),
+			"type": TYPE_NIL,
+			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_CATEGORY,
+		},
+		{
+			"name": "expression",
+			"type": TYPE_STRING,
+			"hint": PROPERTY_HINT_EXPRESSION,
+			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR,
+		},
+		{
+			"name": "next_node_id_true",
+			"type": TYPE_STRING,
+			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
+		},
+		{
+			"name": "next_node_id_false",
+			"type": TYPE_STRING,
+			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
+		},
+	]
+	
+	return properties
+
+
 func _execute(p_state: FlowNodeState) -> void:
 	_while_check(p_state)
 

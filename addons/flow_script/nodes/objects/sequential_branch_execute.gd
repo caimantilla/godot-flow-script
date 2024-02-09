@@ -3,12 +3,14 @@ extends "_multi_branch_execute.gd"
 
 
 func _execute(p_state: FlowNodeState) -> void:
-	p_state.current_step = -1
+	p_state.set_temporary_variable("current_step", -1)
 	_do_next_step(p_state)
 
 
 func _do_next_step(p_state: FlowNodeState) -> void:
-	var current_step: int = p_state.current_step + 1
+	var current_step: int = p_state.get_temporary_variable("current_step")
+	current_step += 1
+	p_state.set_temporary_variable("current_step", current_step)
 	
 	if current_step >= get_execution_stack_size():
 		p_state.finish(get_next_node_id(), null)

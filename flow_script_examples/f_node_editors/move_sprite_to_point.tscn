@@ -1,0 +1,55 @@
+[gd_scene load_steps=2 format=3 uid="uid://p2pq0hgtph2"]
+
+[ext_resource type="Script" path="res://flow_script_examples/f_node_editors/move_sprite_to_point.gd" id="1_s7qbg"]
+
+[node name="Move Sprite to Point" type="GraphNode" node_paths=PackedStringArray("sprite_name_edit", "spinbox_x", "spinbox_y")]
+title = "Move Sprite to Point"
+slot/0/left_enabled = true
+slot/0/left_type = 0
+slot/0/left_color = Color(1, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = true
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+script = ExtResource("1_s7qbg")
+sprite_name_edit = NodePath("Spread/Sprite Name")
+spinbox_x = NodePath("Spread/Position/X")
+spinbox_y = NodePath("Spread/Position/Y")
+
+[node name="Spread" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Move" type="Label" parent="Spread"]
+layout_mode = 2
+text = "Move"
+
+[node name="Sprite Name" type="LineEdit" parent="Spread"]
+layout_mode = 2
+expand_to_text_length = true
+
+[node name="To" type="Label" parent="Spread"]
+layout_mode = 2
+text = "to"
+
+[node name="Position" type="HBoxContainer" parent="Spread"]
+layout_mode = 2
+
+[node name="X" type="SpinBox" parent="Spread/Position"]
+layout_mode = 2
+min_value = -99999.0
+max_value = 99999.0
+value = 99999.0
+prefix = "X"
+
+[node name="Y" type="SpinBox" parent="Spread/Position"]
+layout_mode = 2
+min_value = -99999.0
+max_value = 99999.0
+value = 99999.0
+prefix = "Y"
+
+[connection signal="text_changed" from="Spread/Sprite Name" to="." method="_on_sprite_name_text_changed"]
+[connection signal="value_changed" from="Spread/Position/X" to="." method="_on_x_value_changed"]
+[connection signal="value_changed" from="Spread/Position/Y" to="." method="_on_y_value_changed"]

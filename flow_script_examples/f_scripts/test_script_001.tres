@@ -8,15 +8,18 @@ data = {
 "pages": [{
 "data": {
 "nodes": [{
+"expression": "not is_penis_bitten()",
 "graph_position_x": 578,
 "graph_position_y": -102,
 "id": "LHpEAl",
+"next_node_id_false": "aAAJRf",
+"next_node_id_true": "rN7gpQ",
 "type": "while_expression_loop"
 }, {
 "graph_position_x": 34,
 "graph_position_y": -28,
 "id": "Proc1",
-"next_node_id": "SvyXev",
+"next_node_id": "ZAMYyh",
 "type": "procedure"
 }, {
 "expression": "false",
@@ -41,17 +44,71 @@ data = {
 "type": "sequential_branch_execute"
 }, {
 "execution_stack": PackedStringArray("SvyXev"),
-"graph_position_x": -100,
-"graph_position_y": 106,
+"graph_position_x": -21,
+"graph_position_y": 133,
 "id": "iAyrWE",
 "next_node_id": "LHpEAl",
 "type": "simultaneous_branch_execute"
+}, {
+"format_expressions": "",
+"graph_position_x": -561,
+"graph_position_y": 129,
+"id": "ZAMYyh",
+"message_string": "There are millions",
+"next_node_id": "iAyrWE",
+"type": "console_print"
 }]
 },
 "id": "TestPage001"
 }, {
 "data": {
-"nodes": []
+"nodes": [{
+"destination": Vector2(500, 500),
+"graph_position_x": -400,
+"graph_position_y": 12,
+"id": "OPa5bF",
+"next_node_id": "Qq7iI2",
+"speed": 100.0,
+"sprite_name": "Godotito",
+"type": "move_sprite_to_point"
+}, {
+"graph_position_x": -1255,
+"graph_position_y": -95,
+"id": "SpriteMovementTest",
+"next_node_id": "o5EdE2",
+"type": "procedure"
+}, {
+"format_expressions": "str(get_sprite(\"Godotito\"))",
+"graph_position_x": -412,
+"graph_position_y": -202,
+"id": "hOEI8x",
+"message_string": "Moving %s.",
+"next_node_id": "OPa5bF",
+"type": "console_print"
+}, {
+"format_expressions": "str(get_sprite(\"Godotito\"))",
+"graph_position_x": -400,
+"graph_position_y": 99,
+"id": "Qq7iI2",
+"message_string": "Finished moving %s.",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -882,
+"graph_position_y": -202,
+"id": "o5EdE2",
+"message_string": "Waiting 2.5 seconds before moving...",
+"next_node_id": "XhbPSN",
+"type": "console_print"
+}, {
+"graph_position_x": -819,
+"graph_position_y": -4,
+"id": "XhbPSN",
+"next_node_id": "hOEI8x",
+"seconds": 2.5,
+"type": "wait_seconds"
+}]
 },
 "id": "TestPage002"
 }]

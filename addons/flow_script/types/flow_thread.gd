@@ -107,7 +107,7 @@ func on_external_thread_finished(p_thread_id: String) -> void:
 
 func _execute_node(p_node_id: String) -> void:
 	if _current_flow_node_state != null:
-		_current_flow_node_state.free()
+		_current_flow_node_state.call_deferred(&"free")
 	
 	_current_flow_node_state = null
 	_current_flow_node = null

@@ -35,30 +35,19 @@ func _init(p_flow_object: FlowObject) -> void:
 	_flow_object = p_flow_object
 
 
-func _set(property: StringName, value: Variant) -> bool:
-	if property in self:
-		set(property, value)
-		return true
-	
-	# Storing multi-frame node state should be easy this way.
-	else:
-		_node_state[property] = value
-		return true
-
-
-func _get(property: StringName) -> Variant:
-	if property in self:
-		return get(property)
-	
-	elif _node_state.has(property):
-		return _node_state[property]
-	
-	else:
-		return null
-
-
 func get_flow_object() -> FlowObject:
 	return _flow_object
+
+
+func set_temporary_variable(p_name: String, p_value: Variant) -> void:
+	_node_state[p_name] = p_value
+
+
+func get_temporary_variable(p_name: String) -> Variant:
+	if _node_state.has(p_name):
+		return _node_state[p_name]
+	
+	return null
 
 
 ## Return the node state, in case the state of the FlowController needs to be serialized.

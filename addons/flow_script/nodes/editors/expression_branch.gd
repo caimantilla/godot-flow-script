@@ -12,12 +12,11 @@ const ExpressionBranchNode := preload("../objects/expression_branch.gd")
 
 
 func _initialize() -> void:
-	if Engine.is_editor_hint():
-		var expression_box_min_size: Vector2 = expression_box.get_custom_minimum_size()
-		expression_box_min_size *= EditorInterface.get_editor_scale()
-		expression_box_min_size = expression_box_min_size.floor()
-		
-		expression_box.set_custom_minimum_size(expression_box_min_size)
+	var expression_box_min_size: Vector2 = expression_box.get_custom_minimum_size()
+	expression_box_min_size *= get_editor_scale()
+	expression_box_min_size = expression_box_min_size.floor()
+	
+	expression_box.set_custom_minimum_size(expression_box_min_size)
 
 
 func _on_node_updated() -> void:

@@ -12,11 +12,10 @@ const Comment := preload("../objects/comment.gd")
 
 
 func _initialize() -> void:
-	if Engine.is_editor_hint():
-		var cb_min_size: Vector2 = comment_box.get_custom_minimum_size()
-		cb_min_size *= EditorInterface.get_editor_scale()
-		cb_min_size = cb_min_size.floor()
-		comment_box.set_custom_minimum_size(cb_min_size)
+	var cb_min_size: Vector2 = comment_box.get_custom_minimum_size()
+	cb_min_size *= get_editor_scale()
+	cb_min_size = cb_min_size.floor()
+	comment_box.set_custom_minimum_size(cb_min_size)
 
 
 func _on_node_updated() -> void:

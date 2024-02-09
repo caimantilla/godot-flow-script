@@ -5,34 +5,23 @@ extends Object
 ## This should be extended for your game's needs.
 
 
-
-
-
 ## Emitted when the object would like to be deleted.
 signal deletion_requested()
 
 ## Requested when a new thread should be created.
 signal flow_thread_creation_requested(initial_flow_node_id: String)
 
-## Emitted when the object should be allowed to resume.
-## This is emitted when all of the threads that it's created have finished execution.
-## It is only really relevant to overriden FlowObject scripts.
-signal resumed()
+## Emitted when the controller finishes execution of some thread.
+signal flow_thread_execution_finished(thread_id: String)
 
 
+## Emitted 
+var last_created_thread_id: String: set = set_last_created_thread_id, get = get_last_created_thread_id
 
 
-
-
-
-
-
-
+var _last_created_thread_id: String = ""
 var _locals: Dictionary = {}
 var _locals_names := PackedStringArray()
-var _flow_script: FlowScript = null
-
-
 
 
 # Overrides
@@ -47,9 +36,8 @@ func _notification(what: int) -> void:
 		kill()
 
 
-
-
 # Virtuals
+
 
 ## Virtual.
 ## Use this method to clean up any unmanaged memory.
@@ -67,7 +55,6 @@ func _set_state(p_state: Dictionary) -> void:
 ## Returns the game-specific object state for use in a save file.
 func _get_state() -> Dictionary:
 	return {}
-
 
 
 ## Virtual.
@@ -97,21 +84,56 @@ func _get_global_names() -> PackedStringArray:
 	return PackedStringArray()
 
 
+## Virtual.
+## Override to change the message printing behavior.
+## This isn't mandatory, though, as a default behavior is provided.
+func _console_print(p_value: Variant) -> void:
+	print(p_value)
 
 
-
-
-
-
-
+## Virtual.
+## A default implementation is provided, but override if needed (like if you need a custom pausing behavior).
+func _create_seconds_timer(p_duration: float) -> Object:
+	var main_loop := Engine.get_main_loop() as SceneTree
+	if main_loop == null:
+		return null
+	
+	# Process the timer during the physics step by default.
+	var timer: SceneTreeTimer = main_loop.create_timer(p_duration, false, true, false)
+	
+	return timer
 
 
 # Sealed
 
 
+func notify_thread_finished(p_thread_id: String) -> void:
+	emit_signal.call_deferred(&"flow_thread_execution_finished", p_thread_id)
+
+
+func set_last_created_thread_id(p_thread_id: String) -> void:
+	_last_created_thread_id = p_thread_id
+
+
+func get_last_created_thread_id() -> String:
+	return _last_created_thread_id
+
+
 ## Kills flow execution.
 func kill() -> void:
 	_kill()
+
+
+func wait_last_thread_finished() -> void:
+	var new_thread_id: String = _last_created_thread_id
+	
+	# If there was a mistake in creating the thread, don't wait. A non-empty thread ID should indicate success.
+	if not new_thread_id.is_empty():
+		# WARNING: This could probably cause an infinite loop? It won't lock the game up, but depending on the usage it could softlock, and I'm not sure if this causes a leak. Be careful.
+		while 1:
+			var finished_thread: String = await flow_thread_execution_finished
+			if finished_thread == new_thread_id:
+				return
 
 
 ## Creates a thread and begins execution of the FlowScript from the node ID passed.
@@ -120,26 +142,15 @@ func execute_flow(p_from_node_id: String) -> void:
 
 
 ## Creates a thread and executes it, then awaits its completion.
-## This is only recommended if calling internally.
+## This is only recommended if calling internally. Await should be avoided in FlowNodes.
 func execute_flow_async(p_from_node_id: String) -> void:
-	pass
+	execute_flow(p_from_node_id)
+	await wait_last_thread_finished()
 
 
 ## Requests deletion of the object.
 func request_deletion() -> void:
 	deletion_requested.emit()
-
-
-## Sets the object's flow script.
-func set_flow_script(p_script: FlowScript) -> void:
-	assert(_flow_script == null, "Flow script cannot be overriden.")
-	_flow_script = p_script
-
-
-## Returns the object's flow script.
-func get_flow_script() -> FlowScript:
-	return _flow_script
-
 
 
 ## Restores the object's state from a save file.
@@ -168,9 +179,6 @@ func get_state() -> Dictionary:
 		state[lkey] = lvalue
 	
 	return state
-
-
-
 
 
 func has_local(p_variable_name: String) -> bool:
@@ -213,7 +221,6 @@ func get_local_values() -> Array:
 		local_values[lidx] = get_local(local_names[lidx])
 	
 	return local_values
-
 
 
 ## Checks if a global variable with the name passed exists.
@@ -324,13 +331,6 @@ func evaluate_multiline_expression(p_multiline: String) -> Array:
 	return evaluation_results
 
 
-
-
-
-
-
-
-
 func split_multiline_expression(p_multiline: String) -> PackedStringArray:
 	var expressions: PackedStringArray = p_multiline.split("\n", false)
 	
@@ -343,3 +343,14 @@ func split_multiline_expression(p_multiline: String) -> PackedStringArray:
 			expressions.set(i, expression)
 	
 	return expressions
+
+
+## Print some value to the console.
+func console_print(p_value: Variant) -> void:
+	_console_print(p_value)
+
+
+## Creates a seconds timer.
+## can return null, a Timer, or a SceneTreeTimer.
+func create_seconds_timer(p_duration: float) -> Object:
+	return _create_seconds_timer(p_duration)
