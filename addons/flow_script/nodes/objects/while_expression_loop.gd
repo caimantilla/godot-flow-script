@@ -47,6 +47,7 @@ func _get_property_list() -> Array[Dictionary]:
 
 
 func _execute(p_state: FlowNodeState) -> void:
+	p_state.resumed.connect(_while_check.bind(p_state))
 	_while_check(p_state)
 
 
@@ -56,7 +57,6 @@ func _while_check(p_state: FlowNodeState) -> void:
 	var result: bool = p_state.get_flow_object().evaluate_multiline_boolean_expression(_expression_string, false)
 	
 	if result:
-		p_state.resumed.connect(_while_check.bind(p_state), CONNECT_ONE_SHOT)
 		p_state.request_new_thread(_next_node_id_true, true)
 	else:
 		p_state.finish(_next_node_id_false, null)

@@ -324,9 +324,11 @@ func evaluate_multiline_expression(p_multiline: String) -> Array:
 	
 	for string: String in expression_strings:
 		var parse_error: Error = expression.parse(string, variable_names)
+		#var parse_error: Error = expression.parse(string)
 		assert(parse_error == OK)
 		
 		evaluation_results.append(expression.execute(variable_values, self, true, false))
+		#evaluation_results.append(expression.execute([], self, false, true))
 	
 	return evaluation_results
 
@@ -354,3 +356,11 @@ func console_print(p_value: Variant) -> void:
 ## can return null, a Timer, or a SceneTreeTimer.
 func create_seconds_timer(p_duration: float) -> Object:
 	return _create_seconds_timer(p_duration)
+
+
+func get_ticks_msec() -> int:
+	return Time.get_ticks_msec()
+
+
+func get_ticks_usec() -> int:
+	return Time.get_ticks_usec()

@@ -1,7 +1,6 @@
 @tool
 class_name FlowThread
-extends Node
-
+extends Object
 
 
 ## Emitted when the thread is finished, ie. there are no longer any nodes executing.
@@ -106,8 +105,7 @@ func on_external_thread_finished(p_thread_id: String) -> void:
 
 
 func _execute_node(p_node_id: String) -> void:
-	if _current_flow_node_state != null:
-		_current_flow_node_state.call_deferred(&"free")
+	_delete_node_state(_current_flow_node_state)
 	
 	_current_flow_node_state = null
 	_current_flow_node = null
@@ -147,4 +145,10 @@ func _on_new_threads_requested(p_initial_node_ids: PackedStringArray, p_wait_com
 
 
 func _emit_finished(p_return_value: Variant) -> void:
+	_delete_node_state(_current_flow_node_state)
 	finished.emit(p_return_value)
+
+
+func _delete_node_state(p_node_state: FlowNodeState) -> void:
+	if p_node_state != null:
+		Engine.get_main_loop().queue_delete(p_node_state)
