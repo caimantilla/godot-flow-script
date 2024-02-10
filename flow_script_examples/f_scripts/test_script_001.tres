@@ -64,7 +64,7 @@ data = {
 "graph_position_x": -1537,
 "graph_position_y": 46,
 "id": "CdjGOA",
-"next_node_id": "xKx93O",
+"next_node_id": "cR9Rqj",
 "type": "sequential_branch_execute"
 }, {
 "format_expressions": "",
@@ -96,14 +96,6 @@ data = {
 "id": "TOyZZY",
 "message_string": "Branch 3...",
 "next_node_id": "o5EdE2",
-"type": "console_print"
-}, {
-"format_expressions": "",
-"graph_position_x": -1177,
-"graph_position_y": 12,
-"id": "xKx93O",
-"message_string": "Done.",
-"next_node_id": "lQOyou",
 "type": "console_print"
 }, {
 "format_expressions": "",
@@ -155,7 +147,7 @@ data = {
 "graph_position_y": 643,
 "id": "TGiaFs",
 "message_string": "All branches finished.",
-"next_node_id": "",
+"next_node_id": "CdjGOA",
 "type": "console_print"
 }, {
 "format_expressions": "",
@@ -195,8 +187,105 @@ data = {
 "message_string": "Branch 3 finished.",
 "next_node_id": "",
 "type": "console_print"
+}, {
+"format_expressions": "",
+"graph_position_x": -1216,
+"graph_position_y": -7,
+"id": "cR9Rqj",
+"message_string": "Wow.",
+"next_node_id": "lQOyou",
+"type": "console_print"
 }]
 },
 "id": "TestPage002"
+}, {
+"data": {
+"nodes": [{
+"expression": "get_local(\"GamerMoment\") < 50000",
+"graph_position_x": -1518,
+"graph_position_y": 246,
+"id": "UzaWVg",
+"next_node_id_false": "Ap0xMq",
+"next_node_id_true": "U2TVAM",
+"type": "while_expression_loop"
+}, {
+"graph_position_x": -2016,
+"graph_position_y": 3,
+"id": "LoopTest",
+"next_node_id": "l9gV3i",
+"type": "procedure"
+}, {
+"graph_position_x": -1525,
+"graph_position_y": 157,
+"id": "oEccwU",
+"next_node_id": "UzaWVg",
+"type": "set_local",
+"value_expression": "0",
+"variable_name": "GamerMoment"
+}, {
+"graph_position_x": -807,
+"graph_position_y": 294,
+"id": "U2TVAM",
+"next_node_id": "M070fF",
+"type": "set_local",
+"value_expression": "get_local(\"GamerMoment\") + 1",
+"variable_name": "GamerMoment"
+}, {
+"graph_position_x": -1988,
+"graph_position_y": 73,
+"id": "l9gV3i",
+"next_node_id": "zIXPGQ",
+"seconds": 5.0,
+"type": "wait_seconds"
+}, {
+"graph_position_x": -1957,
+"graph_position_y": 166,
+"id": "zIXPGQ",
+"next_node_id": "oEccwU",
+"type": "set_local",
+"value_expression": "get_ticks_msec()",
+"variable_name": "LoopExecTime"
+}, {
+"graph_position_x": -1751,
+"graph_position_y": 369,
+"id": "Ap0xMq",
+"next_node_id": "EZc5UQ",
+"type": "set_local",
+"value_expression": "get_ticks_msec() - get_local(\"LoopExecTime\")",
+"variable_name": "LoopExecTime"
+}, {
+"format_expressions": "get_local(\"GamerMoment\")
+get_local(\"LoopExecTime\")",
+"graph_position_x": -1256,
+"graph_position_y": 483,
+"id": "vhcl5s",
+"message_string": "Finished incrementing GamerMoment to %d.
+This took %dms.",
+"next_node_id": "g1cjyQ",
+"type": "console_print"
+}, {
+"format_expressions": "get_local(\"GamerMoment\")",
+"graph_position_x": -737,
+"graph_position_y": 381,
+"id": "M070fF",
+"message_string": "GamerMoment = %d",
+"next_node_id": "",
+"type": "console_print"
+}, {
+"graph_position_x": -1493,
+"graph_position_y": 462,
+"id": "EZc5UQ",
+"next_node_id": "vhcl5s",
+"seconds": 1.0,
+"type": "wait_seconds"
+}, {
+"expression": "",
+"graph_position_x": -886,
+"graph_position_y": 526,
+"id": "g1cjyQ",
+"type": "return"
+}]
+},
+"id": "VariableTest"
 }]
 }

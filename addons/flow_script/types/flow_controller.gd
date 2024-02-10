@@ -50,16 +50,16 @@ var _flow_thread_map: Dictionary = {}
 	#_flow_script = p_flow_script
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		kill()
+
+
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	
 	_initialize_flow_object()
-
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE:
-		kill()
 
 
 func set_flow_object_type(p_type_script: GDScript) -> void:
@@ -140,7 +140,7 @@ func kill() -> void:
 	
 	if _flow_object != null:
 		_flow_object.kill()
-		_flow_object.call_deferred(&"free")
+		Engine.get_main_loop().queue_delete(_flow_object)
 		_flow_object = null
 
 
@@ -194,7 +194,7 @@ func _delete_thread(p_thread_id: String) -> bool:
 	
 	if thread != null:
 		thread.kill()
-		thread.call_deferred(&"free")
+		Engine.get_main_loop().queue_delete(thread)
 		_flow_thread_map.erase(p_thread_id)
 		return true
 	

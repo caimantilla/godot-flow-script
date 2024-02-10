@@ -3,7 +3,7 @@ extends FlowNode
 
 
 const MIN_SECONDS: float = 0.01
-const MAX_SECONDS: float = 1200.0
+const MAX_SECONDS: float = 999.0
 const SECONDS_STEP: float = 0.01
 
 
