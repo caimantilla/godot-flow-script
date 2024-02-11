@@ -2,7 +2,6 @@
 extends FlowNode
 
 
-
 var next_node_id: String: set = set_next_node_id, get = get_next_node_id
 var variable_name: String: set = set_variable_name, get = get_variable_name
 var value_expression: String: set = set_value_expression, get = get_value_expression
@@ -12,10 +11,6 @@ var _next_node_id: String = ""
 var _variable_name: String = ""
 var _value_expression: String = ""
 
-
-
-
-# Overrides
 
 func _get_property_list() -> Array[Dictionary]:
 	var properties: Array[Dictionary] = [
@@ -45,7 +40,6 @@ func _get_property_list() -> Array[Dictionary]:
 	return properties
 
 
-
 func _is_property_flow_node_reference(p_name: StringName) -> bool:
 	return (p_name == &"next_node_id")
 
@@ -53,11 +47,6 @@ func _is_property_flow_node_reference(p_name: StringName) -> bool:
 func _on_external_node_renamed(p_from: String, p_to: String) -> void:
 	if p_from == _next_node_id:
 		_next_node_id = p_to
-
-
-
-
-# Setget
 
 
 func set_next_node_id(p_id: String) -> void:
@@ -76,7 +65,6 @@ func set_variable_name(p_name: String) -> void:
 
 func get_variable_name() -> String:
 	return _variable_name
-
 
 
 func set_value_expression(p_expression: String) -> void:

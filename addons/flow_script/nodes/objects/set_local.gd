@@ -4,9 +4,6 @@ extends "_base_set_variable.gd"
 ## This can also be used to initialize a variable, useful in something like a loop.
 
 
-@export_category("Set Local")
-
-
 func _execute(p_state: FlowNodeState) -> void:
 	
 	var expression_result: Variant = p_state.get_flow_object().evaluate_expression(get_value_expression())

@@ -51,17 +51,6 @@ func _execute(p_state: FlowNodeState) -> void:
 	_while_check(p_state)
 
 
-func _while_check(p_state: FlowNodeState) -> void:
-	# Don't evaluate to true if there are no conditions in the first place.
-	# If you want an infinite loop, like for the idle animation of a non-interactable entity, just write "true" as the expression.
-	var result: bool = p_state.get_flow_object().evaluate_multiline_boolean_expression(_expression_string, false)
-	
-	if result:
-		p_state.request_new_thread(_next_node_id_true, true)
-	else:
-		p_state.finish(_next_node_id_false, null)
-
-
 func _is_property_flow_node_reference(p_property: StringName) -> bool:
 	return (p_property == &"next_node_id_true") or (p_property == &"next_node_id_false")
 
@@ -72,6 +61,17 @@ func _on_external_node_renamed(p_from: String, p_to: String) -> void:
 	
 	if p_from == _next_node_id_false:
 		_next_node_id_false = p_to
+
+
+func _while_check(p_state: FlowNodeState) -> void:
+	# Don't evaluate to true if there are no conditions in the first place.
+	# If you want an infinite loop, like for the idle animation of a non-interactable entity, just write "true" as the expression.
+	var result: bool = p_state.get_flow_object().evaluate_multiline_boolean_expression(_expression_string, false)
+	
+	if result:
+		p_state.request_new_thread(_next_node_id_true, true)
+	else:
+		p_state.finish(_next_node_id_false, null)
 
 
 func set_expression_string(p_exp: String) -> void:

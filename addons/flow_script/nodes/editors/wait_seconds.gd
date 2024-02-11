@@ -8,19 +8,15 @@ const WaitSecondsNode := preload("../objects/wait_seconds.gd")
 @onready var spinbox_seconds = $"Seconds Spinner"
 
 
-func _ready() -> void:
-	super()
-	
-	spinbox_seconds.set_min(WaitSecondsNode.MIN_SECONDS)
-	spinbox_seconds.set_max(WaitSecondsNode.MAX_SECONDS)
-	spinbox_seconds.set_step(WaitSecondsNode.SECONDS_STEP)
-
-
 func _initialize() -> void:
 	var seconds_spinner_size: Vector2 = spinbox_seconds.get_custom_minimum_size()
 	seconds_spinner_size *= get_editor_scale()
 	seconds_spinner_size = seconds_spinner_size.floor()
 	spinbox_seconds.set_custom_minimum_size(seconds_spinner_size)
+	
+	spinbox_seconds.set_min(WaitSecondsNode.MIN_SECONDS)
+	spinbox_seconds.set_max(WaitSecondsNode.MAX_SECONDS)
+	spinbox_seconds.set_step(WaitSecondsNode.SECONDS_STEP)
 
 
 func _on_node_updated() -> void:
@@ -72,7 +68,7 @@ func _update_seconds_spinner() -> void:
 			spinbox_seconds.set_suffix("Seconds")
 
 
-func _on_seconds_spinner_value_changed(p_value: float) -> void:
+func _on_seconds_spinner_value_changed(_value: float) -> void:
 	var ws_node: WaitSecondsNode = get_ws_node()
 	if ws_node != null:
-		ws_node.set_seconds(p_value)
+		ws_node.set_seconds(spinbox_seconds.get_value())

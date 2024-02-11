@@ -201,7 +201,7 @@ data = {
 }, {
 "data": {
 "nodes": [{
-"expression": "get_local(\"GamerMoment\") < 50000",
+"expression": "GamerMoment < (30 * 30)",
 "graph_position_x": -1518,
 "graph_position_y": 246,
 "id": "UzaWVg",
@@ -228,7 +228,7 @@ data = {
 "id": "U2TVAM",
 "next_node_id": "M070fF",
 "type": "set_local",
-"value_expression": "get_local(\"GamerMoment\") + 1",
+"value_expression": "GamerMoment + 1",
 "variable_name": "GamerMoment"
 }, {
 "graph_position_x": -1988,
@@ -251,11 +251,11 @@ data = {
 "id": "Ap0xMq",
 "next_node_id": "EZc5UQ",
 "type": "set_local",
-"value_expression": "get_ticks_msec() - get_local(\"LoopExecTime\")",
+"value_expression": "get_ticks_msec() - LoopExecTime",
 "variable_name": "LoopExecTime"
 }, {
-"format_expressions": "get_local(\"GamerMoment\")
-get_local(\"LoopExecTime\")",
+"format_expressions": "GamerMoment
+LoopExecTime",
 "graph_position_x": -1256,
 "graph_position_y": 483,
 "id": "vhcl5s",
@@ -264,7 +264,7 @@ This took %dms.",
 "next_node_id": "g1cjyQ",
 "type": "console_print"
 }, {
-"format_expressions": "get_local(\"GamerMoment\")",
+"format_expressions": "GamerMoment",
 "graph_position_x": -737,
 "graph_position_y": 381,
 "id": "M070fF",
@@ -279,7 +279,7 @@ This took %dms.",
 "seconds": 1.0,
 "type": "wait_seconds"
 }, {
-"expression": "",
+"expression": "true",
 "graph_position_x": -886,
 "graph_position_y": 526,
 "id": "g1cjyQ",

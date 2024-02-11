@@ -1,9 +1,11 @@
 @tool
 extends FlowNode
+## Executes any number of expressions immediately.
+## No branching is done, this is only to call methods, modify the game state...
+## See expression_branch for branching on expressions.
 
 
-
-
+## The ID of the next node to be executed.
 var next_node_id: String: set = set_next_node_id, get = get_next_node_id
 
 ## The all of the expressions which should be executed, separated by line.
@@ -12,8 +14,6 @@ var expression_list: String: set = set_expression_string, get = get_expression_s
 
 var _expression_string: String = ""
 var _next_node_id: String = ""
-
-
 
 
 func _get_property_list() -> Array[Dictionary]:
@@ -34,13 +34,19 @@ func _get_property_list() -> Array[Dictionary]:
 	return properties
 
 
-
-
-
 func _is_property_flow_node_reference(p_property_name: StringName) -> bool:
 	return (p_property_name == &"next_node_id")
 
 
+func _on_external_node_renamed(p_from: String, p_to: String) -> void:
+	if p_from == _next_node_id:
+		_next_node_id = p_to
+
+
+func _execute(p_state: FlowNodeState) -> void:
+	# Just execute, whatever gets returned is irrelevant
+	p_state.get_flow_object().evaluate_multiline_expression(_expression_string)
+	p_state.finish(_next_node_id)
 
 
 func set_next_node_id(p_id: String) -> void:

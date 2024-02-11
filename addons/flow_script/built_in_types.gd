@@ -47,14 +47,15 @@ const data: Array[Dictionary] = [
 		editor_path = "nodes/editors/return.tscn",
 		automatically_assign_id = true,
 	},
-	#{
-		#id = "expression_execute",
-		#name = "Execute Expressions",
-		#category = "Flow",
-		#description = "Executes a series of expressions.",
-		#object_path = "nodes/objects/expression_execute.gd",
-		#editor_path = "nodes/editors/expression_execute.gd",
-	#},
+	{
+		id = "expression_execute",
+		name = "Execute Expressions",
+		category = "Flow",
+		description = "Executes a series of expressions.",
+		object_path = "nodes/objects/expression_execute.gd",
+		editor_path = "nodes/editors/expression_execute.tscn",
+		automatically_assign_id = true,
+	},
 	{
 		id = "expression_branch",
 		name = "Conditional Branch",

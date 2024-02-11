@@ -29,6 +29,7 @@ var _flow_object_type: GDScript = null
 var _flow_object: FlowObject = null
 var _flow_script: FlowScript = null
 var _flow_thread_map: Dictionary = {}
+var _last_return_value: Variant = null
 
 
 ## Initializes the FlowController.
@@ -94,6 +95,12 @@ func get_flow_object() -> FlowObject:
 	return _flow_object
 
 
+## Returns the last value to be returned by a thread.
+## Query this once the thread you're waiting on finishes.
+func get_last_return_value() -> Variant:
+	return _last_return_value
+
+
 func get_active_thread_count() -> int:
 	return _flow_thread_map.size()
 
@@ -144,8 +151,22 @@ func kill() -> void:
 		_flow_object = null
 
 
+## Begins execution of a thread.
 func execute(p_procedure_id: String) -> void:
-	_create_new_thread(p_procedure_id)
+	var _thread: FlowThread = _create_new_thread(p_procedure_id)
+
+
+## Begins execution of a thread.
+## A callback is also passed, which is later called when a value is returned from the thread created.
+func execute_with_return_callback(p_procedure_id: String, p_callback: Callable) -> void:
+	var thread: FlowThread = _create_new_thread(p_procedure_id)
+	
+	if thread == null:
+		p_callback.call(get_last_return_value())
+	else:
+		# TODO: Add some callback with a bind for checking if the correct thread has finished.
+		# qWhen that thread finishes, call the return callback passed to this method.
+		pass
 
 
 func _initialize_flow_object() -> void:
@@ -169,6 +190,8 @@ func _on_thread_new_threads_creation_request(p_initial_node_ids: PackedStringArr
 
 func _on_thread_finished(p_return_value: Variant, p_thread_id: String) -> void:
 	# Don't do anything unless thread deletion is successful... Not sure why it shouldn't be, but yeah !!
+	_last_return_value = p_return_value
+	
 	if _delete_thread(p_thread_id):
 		# Duplicate the thread list to make sure that the same array as any potential future calls is not being used.
 		# It's just an array of pointers anyways, so I'd think it should be quick to duplicate.
