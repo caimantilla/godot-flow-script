@@ -2,23 +2,16 @@
 extends FlowNode
 
 
-
-
 @export_category("Expression Branch")
-
-
 
 var expression_string: String: set = set_expressions, get = get_expressions
 var next_node_id_true: String: set = set_true_id, get = get_true_id
 var next_node_id_false: String: set = set_false_id, get = get_false_id
 
 
-
 var _expression_string: String = ""
 var _next_node_id_true: String = ""
 var _next_node_id_false: String = ""
-
-
 
 
 func _get_property_list() -> Array[Dictionary]:
@@ -44,8 +37,6 @@ func _get_property_list() -> Array[Dictionary]:
 	return properties
 
 
-
-
 func _execute(state: FlowNodeState) -> void:
 	var expression := Expression.new()
 
@@ -62,9 +53,6 @@ func _on_external_node_renamed(p_from: String, p_to: String) -> void:
 		_next_node_id_false = p_to
 
 
-
-
-
 func set_expressions(p_string: String) -> void:
 	if p_string != _expression_string:
 		_expression_string = p_string
@@ -72,7 +60,6 @@ func set_expressions(p_string: String) -> void:
 
 func get_expressions() -> String:
 	return _expression_string
-
 
 
 func set_true_id(p_node_id: String) -> void:

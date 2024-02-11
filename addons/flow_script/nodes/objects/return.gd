@@ -5,17 +5,10 @@ extends FlowNode
 ## If multiline, a boolean result is returned instead.
 
 
-
-
-
 var expression: String: set = set_expression_string, get = get_expression_string
 
 
 var _expression_string: String = ""
-
-
-
-
 
 
 func _get_property_list() -> Array[Dictionary]:
@@ -29,8 +22,6 @@ func _get_property_list() -> Array[Dictionary]:
 	]
 	
 	return properties
-
-
 
 
 func _execute(p_state: FlowNodeState) -> void:
@@ -48,8 +39,6 @@ func _execute(p_state: FlowNodeState) -> void:
 				p_state.finish("", false)
 		
 		p_state.finish("", true)
-
-
 
 
 func set_expression_string(p_exp: String) -> void:

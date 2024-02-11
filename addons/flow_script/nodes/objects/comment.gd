@@ -2,19 +2,10 @@
 extends FlowNode
 
 
-
-
-
-
 var comment: String: set = set_comment_string, get = get_comment_string
 
 
 var _comment_string: String = ""
-
-
-
-
-
 
 
 func _get_property_list() -> Array[Dictionary]:
@@ -28,9 +19,6 @@ func _get_property_list() -> Array[Dictionary]:
 	]
 	
 	return properties
-
-
-
 
 
 func set_comment_string(p_text: String) -> void:

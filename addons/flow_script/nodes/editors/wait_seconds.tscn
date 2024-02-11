@@ -19,9 +19,9 @@ script = ExtResource("1_y5vdk")
 custom_minimum_size = Vector2(160, 2.08165e-12)
 layout_mode = 2
 min_value = 0.01
-max_value = 1200.0
+max_value = 999.0
 step = 0.01
-value = 1000.0
+value = 999.0
 suffix = "Second(s)"
 
 [connection signal="value_changed" from="Seconds Spinner" to="." method="_on_seconds_spinner_value_changed"]
