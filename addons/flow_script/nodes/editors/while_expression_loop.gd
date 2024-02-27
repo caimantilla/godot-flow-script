@@ -22,7 +22,7 @@ func _on_node_updated() -> void:
 
 
 func _get_input_slot() -> int:
-	return 1
+	return 0
 
 
 func _set_outgoing_connection(p_param: FlowNodeEditorOutgoingConnectionParameters) -> void:

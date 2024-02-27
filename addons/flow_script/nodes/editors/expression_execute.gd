@@ -9,7 +9,7 @@ const ExpressionExecuteNode := preload("../objects/expression_execute.gd")
 
 
 func _get_input_slot() -> int:
-	return 1
+	return 0
 
 
 func _set_outgoing_connection(p_connection: FlowNodeEditorOutgoingConnectionParameters) -> void:

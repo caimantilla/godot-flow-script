@@ -32,8 +32,10 @@ func _init() -> void:
 	set_show_grid(false)
 	set_show_grid_buttons(false)
 	set_snapping_enabled(false)
+	set_right_disconnects(true)
 	
 	connection_request.connect(_on_graph_connection_request)
+	disconnection_request.connect(_on_graph_disconnection_request)
 	delete_nodes_request.connect(_on_graph_delete_nodes_request)
 	node_selected.connect(_on_graph_node_selected)
 	end_node_move.connect(_on_graph_node_move_ended, CONNECT_DEFERRED)
@@ -245,6 +247,16 @@ func _on_graph_connection_request(p_from_node: StringName, p_from_port: int, p_t
 		return
 	
 	_create_connection(from_editor, p_from_port, to_editor)
+
+
+func _on_graph_disconnection_request(p_from_node: StringName, p_from_port: int, p_to_node: StringName, p_to_port: int) -> void:
+	var from_editor := get_node(String(p_from_node)) as FlowNodeEditor
+	var to_editor := get_node(String(p_to_node)) as FlowNodeEditor
+	
+	if (from_editor == null) or (to_editor == null):
+		return
+	
+	_erase_connection(from_editor, p_from_port)
 
 
 func _on_graph_node_move_ended() -> void:
