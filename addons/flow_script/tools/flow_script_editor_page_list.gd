@@ -13,7 +13,7 @@ signal page_deletion_requested(page_id: String)
 
 
 
-const MIN_SIZE := Vector2(200, 100)
+const MIN_SIZE := Vector2(120, 100)
 
 
 
