@@ -15,6 +15,14 @@ enum CharacterType {
 }
 
 
+enum InterfaceLocation {
+	BOTTOM_PANEL = 0,
+	MAIN_SCREEN = 1,
+}
+
+const InterfaceLocation_HINT := PROPERTY_HINT_ENUM
+const InterfaceLocation_HINT_STRING: String = "Bottom Panel:0,Main Screen:1"
+
 
 const _SERIALIZABLE_TYPES_SET: Dictionary = {
 	TYPE_STRING: true,
