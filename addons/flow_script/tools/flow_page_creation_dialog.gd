@@ -28,7 +28,9 @@ func _init() -> void:
 
 
 func _on_visibility_changed() -> void:
-	if not is_visible():
+	if is_visible():
+		_id_entry_line_edit.grab_focus.call_deferred()
+	else:
 		_id_entry_line_edit.clear.call_deferred()
 
 

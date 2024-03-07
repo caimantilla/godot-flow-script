@@ -10,8 +10,10 @@ const ID_LENGTH_DEFAULT: int = 6
 
 enum CharacterType {
 	BAN = 0,
-	ALPHA = 1,
-	NUMERIC = 2,
+	ALPHA_UPPER = 1,
+	ALPHA_LOWER = 2,
+	NUMERIC = 3,
+	SYMBOL = 4,
 }
 
 
@@ -43,59 +45,59 @@ const _SERIALIZABLE_TYPES_SET: Dictionary = {
 
 
 const _ID_PERMITTED_CHARACTER_SET: Dictionary = {
-	'A': CharacterType.ALPHA,
-	'B': CharacterType.ALPHA,
-	'C': CharacterType.ALPHA,
-	'D': CharacterType.ALPHA,
-	'E': CharacterType.ALPHA,
-	'F': CharacterType.ALPHA,
-	'G': CharacterType.ALPHA,
-	'H': CharacterType.ALPHA,
-	'I': CharacterType.ALPHA,
-	'J': CharacterType.ALPHA,
-	'K': CharacterType.ALPHA,
-	'L': CharacterType.ALPHA,
-	'M': CharacterType.ALPHA,
-	'N': CharacterType.ALPHA,
-	'O': CharacterType.ALPHA,
-	'P': CharacterType.ALPHA,
-	'Q': CharacterType.ALPHA,
-	'R': CharacterType.ALPHA,
-	'S': CharacterType.ALPHA,
-	'T': CharacterType.ALPHA,
-	'U': CharacterType.ALPHA,
-	'V': CharacterType.ALPHA,
-	'W': CharacterType.ALPHA,
-	'X': CharacterType.ALPHA,
-	'Y': CharacterType.ALPHA,
-	'Z': CharacterType.ALPHA,
+	'A': CharacterType.ALPHA_UPPER,
+	'B': CharacterType.ALPHA_UPPER,
+	'C': CharacterType.ALPHA_UPPER,
+	'D': CharacterType.ALPHA_UPPER,
+	'E': CharacterType.ALPHA_UPPER,
+	'F': CharacterType.ALPHA_UPPER,
+	'G': CharacterType.ALPHA_UPPER,
+	'H': CharacterType.ALPHA_UPPER,
+	'I': CharacterType.ALPHA_UPPER,
+	'J': CharacterType.ALPHA_UPPER,
+	'K': CharacterType.ALPHA_UPPER,
+	'L': CharacterType.ALPHA_UPPER,
+	'M': CharacterType.ALPHA_UPPER,
+	'N': CharacterType.ALPHA_UPPER,
+	'O': CharacterType.ALPHA_UPPER,
+	'P': CharacterType.ALPHA_UPPER,
+	'Q': CharacterType.ALPHA_UPPER,
+	'R': CharacterType.ALPHA_UPPER,
+	'S': CharacterType.ALPHA_UPPER,
+	'T': CharacterType.ALPHA_UPPER,
+	'U': CharacterType.ALPHA_UPPER,
+	'V': CharacterType.ALPHA_UPPER,
+	'W': CharacterType.ALPHA_UPPER,
+	'X': CharacterType.ALPHA_UPPER,
+	'Y': CharacterType.ALPHA_UPPER,
+	'Z': CharacterType.ALPHA_UPPER,
 	
-	'a': CharacterType.ALPHA,
-	'b': CharacterType.ALPHA,
-	'c': CharacterType.ALPHA,
-	'd': CharacterType.ALPHA,
-	'e': CharacterType.ALPHA,
-	'f': CharacterType.ALPHA,
-	'g': CharacterType.ALPHA,
-	'h': CharacterType.ALPHA,
-	'i': CharacterType.ALPHA,
-	'j': CharacterType.ALPHA,
-	'k': CharacterType.ALPHA,
-	'l': CharacterType.ALPHA,
-	'm': CharacterType.ALPHA,
-	'n': CharacterType.ALPHA,
-	'o': CharacterType.ALPHA,
-	'p': CharacterType.ALPHA,
-	'q': CharacterType.ALPHA,
-	'r': CharacterType.ALPHA,
-	's': CharacterType.ALPHA,
-	't': CharacterType.ALPHA,
-	'u': CharacterType.ALPHA,
-	'v': CharacterType.ALPHA,
-	'w': CharacterType.ALPHA,
-	'x': CharacterType.ALPHA,
-	'y': CharacterType.ALPHA,
-	'z': CharacterType.ALPHA,
+	'a': CharacterType.ALPHA_LOWER,
+	'b': CharacterType.ALPHA_LOWER,
+	'c': CharacterType.ALPHA_LOWER,
+	'd': CharacterType.ALPHA_LOWER,
+	'e': CharacterType.ALPHA_LOWER,
+	'f': CharacterType.ALPHA_LOWER,
+	'g': CharacterType.ALPHA_LOWER,
+	'h': CharacterType.ALPHA_LOWER,
+	'i': CharacterType.ALPHA_LOWER,
+	'j': CharacterType.ALPHA_LOWER,
+	'k': CharacterType.ALPHA_LOWER,
+	'l': CharacterType.ALPHA_LOWER,
+	'm': CharacterType.ALPHA_LOWER,
+	'n': CharacterType.ALPHA_LOWER,
+	'o': CharacterType.ALPHA_LOWER,
+	'p': CharacterType.ALPHA_LOWER,
+	'q': CharacterType.ALPHA_LOWER,
+	'r': CharacterType.ALPHA_LOWER,
+	's': CharacterType.ALPHA_LOWER,
+	't': CharacterType.ALPHA_LOWER,
+	'u': CharacterType.ALPHA_LOWER,
+	'v': CharacterType.ALPHA_LOWER,
+	'w': CharacterType.ALPHA_LOWER,
+	'x': CharacterType.ALPHA_LOWER,
+	'y': CharacterType.ALPHA_LOWER,
+	'z': CharacterType.ALPHA_LOWER,
 	
 	'1': CharacterType.NUMERIC,
 	'2': CharacterType.NUMERIC,
@@ -107,6 +109,8 @@ const _ID_PERMITTED_CHARACTER_SET: Dictionary = {
 	'8': CharacterType.NUMERIC,
 	'9': CharacterType.NUMERIC,
 	'0': CharacterType.NUMERIC,
+	
+	'_': CharacterType.SYMBOL,
 }
 
 
@@ -129,10 +133,8 @@ static func generate_random_alphanumeric_id(p_length: int = ID_LENGTH_DEFAULT) -
 	
 	for i in p_length:
 		var new_character: String = character_set.pick_random()
-		
-		if i == 0:
-			while _ID_PERMITTED_CHARACTER_SET[new_character] == CharacterType.NUMERIC:
-				new_character = character_set.pick_random()
+		while _ID_PERMITTED_CHARACTER_SET[new_character] != CharacterType.ALPHA_LOWER:
+			new_character = character_set.pick_random()
 		
 		id += new_character
 	
@@ -149,7 +151,12 @@ static func is_alphanumeric_id_valid(p_id: String) -> bool:
 		if not _ID_PERMITTED_CHARACTER_SET.has(character):
 			return false
 		
-		if i == 0 and _ID_PERMITTED_CHARACTER_SET[character] == CharacterType.NUMERIC:
+		var character_type: CharacterType = _ID_PERMITTED_CHARACTER_SET[character]
+		if i == 0:
+			if character_type != CharacterType.ALPHA_UPPER and character_type != CharacterType.ALPHA_LOWER:
+				return false
+		
+		if character_type == CharacterType.BAN:
 			return false
 	
 	return true

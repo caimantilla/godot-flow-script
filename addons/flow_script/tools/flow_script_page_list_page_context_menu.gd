@@ -21,7 +21,7 @@ var _selected_page_id: String = ""
 
 func _init() -> void:
 	add_item("Rename...", Item.RENAME)
-	set_item_tooltip(Item.RENAME, "Rename the selected page.")
+	set_item_tooltip(Item.RENAME, "Rename the selected page.\nThis feature is not yet implemented.")
 	set_item_disabled(Item.RENAME, true) # Don't feel like implementing renaming yet
 	
 	add_item("Delete", Item.DELETE)

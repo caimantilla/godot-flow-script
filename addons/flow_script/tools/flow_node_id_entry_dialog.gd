@@ -35,7 +35,9 @@ func get_new_id() -> String:
 
 
 func _on_visibility_changed() -> void:
-	if not is_visible():
+	if is_visible():
+		_id_edit.grab_focus.call_deferred()
+	else:
 		_id_edit.clear.call_deferred()
 
 

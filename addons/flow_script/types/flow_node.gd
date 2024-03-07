@@ -77,7 +77,7 @@ func _get_property_list() -> Array[Dictionary]:
 	properties.append({
 		"name": "id",
 		"type": TYPE_STRING,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
+		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
 	})
 	
 	for axis_name: String in [ 'x', 'y' ]:
@@ -215,45 +215,3 @@ func set_graph_position_no_signal(p_pos: Vector2i) -> void:
 	#if p_pos != _graph_position:
 	# No point doing the check if the signal isn't even being emitted anyway lol
 	_graph_position = p_pos
-
-
-
-
-
-
-func set_data(p_data: Dictionary) -> void:
-	var property_list: Array[Dictionary] = get_property_list()
-	
-	for property: Dictionary in property_list:
-		var property_usage: int = property.usage
-		
-		if property_usage & PROPERTY_USAGE_SCRIPT_VARIABLE \
-		and property_usage & PROPERTY_USAGE_STORAGE:
-			
-			var property_name: String = property.name
-			
-			if p_data.has(property_name):
-				var property_type = property.type
-				
-				var seria_value: Variant = p_data[property_name]
-				var seria_value_type: Variant.Type = typeof(seria_value)
-				
-				if (seria_value_type == property_type):
-					set(property_name, seria_value)
-				elif (seria_value_type == TYPE_NIL and property_type == TYPE_OBJECT):
-					set(property_name, null)
-
-
-func get_data() -> Dictionary:
-	var data: Dictionary = {}
-	
-	for property_info: Dictionary in get_property_list():
-		
-		if property_info.usage & PROPERTY_USAGE_SCRIPT_VARIABLE \
-		and property_info.usage & PROPERTY_USAGE_STORAGE:
-			
-			data[property_info.name] = get(property_info.name)
-	
-	data["type"] = get_type()
-	
-	return data

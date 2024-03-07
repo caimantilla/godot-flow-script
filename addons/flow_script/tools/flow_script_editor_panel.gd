@@ -21,7 +21,7 @@ enum NodeCreationDialogAppearPosition {
 
 
 
-const MARGIN: int = 0
+const MARGIN: int = 4
 const NODE_CREATION_DIALOG_SIZE := Vector2i(512, 384)
 
 

@@ -21,6 +21,9 @@ signal node_renamed(from_id: String, to_id: String)
 ## The maximum number of nodes that a page can hold.
 const MAX_NODES: int = 999
 
+const _PROPERTY_PREFIX_NODES: String = "nodes/"
+var _PROPERTY_PREFIX_NODES_LENGTH: int = _PROPERTY_PREFIX_NODES.length()
+
 
 
 ## The page's ID.
@@ -52,46 +55,51 @@ func _notification(what: int) -> void:
 func _get_property_list() -> Array[Dictionary]:
 	var properties: Array[Dictionary] = []
 	
-	properties.append({
-		"name": "id",
-		"type": TYPE_STRING,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
-	})
-	
-	
 	for node in _node_list:
+		if node == null:
+			continue
+		
 		var node_id: String = node.get_id()
+		# The node's type is read when deserializing the page.
+		properties.append({
+			"name": _PROPERTY_PREFIX_NODES + node_id + "/type",
+			"type": TYPE_STRING,
+			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
+		})
+		
 		for node_p_info: Dictionary in node.get_property_list():
-			if node_p_info.usage & PROPERTY_USAGE_SCRIPT_VARIABLE \
-			and node_p_info.usage & PROPERTY_USAGE_EDITOR:
-				
-				node_p_info.name = ("nodes/%s/%s" % [ node_id, node_p_info.name ])
-				node_p_info.usage = node_p_info.usage &~ PROPERTY_USAGE_STORAGE
-				node_p_info.usage = node_p_info.usage &~ PROPERTY_USAGE_STORE_IF_NULL
-				
+			if node_p_info.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and node_p_info.type != TYPE_NIL and node_p_info.name != "type":
+				node_p_info.name = _PROPERTY_PREFIX_NODES + node_id + '/' + node_p_info.name
 				properties.append(node_p_info)
-	
-	
-	properties.append({
-		"name": "data",
-		"type": TYPE_DICTIONARY,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE,
-	})
 	
 	return properties
 
 
 func _set(property: StringName, value: Variant) -> bool:
-	if property == &"data":
-		_set_data_serializable(value)
-		return true
+	if property.begins_with(_PROPERTY_PREFIX_NODES):
+		var node_id: String = property.get_slice('/', 1)
+		var node: FlowNode = get_node_by_id(node_id)
+		
+		# Create the node if it doesn't exist.
+		if node == null and property.get_slice('/', 2) == "type":
+			if _create_node(value, node_id, false) != null:
+				return true
+		
+		if node != null:
+			var sub_property: StringName = property.substr(_PROPERTY_PREFIX_NODES_LENGTH + node_id.length() + 1)
+			node.set(sub_property, value)
+			return true
 	
 	return false
 
 
 func _get(property: StringName) -> Variant:
-	if property == &"data":
-		return _get_data_serializable()
+	if property.begins_with(_PROPERTY_PREFIX_NODES):
+		var node_id: String = property.get_slice('/', 1)
+		var node: FlowNode = get_node_by_id(node_id)
+		if node != null:
+			var sub_property: StringName = property.substr(_PROPERTY_PREFIX_NODES_LENGTH + node_id.length() + 1)
+			return node.get(sub_property)
 	
 	return null
 
@@ -220,6 +228,8 @@ func _create_node(p_type: String, p_id: String, p_emit: bool) -> FlowNode:
 		return null
 	
 	node.set_id(p_id)
+	node.changed.connect(emit_changed)
+	node.property_list_changed.connect(notify_property_list_changed)
 	
 	_node_id_map[p_id] = _node_list.size()
 	_node_list.append(node)
@@ -239,7 +249,6 @@ func _delete_node(p_node_id: String, p_emit: bool) -> bool:
 	var node: FlowNode = _node_list[node_idx]
 	
 	# Do anything important before deletion!!
-	#if p_emit:
 	deleting_node.emit(p_node_id)
 	
 	node.free()
@@ -250,48 +259,7 @@ func _delete_node(p_node_id: String, p_emit: bool) -> bool:
 	
 	if p_emit:
 		node_deleted.emit(p_node_id)
+		emit_changed()
+		notify_property_list_changed()
 	
 	return true
-
-
-
-
-func _set_data_serializable(p_data: Dictionary) -> void:
-	for key in p_data:
-		var value: Variant = p_data[key]
-		
-		match key:
-			"nodes":
-				for node_data in value:
-					if typeof(node_data) == TYPE_DICTIONARY:
-						
-						if node_data.has("type") and typeof(node_data["type"]) == TYPE_STRING \
-						and node_data.has("id") and typeof(node_data["id"]) == TYPE_STRING:
-							
-							var node_type: String = node_data.type
-							var node_id: String = node_data.id
-							
-							# The node has no need to deserialize these properties, and attempting to override them could cause problems.
-							node_data.erase("type")
-							node_data.erase("id")
-							
-							var new_node: FlowNode = _create_node(node_type, node_id, false)
-							
-							if new_node != null:
-								new_node.set_data(node_data)
-
-
-func _get_data_serializable() -> Dictionary:
-	var data: Dictionary = {
-		"nodes": [],
-	}
-	
-	data.nodes.resize(get_node_count())
-	
-	for node_idx: int in _node_list.size():
-		var node: FlowNode = _node_list[node_idx]
-		var node_data: Dictionary = node.get_data()
-		
-		data.nodes[node_idx] = node_data
-	
-	return data

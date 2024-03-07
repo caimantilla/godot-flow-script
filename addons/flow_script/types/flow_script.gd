@@ -21,6 +21,9 @@ signal node_renamed(from_id: String, to_id: String)
 
 const MAX_PAGES: int = 9
 
+const _PROPERTY_PREFIX_PAGES: String = "pages/"
+var _PROPERTY_PREFIX_PAGES_LENGTH: int = _PROPERTY_PREFIX_PAGES.length()
+
 
 
 
@@ -47,26 +50,46 @@ func _notification(what: int) -> void:
 func _get_property_list() -> Array[Dictionary]:
 	var properties: Array[Dictionary] = []
 	
-	properties.append({
-		"name": "data",
-		"type": TYPE_DICTIONARY,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE,
-	})
+	for page in _page_list:
+		if page == null:
+			continue
+		
+		var page_id: String = page.get_id()
+		
+		for property in page.get_property_list():
+			if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				property.name = _PROPERTY_PREFIX_PAGES + page_id + '/' + property.name
+				properties.append(property)
 	
 	return properties
 
 
 func _set(property: StringName, value: Variant) -> bool:
-	if property == &"data":
-		_set_data_serializable(value)
-		return true
+	if property.begins_with(_PROPERTY_PREFIX_PAGES):
+		var page_id: String = property.get_slice('/', 1)
+		var page: FlowPage = get_page_by_id(page_id)
+		
+		if page == null:
+			var result = _create_page(page_id, false)
+			if result != null and result.error == FlowScriptPageCreationResult.PageCreationErrorCode.OK:
+				page = result.page
+		
+		if page != null:
+			var sub_property: StringName = property.substr(_PROPERTY_PREFIX_PAGES_LENGTH + page_id.length() + 1)
+			page.set(sub_property, value)
+			return true
 	
 	return false
 
 
 func _get(property: StringName) -> Variant:
-	if property == &"data":
-		return _get_data_serializable()
+	if property.begins_with(_PROPERTY_PREFIX_PAGES):
+		var page_id: String = property.get_slice('/', 1)
+		var page: FlowPage = get_page_by_id(page_id)
+		
+		if page != null:
+			var sub_property: StringName = property.substr(_PROPERTY_PREFIX_PAGES_LENGTH + page_id.length() + 1)
+			return page.get(sub_property)
 	
 	return null
 
@@ -213,6 +236,7 @@ func delete_page(p_page_id: String) -> bool:
 	page_deleted.emit(p_page_id)
 	
 	emit_changed()
+	notify_property_list_changed()
 	
 	return true
 
@@ -268,14 +292,11 @@ func _create_page(p_new_page_id: String, p_emit: bool) -> FlowScriptPageCreation
 	
 	if p_emit:
 		page_created.emit(page.get_id())
+		emit_changed()
+		notify_property_list_changed()
 	
-	emit_changed()
 	
 	return result
-
-
-#func _node_predelete(p_node_id: String) -> void:
-	#clear_references_to_node(p_node_id)
 
 
 func _node_postdelete(p_node_id: String) -> void:
@@ -284,52 +305,3 @@ func _node_postdelete(p_node_id: String) -> void:
 
 func _nodes_postdelete(p_nodes_ids: PackedStringArray) -> void:
 	clear_references_to_nodes(p_nodes_ids)
-
-
-func _set_data_serializable(p_data: Dictionary) -> void:
-	for key in p_data:
-		var value: Variant = p_data[key]
-		
-		match key:
-			"pages":
-				for seria_page in value:
-					var page: FlowPage = _deserialize_page(seria_page)
-
-
-func _get_data_serializable() -> Dictionary:
-	var data: Dictionary = {
-		"pages": [],
-	}
-	
-	data.pages.resize(_page_list.size())
-	
-	for i in _page_list.size():
-		data.pages[i] = _serialize_page(_page_list[i])
-	
-	return data
-
-
-func _serialize_page(p_page: FlowPage) -> Dictionary:
-	var data: Dictionary = {}
-	
-	for p_info: Dictionary in p_page.get_property_list():
-		if p_info.usage & PROPERTY_USAGE_SCRIPT_VARIABLE \
-		and p_info.usage & PROPERTY_USAGE_STORAGE:
-			
-			data[p_info.name] = p_page.get(p_info.name)
-	
-	return data
-
-
-func _deserialize_page(p_page_data: Dictionary) -> FlowPage:
-	var creation_result: FlowScriptPageCreationResult = _create_page(p_page_data.id, false)
-	if creation_result.get_error() != FlowScriptPageCreationResult.PageCreationErrorCode.OK:
-		return null
-	
-	var page: FlowPage = creation_result.get_page()
-	
-	for key in p_page_data:
-		var value = p_page_data[key]
-		page.set(key, value)
-	
-	return page
