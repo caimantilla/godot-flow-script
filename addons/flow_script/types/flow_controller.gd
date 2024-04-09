@@ -2,6 +2,9 @@
 class_name FlowController
 extends Node
 ## Controls execution of a FlowScript.
+#
+# NOTE: I'm not sure whether or not I want this to run in the editor.
+# With proper execution guards, there shouldn't be a problem, and it would allow the property setters and getters to run, but I'm not sure any of this really matters.
 
 
 signal finished()
@@ -14,14 +17,14 @@ const MAX_THREADS: int = 999
 
 ## The script of the object type to instantiate.
 ## It script must extend FlowObject in order to be valid.
-@export var flow_object_type: GDScript: set = set_flow_object_type, get = get_flow_object_type
+@export var flow_object_type: GDScript = null: set = set_flow_object_type, get = get_flow_object_type
 
 ## The FlowScript assigned to the controller.
 ## A reference to it is passed to each thread.
-@export var flow_script: FlowScript: set = set_flow_script, get = get_flow_script
+@export var flow_script: FlowScript = null: set = set_flow_script, get = get_flow_script
 
 ## The FlowController's FlowObject where local state and stuff is stored.
-var flow_object: FlowObject: get = get_flow_object
+var flow_object: FlowObject = null: get = get_flow_object
 
 
 
@@ -69,6 +72,7 @@ func set_flow_object_type(p_type_script: GDScript) -> void:
 	while obj_base_script != null:
 		if obj_base_script == FlowObject:
 			break
+		
 		obj_base_script = obj_base_script.get_base_script()
 	
 	if obj_base_script == FlowObject:
@@ -92,6 +96,7 @@ func get_flow_script() -> FlowScript:
 func get_flow_object() -> FlowObject:
 	if _flow_object == null:
 		_initialize_flow_object()
+	
 	return _flow_object
 
 
@@ -147,26 +152,34 @@ func kill() -> void:
 	
 	if _flow_object != null:
 		_flow_object.kill()
-		Engine.get_main_loop().queue_delete(_flow_object)
+		get_tree().queue_delete(_flow_object)
 		_flow_object = null
 
 
 ## Begins execution of a thread.
 func execute(p_procedure_id: String) -> void:
-	var _thread: FlowThread = _create_new_thread(p_procedure_id)
+	var _thread: FlowThread = _create_new_thread(p_procedure_id, Callable())
 
 
 ## Begins execution of a thread.
-## A callback is also passed, which is later called when a value is returned from the thread created.
-func execute_with_return_callback(p_procedure_id: String, p_callback: Callable) -> void:
-	var thread: FlowThread = _create_new_thread(p_procedure_id)
+## A callback is also passed, which is called at the point where a value is returned from the thread that was created.
+func execute_with_return_callback(p_procedure_id: String, p_finish_callback: Callable) -> void:
+	var thread: FlowThread = _create_new_thread(p_procedure_id, p_finish_callback)
+
+
+## Begins execution of a thread and waits for it to finish.
+## The value emitted by the final node of the thread is returned afterwards.
+func execute_async(p_procedure_id: String) -> Variant:
+	var thread: FlowThread = _create_new_thread(p_procedure_id, Callable())
 	
 	if thread == null:
-		p_callback.call(get_last_return_value())
+		return null
 	else:
-		# TODO: Add some callback with a bind for checking if the correct thread has finished.
-		# qWhen that thread finishes, call the return callback passed to this method.
-		pass
+		if not thread.is_finished():
+			await thread.finished
+		
+		return thread.get_return_value()
+
 
 
 func _initialize_flow_object() -> void:
@@ -182,7 +195,8 @@ func _on_thread_new_threads_creation_request(p_initial_node_ids: PackedStringArr
 	assert(calling_thread != null)
 	
 	for initial_node_id: String in p_initial_node_ids:
-		var new_thread: FlowThread = _create_new_thread(initial_node_id)
+		# Sub-threads cannot return a value.
+		var new_thread: FlowThread = _create_new_thread(initial_node_id, Callable())
 		var new_thread_id: String = new_thread.get_thread_id()
 		
 		calling_thread.add_resume_dependent_thread(new_thread_id)
@@ -217,21 +231,23 @@ func _delete_thread(p_thread_id: String) -> bool:
 	
 	if thread != null:
 		thread.kill()
-		Engine.get_main_loop().queue_delete(thread)
+		get_tree().queue_delete(thread)
 		_flow_thread_map.erase(p_thread_id)
 		return true
 	
 	return false
 
 
-func _create_new_thread(p_from_node_id: String) -> FlowThread:
+# Creates a new thread and starts it.
+# A callback must be passed. It will be executed when execution finishes if valid.
+func _create_new_thread(p_from_node_id: String, p_finish_callback: Callable) -> FlowThread:
 	assert(get_active_thread_count() < MAX_THREADS, "Attempting to make more than %d threads." % MAX_THREADS)
 	
-	var new_thread_id: String = _generate_new_thread_id()
-	while has_thread_with_id(new_thread_id):
-		new_thread_id = _generate_new_thread_id()
+	var new_thread_id: String = _generate_unique_thread_id()
+	assert(not new_thread_id.is_empty(), "Failed to generate a new thread ID.")
 	
 	var new_thread := FlowThread.new(new_thread_id, _flow_object, _flow_script)
+	new_thread.set_finish_callback(p_finish_callback)
 	_flow_thread_map[new_thread_id] = new_thread
 	
 	new_thread.finished.connect(_on_thread_finished.bind(new_thread_id))
@@ -241,12 +257,26 @@ func _create_new_thread(p_from_node_id: String) -> FlowThread:
 	return new_thread
 
 
-func _generate_new_thread_id() -> String:
-	return "THREAD_" + str(randi())
+# Generates the ID for a new thread.
+# While it should only need to run once, the generation will run however many times as needed until there's a unique one.
+func _generate_unique_thread_id() -> String:
+	const prefix: String = "THREAD_"
+	const max_attempts: int = 100
+	
+	var new_id: String = prefix + str(randi())
+	var attempt_count: int = 0
+	while has_thread_with_id(new_id):
+		if attempt_count < max_attempts:
+			new_id = prefix + str(randi())
+		else:
+			new_id = ""
+			break
+	
+	return new_id
 
 
-func _on_flow_object_new_thread_requested(p_from_node_id: String) -> void:
-	var thread: FlowThread = _create_new_thread(p_from_node_id)
+func _on_flow_object_new_thread_requested(p_from_node_id: String, p_finish_callback: Callable) -> void:
+	var thread: FlowThread = _create_new_thread(p_from_node_id, p_finish_callback)
 	var thread_id: String = thread.get_thread_id() if thread != null else ""
 	
 	get_flow_object().set_last_created_thread_id(thread_id)

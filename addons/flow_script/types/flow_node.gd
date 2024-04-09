@@ -4,8 +4,6 @@ extends Object
 ## A FlowNode object.
 
 
-
-
 ## Emitted when some property changes.
 ## Used to signal to update the graph state.
 signal changed()
@@ -18,22 +16,25 @@ signal id_changed(from: String, to: String)
 signal graph_position_changed()
 
 
-
 ## The ID of the node's type.
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var type: String: get = get_type
 
 ## The name of the node's type.
 var type_name: String: get = get_type_name
 
 ## The node's ID in the script that owns it.
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var id: String: set = set_id, get = get_id
 
 ## The node's position in the graph.
 var graph_position: Vector2i: set = set_graph_position, get = get_graph_position
 
 ## The node's horizontal position in the graph.
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var graph_position_x: int: set = set_graph_position_x, get = get_graph_position_x
 
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 ## The node's vertical position in the graph.
 var graph_position_y: int: set = set_graph_position_y, get = get_graph_position_y
 
@@ -45,9 +46,6 @@ var _id: String = ""
 var _graph_position := Vector2i.ZERO
 
 
-
-
-
 # Overrides
 
 
@@ -55,41 +53,6 @@ func _init(p_type_id: String, p_type_name: String, p_id_editable: bool) -> void:
 	_type = p_type_id
 	_type_name = p_type_name
 	_id_editable = p_id_editable
-
-
-
-
-func _get_property_list() -> Array[Dictionary]:
-	var properties: Array[Dictionary] = []
-	
-	properties.append({
-		"name": "FlowNode",
-		"type": TYPE_NIL,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_CATEGORY,
-	})
-	
-	properties.append({
-		"name": "type",
-		"type": TYPE_STRING,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
-	})
-	
-	properties.append({
-		"name": "id",
-		"type": TYPE_STRING,
-		"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
-	})
-	
-	for axis_name: String in [ 'x', 'y' ]:
-		properties.append({
-			"name": "graph_position_" + axis_name,
-			"type": TYPE_INT,
-			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
-		})
-	
-	return properties
-
-
 
 
 # Virtuals

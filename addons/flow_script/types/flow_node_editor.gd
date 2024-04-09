@@ -204,6 +204,14 @@ func get_outgoing_connections() -> Array[FlowNodeEditorOutgoingConnectionParamet
 	return connections
 
 
+func create_outgoing_connection(p_target_node_id: String, p_slot: int) -> FlowNodeEditorOutgoingConnectionParameters:
+	var connection := FlowNodeEditorOutgoingConnectionParameters.new()
+	connection.node_id = p_target_node_id
+	connection.slot = p_slot
+	
+	return connection
+
+
 
 
 

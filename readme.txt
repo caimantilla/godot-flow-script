@@ -1,4 +1,4 @@
-Visual scripting solution for Godot 4.
+Visual scripting solution for Godot 4.3+.
 Not for scripting game mechanics!
 Instead, you write game-specific nodes for scripting levels, NPCs, stuff like that. Simple behaviors.
 Each script has pages which contain nodes. Use pages for organization.

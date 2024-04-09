@@ -171,7 +171,8 @@ func get_state() -> Dictionary:
 	var state: Dictionary = _get_state()
 	
 	for lkey in _locals:
-		assert(typeof(lkey) == TYPE_STRING)
+		assert(typeof(lkey) == TYPE_STRING or typeof(lkey) == TYPE_STRING_NAME, "Variable keys must be strings.")
+		assert(not state.has(lkey), "State variable name conflict encountered.")
 		
 		var lvalue: Variant = _locals[lkey]
 		assert(FlowUtilities.is_type_serializable(typeof(lvalue)))

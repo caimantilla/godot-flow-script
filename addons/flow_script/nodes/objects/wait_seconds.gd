@@ -9,8 +9,10 @@ const SECONDS_STEP: float = 0.01
 
 @export_category("Wait Seconds")
 
-@export_range(MIN_SECONDS, MAX_SECONDS, SECONDS_STEP) var seconds: float: set = set_seconds, get = get_seconds
-@export var next_node_id: String: set = set_next_node_id, get = get_next_node_id
+@export_range(MIN_SECONDS, MAX_SECONDS, SECONDS_STEP, "suffix:Seconds") var seconds: float: set = set_seconds, get = get_seconds
+
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
+var next_node_id: String: set = set_next_node_id, get = get_next_node_id
 
 
 var _seconds: float = 1.0

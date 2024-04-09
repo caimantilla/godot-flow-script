@@ -52,10 +52,13 @@ func _enter_tree() -> void:
 		FlowUtilities.InterfaceLocation.MAIN_SCREEN, _:
 			EditorInterface.get_editor_main_screen().add_child(_flow_script_editor_panel, true)
 			_make_visible(false)
+	
+	EditorInterface.get_inspector().resource_selected.connect(_on_inspector_resource_selected)
 
 
 func _exit_tree() -> void:
 	ProjectSettings.settings_changed.disconnect(reload_type_db)
+	EditorInterface.get_inspector().resource_selected.disconnect(_on_inspector_resource_selected)
 	
 	if _plugin_interface_location == FlowUtilities.InterfaceLocation.BOTTOM_PANEL:
 		remove_control_from_bottom_panel(_flow_script_editor_panel)
@@ -153,3 +156,10 @@ func _on_editor_flow_node_selected(p_node_id: String) -> void:
 
 func _clear_inspector() -> void:
 	EditorInterface.inspect_object(null, "", false)
+
+
+func _on_inspector_resource_selected(resource: Resource, _path: String) -> void:
+	print("Resource selected: ", resource, _path)
+	
+	#if _handles(resource):
+		#_edit(resource)

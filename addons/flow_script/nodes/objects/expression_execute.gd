@@ -6,32 +6,16 @@ extends FlowNode
 
 
 ## The ID of the next node to be executed.
-var next_node_id: String: set = set_next_node_id, get = get_next_node_id
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY)
+var next_node_id: String = "": set = set_next_node_id, get = get_next_node_id
 
 ## The all of the expressions which should be executed, separated by line.
-var expression_list: String: set = set_expression_string, get = get_expression_string
+@export_custom(PROPERTY_HINT_EXPRESSION, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_DEFAULT)
+var expression_list: String = "": set = set_expression_string, get = get_expression_string
 
 
-var _expression_string: String = ""
-var _next_node_id: String = ""
-
-
-func _get_property_list() -> Array[Dictionary]:
-	const properties: Array[Dictionary] = [
-		{
-			"name": "next_node_id",
-			"type": TYPE_STRING,
-			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY,
-		},
-		{
-			"name": "expression_list",
-			"type": TYPE_STRING,
-			"hint": PROPERTY_HINT_EXPRESSION,
-			"usage": PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR,
-		},
-	]
-	
-	return properties
+var _expression_string: String
+var _next_node_id: String
 
 
 func _is_property_flow_node_reference(p_property_name: StringName) -> bool:
@@ -45,8 +29,8 @@ func _on_external_node_renamed(p_from: String, p_to: String) -> void:
 
 func _execute(p_state: FlowNodeState) -> void:
 	# Just execute, whatever gets returned is irrelevant
-	p_state.get_flow_object().evaluate_multiline_expression(_expression_string)
-	p_state.finish(_next_node_id)
+	p_state.get_flow_object().evaluate_multiline_expression(get_expression_string())
+	p_state.finish(get_next_node_id())
 
 
 func set_next_node_id(p_id: String) -> void:

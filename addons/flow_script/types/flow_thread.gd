@@ -27,6 +27,11 @@ var current_flow_node_state: FlowNodeState: get = get_current_flow_node_state
 ## The list of threads which must be finished for the current node to resume execution.
 var resume_dependent_threads_ids: PackedStringArray: get = get_resume_dependent_threads_ids
 
+## The value returned at the end of the thread execution.
+var return_value: Variant = null: get = get_return_value
+
+var finish_callback: Callable: set = set_finish_callback, get = get_finish_callback
+
 
 var _thread_id: String = ""
 var _flow_object: FlowObject = null
@@ -34,6 +39,8 @@ var _flow_script: FlowScript = null
 var _current_flow_node: FlowNode = null
 var _current_flow_node_state: FlowNodeState = null
 var _resume_dependent_threads_ids := PackedStringArray()
+var _return_value: Variant = null
+var _finish_callback := Callable()
 
 
 func _init(p_thread_id: String, p_flow_object: FlowObject, p_flow_script: FlowScript) -> void:
@@ -79,8 +86,22 @@ func is_active() -> bool:
 	return not is_finished()
 
 
+## Kills the thread execution.
+## WARNING, TODO: This is not yet implemented! It does nothing!!
 func kill() -> void:
 	pass
+
+
+func get_return_value() -> Variant:
+	return _return_value
+
+
+func set_finish_callback(callback: Callable) -> void:
+	_finish_callback = callback
+
+
+func get_finish_callback() -> Callable:
+	return _finish_callback
 
 
 ## Begins execution of a node.
@@ -99,7 +120,7 @@ func on_external_thread_finished(p_thread_id: String) -> void:
 		if _resume_dependent_threads_ids.is_empty():
 			if _current_flow_node_state == null:
 				printerr("Lost flow node state ref...?!??!?!?!??!!?? WGHAT")
-				_emit_finished(null)
+				_on_finished(null)
 			else:
 				_current_flow_node_state.resume()
 
@@ -112,7 +133,7 @@ func _execute_node(p_node_id: String) -> void:
 	
 	if not _flow_script.has_node_with_id(p_node_id):
 		printerr('Unable to execute non-existent FlowNode "%s" in thread "%s".' % [ p_node_id, _thread_id ])
-		_emit_finished(null)
+		_on_finished(null)
 		return
 	
 	_current_flow_node_state = FlowNodeState.new(_flow_object)
@@ -135,7 +156,7 @@ func _on_node_finished(p_next_node_id: String, p_return_value: Variant) -> void:
 	
 	
 	if should_thread_finish:
-		_emit_finished(p_return_value)
+		_on_finished(p_return_value)
 	else:
 		_execute_node(p_next_node_id)
 
@@ -144,8 +165,21 @@ func _on_new_threads_requested(p_initial_node_ids: PackedStringArray, p_wait_com
 	new_threads_requested.emit(p_initial_node_ids, p_wait_completion)
 
 
-func _emit_finished(p_return_value: Variant) -> void:
+func _on_finished(p_return_value: Variant) -> void:
 	_delete_node_state(_current_flow_node_state)
+	_return_value = p_return_value
+	
+	if _finish_callback.is_valid():
+		var argument_count: int = _finish_callback.get_argument_count()
+		
+		# Null is returned if the final node doesn't return a value.
+		# If the callback doesn't take any arguments at all, this is safe to discard.
+		if argument_count == 0 and p_return_value == null:
+			_finish_callback.call()
+		# Otherwise, the callback should take the return value of the final node. This could error out, so take care!
+		else:
+			_finish_callback.call(p_return_value)
+	
 	finished.emit(p_return_value)
 
 

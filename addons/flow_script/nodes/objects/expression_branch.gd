@@ -4,8 +4,16 @@ extends FlowNode
 
 @export_category("Expression Branch")
 
+## The list of expressions to check.
+@export_custom(PROPERTY_HINT_EXPRESSION, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_DEFAULT)
 var expression_string: String: set = set_expressions, get = get_expressions
+
+## The next node to execute if the expression evaluates to true.
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var next_node_id_true: String: set = set_true_id, get = get_true_id
+
+## The next node to execute if the expression evaluates to false.
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_SCRIPT_VARIABLE | PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY)
 var next_node_id_false: String: set = set_false_id, get = get_false_id
 
 
@@ -38,7 +46,15 @@ func _get_property_list() -> Array[Dictionary]:
 
 
 func _execute(state: FlowNodeState) -> void:
-	var expression := Expression.new()
+	var result: bool = state.get_flow_object().evaluate_multiline_boolean_expression(get_expressions())
+	
+	var next_id: String
+	if result:
+		next_id = get_true_id()
+	else:
+		next_id = get_false_id()
+	
+	state.finish(next_id)
 
 
 func _is_property_flow_node_reference(p_property: StringName) -> bool:

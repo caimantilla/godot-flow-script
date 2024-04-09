@@ -42,10 +42,7 @@ func _get_outgoing_connections() -> Array[FlowNodeEditorOutgoingConnectionParame
 	var ws_node: WaitSecondsNode = get_ws_node()
 	if ws_node != null:
 		if not ws_node.get_next_node_id().is_empty():
-			var conn := FlowNodeEditorOutgoingConnectionParameters.new()
-			conn.set_node_id(ws_node.get_next_node_id())
-			conn.set_slot(0)
-			connections.append(conn)
+			connections.append(create_outgoing_connection(ws_node.get_next_node_id(), 0))
 	
 	return connections
 
