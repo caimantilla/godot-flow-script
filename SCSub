@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+Import("env")
+Import("env_modules")
+
+env_flow_script = env_modules.Clone()
+
+env_flow_script.add_source_files(env.modules_sources, "*.cpp")
+env_flow_script.add_source_files(env.modules_sources, "./utilities/*.cpp")
+env_flow_script.add_source_files(env.modules_sources, "./singletons/*.cpp")
+env_flow_script.add_source_files(env.modules_sources, "./core_types/*.cpp")
+env_flow_script.add_source_files(env.modules_sources, "./flow_nodes/*.cpp")
+env_flow_script.add_source_files(env.modules_sources, "./flow_nodes/editors/*.cpp")
+
+if env.editor_build:
+	env_flow_script.add_source_files(env.modules_sources, "./editor/*.cpp")
