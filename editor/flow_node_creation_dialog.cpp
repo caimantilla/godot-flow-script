@@ -55,7 +55,8 @@ void FlowNodeCreationDialog::update_flow_type_description()
 	}
 
 	// flow_type_description_label->set_text(new_description);
-	help_bit->set_text(new_description);
+	// help_bit->set_text(new_description);
+	help_bit->set_custom_text(String(), String(), new_description);
 }
 
 
