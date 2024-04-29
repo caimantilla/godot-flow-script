@@ -131,7 +131,7 @@ void FlowScriptEditorPanel::update_next_flow_node_editor_position()
 		new_pos /= flow_script_editor_graph->get_zoom();
 	}
 
-	new_pos /= EDSCALE;
+	// new_pos /= EDSCALE;
 	new_pos = new_pos.round();
 
 	next_flow_node_editor_position = new_pos;

@@ -227,7 +227,15 @@ FlowNode *FlowScript::create_new_flow_node(const String &p_flow_type_id)
 
 bool FlowScript::remove_flow_node(const FlowNodeID p_flow_node_id)
 {
-	return _remove_flow_node(p_flow_node_id, true);
+	if (_remove_flow_node(p_flow_node_id, true))
+	{
+		clear_references_to_flow_node(p_flow_node_id);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 
@@ -239,7 +247,14 @@ bool FlowScript::change_flow_node_id(const FlowNodeID p_from, const FlowNodeID p
 
 FlowNodeIDArray FlowScript::remove_multiple_flow_nodes(const FlowNodeIDArray &p_flow_node_ids)
 {
-	return _remove_multiple_flow_nodes(p_flow_node_ids, true);
+	FlowNodeIDArray successful_removals = _remove_multiple_flow_nodes(p_flow_node_ids, true);
+	
+	if (!successful_removals.is_empty())
+	{
+		clear_references_to_multiple_flow_nodes(successful_removals);
+	}
+
+	return successful_removals;
 }
 
 

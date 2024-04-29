@@ -23,25 +23,32 @@ void FlowBridge::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_state", "state"), &FlowBridge::set_state);
 	ClassDB::bind_method(D_METHOD("get_state"), &FlowBridge::get_state);
 
-	ClassDB::bind_method(D_METHOD("has_local", "name"), &FlowBridge::has_local);
-	ClassDB::bind_method(D_METHOD("get_local", "name"), &FlowBridge::get_local);
-	ClassDB::bind_method(D_METHOD("set_local", "name", "value"), &FlowBridge::set_local);
+	ClassDB::bind_method(D_METHOD("has_local", "variable_name"), &FlowBridge::has_local);
+	ClassDB::bind_method(D_METHOD("get_local", "variable_name"), &FlowBridge::get_local);
+	ClassDB::bind_method(D_METHOD("set_local", "variable_name", "value"), &FlowBridge::set_local);
 	ClassDB::bind_method(D_METHOD("get_local_variable_names"), &FlowBridge::get_local_variable_names);
 
-	ClassDB::bind_method(D_METHOD("has_global", "name"), &FlowBridge::has_global);
-	ClassDB::bind_method(D_METHOD("get_global", "name"), &FlowBridge::get_global);
-	ClassDB::bind_method(D_METHOD("set_global", "name", "value"), &FlowBridge::set_global);
+	ClassDB::bind_method(D_METHOD("has_global", "variable_name"), &FlowBridge::has_global);
+	ClassDB::bind_method(D_METHOD("get_global", "variable_name"), &FlowBridge::get_global);
+	ClassDB::bind_method(D_METHOD("set_global", "variable_name", "value"), &FlowBridge::set_global);
 	ClassDB::bind_method(D_METHOD("get_global_variable_names"), &FlowBridge::get_global_variable_names);
 
-	ClassDB::bind_method(D_METHOD("print_to_console", "value"), &FlowBridge::print_to_console);
+	ClassDB::bind_method(D_METHOD("print_to_console", "message"), &FlowBridge::print_to_console);
+	ClassDB::bind_method(D_METHOD("create_seconds_timer", "duration", "auto_start"), &FlowBridge::create_seconds_timer);
+
+	ClassDB::bind_method(D_METHOD("split_multi_line_expression", "expression"), &FlowBridge::split_multi_line_expression);
+	ClassDB::bind_method(D_METHOD("evaluate_multi_line_expression", "expression"), &FlowBridge::evaluate_multi_line_expression);
+	ClassDB::bind_method(D_METHOD("evaluate_multi_line_boolean_expression", "expression", "succeed_if_expression_empty"), &FlowBridge::evaluate_multi_line_boolean_expression);
+	ClassDB::bind_method(D_METHOD("evaluate_expression", "expression"), &FlowBridge::evaluate_expression);
 
 	GDVIRTUAL_BIND(_set_state, "state");
 	GDVIRTUAL_BIND(_get_state);
-	GDVIRTUAL_BIND(_has_global, "name");
-	GDVIRTUAL_BIND(_get_global, "name");
-	GDVIRTUAL_BIND(_set_global, "name", "value");
+	GDVIRTUAL_BIND(_has_global, "variable_name");
+	GDVIRTUAL_BIND(_get_global, "variable_name");
+	GDVIRTUAL_BIND(_set_global, "variable_name", "value");
 	GDVIRTUAL_BIND(_get_global_variable_names);
-	GDVIRTUAL_BIND(_print_to_console, "value");
+	GDVIRTUAL_BIND(_print_to_console, "message");
+	GDVIRTUAL_BIND(_create_seconds_timer, "duration", "auto_start");
 }
 
 

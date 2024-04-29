@@ -252,6 +252,7 @@ void FlowNodeEditor::initialize()
 
 	has_initialized = true;
 	flow_node_updated();
+	set_safe_to_edit(true);
 }
 
 
@@ -285,6 +286,7 @@ void FlowNodeEditor::flow_node_updated()
 	_flow_node_updated();
 	GDVIRTUAL_CALL(_flow_node_updated);
 
+	set_size(Vector2(0, 0));
 	set_safe_to_edit(true);
 }
 
@@ -298,6 +300,11 @@ void FlowNodeEditor::queue_flow_node_update()
 void FlowNodeEditor::update_style()
 {
 	bool was_edit_safe = is_safe_to_edit();
+	if (!was_edit_safe)
+	{
+		return;
+	}
+
 	set_safe_to_edit(false);
 
 	Ref<Texture2D> icn_rename = get_theme_icon(SNAME("EditInternal"), EditorStringNames::get_singleton()->EditorIcons);
