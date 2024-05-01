@@ -28,6 +28,7 @@
 #include "flow_nodes/comment_flow_node.hpp"
 #include "flow_nodes/execute_expression_flow_node.hpp"
 #include "flow_nodes/expression_branch_flow_node.hpp"
+#include "flow_nodes/execute_external_flow_script_flow_node.hpp"
 #include "flow_nodes/multi_branch_execution_flow_node.hpp"
 #include "flow_nodes/print_to_console_flow_node.hpp"
 #include "flow_nodes/procedure_flow_node.hpp"
@@ -42,6 +43,7 @@
 #include "flow_nodes/editors/comment_flow_node_editor.hpp"
 #include "flow_nodes/editors/execute_expression_flow_node_editor.hpp"
 #include "flow_nodes/editors/expression_branch_flow_node_editor.hpp"
+#include "flow_nodes/editors/execute_external_flow_script_flow_node_editor.hpp"
 #include "flow_nodes/editors/multi_branch_execution_flow_node_editor.hpp"
 #include "flow_nodes/editors/print_to_console_flow_node_editor.hpp"
 #include "flow_nodes/editors/procedure_flow_node_editor.hpp"
@@ -114,6 +116,7 @@ static void _register_types()
 	GDREGISTER_CLASS(CommentFlowNode);
 	GDREGISTER_CLASS(ExecuteExpressionFlowNode);
 	GDREGISTER_CLASS(ExpressionBranchFlowNode);
+	GDREGISTER_CLASS(ExecuteExternalFlowScriptFlowNode);
 	GDREGISTER_VIRTUAL_CLASS(MultiBranchExecutionFlowNode);
 	GDREGISTER_CLASS(SequentialBranchExecutionFlowNode);
 	GDREGISTER_CLASS(SimultaneousBranchExecutionFlowNode);
@@ -128,6 +131,7 @@ static void _register_types()
 	GDREGISTER_CLASS(CommentFlowNodeEditor);
 	GDREGISTER_CLASS(ExecuteExpressionFlowNodeEditor);
 	GDREGISTER_CLASS(ExpressionBranchFlowNodeEditor);
+	GDREGISTER_CLASS(ExecuteExternalFlowScriptFlowNodeEditor);
 	GDREGISTER_CLASS(MultiBranchExecutionFlowNodeEditor);
 	GDREGISTER_CLASS(PrintToConsoleFlowNodeEditor);
 	GDREGISTER_CLASS(WaitSecondsFlowNodeEditor);

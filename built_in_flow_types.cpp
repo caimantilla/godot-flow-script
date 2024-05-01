@@ -134,6 +134,16 @@ void BuiltInFlowTypes::_init_types_internal()
 		false
 	));
 	add_type(FlowType::create_native_type(
+		"execute_external_flow_script",
+		"Execute External Procedure",
+		"Flow",
+		"Executes a procedure from another FlowScript.",
+		"",
+		"ExecuteExternalFlowScriptFlowNode",
+		"ExecuteExternalFlowScriptFlowNodeEditor",
+		false
+	));
+	add_type(FlowType::create_native_type(
 		"while_expression_true_loop",
 		"While Loop",
 		"Flow/Control",
