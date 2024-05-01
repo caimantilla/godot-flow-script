@@ -233,7 +233,7 @@ void MultiBranchExecutionFlowNode::_remove_execution_stack_entry_at(const int p_
 
 void MultiBranchExecutionFlowNode::_resize_execution_stack(const int p_size, const bool p_emit)
 {
-	if (p_size > -1 & p_size < get_max_execution_stack_size() && p_size != get_execution_stack_size())
+	if (p_size > -1 && p_size < get_max_execution_stack_size() && p_size != get_execution_stack_size())
 	{
 		execution_stack.resize(p_size);
 
