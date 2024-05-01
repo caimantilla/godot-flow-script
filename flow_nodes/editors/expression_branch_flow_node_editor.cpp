@@ -70,7 +70,7 @@ ExpressionBranchFlowNodeEditor::ExpressionBranchFlowNodeEditor()
 	Label *true_label = memnew(Label);
 	true_label->set_text("True");
 	true_label->set_self_modulate(green);
-	true_label->set_h_size_flags(SIZE_SHRINK_BEGIN);
+	true_label->set_h_size_flags(SIZE_SHRINK_END);
 	add_child(true_label);
 
 	expression_label = memnew(Label);
