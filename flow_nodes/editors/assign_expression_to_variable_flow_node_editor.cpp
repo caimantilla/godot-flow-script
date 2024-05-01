@@ -30,15 +30,15 @@ void AssignExpressionToVariableFlowNodeEditor::_set_out_going_connection(const R
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> AssignExpressionToVariableFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 	FlowNodeID next_id = get_aetv_flow_node()->get_next_flow_node_id();
 
 	if (next_id != FLOW_NODE_ID_NIL)
 	{
-		connections.append(create_out_going_connection(next_id, OUTPUT_SLOT));
+		ret.append(create_out_going_connection(next_id, OUTPUT_SLOT));
 	}
 
-	return connections;
+	return ret;
 }
 
 

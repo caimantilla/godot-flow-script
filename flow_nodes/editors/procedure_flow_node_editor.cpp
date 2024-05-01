@@ -22,16 +22,14 @@ void ProcedureFlowNodeEditor::_set_out_going_connection(const Ref<FlowNodeEditor
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> ProcedureFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
-	FlowNodeID next_id = get_procedure_flow_node()->get_next_flow_node_id();
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
-	if (next_id != FLOW_NODE_ID_NIL)
+	if (get_procedure_flow_node()->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		Ref<FlowNodeEditorOutGoingConnectionParameters> connection = create_out_going_connection(next_id, 0);
-		connections.append(connection);
+		ret.append(create_out_going_connection(get_procedure_flow_node()->get_next_flow_node_id(), OUTPUT_SLOT));
 	}
 
-	return connections;
+	return ret;
 }
 
 

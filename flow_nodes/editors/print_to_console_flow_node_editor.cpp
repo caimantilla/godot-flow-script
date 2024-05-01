@@ -33,15 +33,14 @@ void PrintToConsoleFlowNodeEditor::_set_out_going_connection(const Ref<FlowNodeE
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> PrintToConsoleFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
-	PrintToConsoleFlowNode *ptc_node = get_ptc_flow_node();
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
-	if (ptc_node->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
+	if (get_ptc_flow_node()->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		connections.append(create_out_going_connection(ptc_node->get_next_flow_node_id(), OUTPUT_SLOT));
+		ret.append(create_out_going_connection(get_ptc_flow_node()->get_next_flow_node_id(), OUTPUT_SLOT));
 	}
 
-	return connections;
+	return ret;
 }
 
 

@@ -14,19 +14,18 @@ ExpressionBranchFlowNode *ExpressionBranchFlowNodeEditor::get_eb_flow_node() con
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> ExpressionBranchFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> out_going_connections;
-	ExpressionBranchFlowNode *eb_node = get_eb_flow_node();
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
-	if (eb_node->get_true_flow_node_id() != FLOW_NODE_ID_NIL)
+	if (get_eb_flow_node()->get_true_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		out_going_connections.append(create_out_going_connection(eb_node->get_true_flow_node_id(), SLOT_TRUE));
+		ret.append(create_out_going_connection(get_eb_flow_node()->get_true_flow_node_id(), SLOT_TRUE));
 	}
-	if (eb_node->get_false_flow_node_id() != FLOW_NODE_ID_NIL)
+	if (get_eb_flow_node()->get_false_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		out_going_connections.append(create_out_going_connection(eb_node->get_false_flow_node_id(), SLOT_FALSE));
+		ret.append(create_out_going_connection(get_eb_flow_node()->get_false_flow_node_id(), SLOT_FALSE));
 	}
 
-	return out_going_connections;
+	return ret;
 }
 
 

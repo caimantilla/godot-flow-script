@@ -132,24 +132,23 @@ void MultiBranchExecutionFlowNodeEditor::_set_out_going_connection(const Ref<Flo
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> MultiBranchExecutionFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
-	MultiBranchExecutionFlowNode *mbe_node = get_mbe_flow_node();
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
-	if (mbe_node->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
+	if (get_mbe_flow_node()->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		connections.append(create_out_going_connection(mbe_node->get_next_flow_node_id(), MAIN_OUTPUT_SLOT));
+		ret.append(create_out_going_connection(get_mbe_flow_node()->get_next_flow_node_id(), MAIN_OUTPUT_SLOT));
 	}
 
-	for (int i = 0; i < mbe_node->get_execution_stack_size(); i++)
+	for (int i = 0; i < get_mbe_flow_node()->get_execution_stack_size(); i++)
 	{
-		FlowNodeID entry_id = mbe_node->get_execution_stack_entry_at(i);
+		FlowNodeID entry_id = get_mbe_flow_node()->get_execution_stack_entry_at(i);
 		if (entry_id != FLOW_NODE_ID_NIL)
 		{
-			connections.append(create_out_going_connection(entry_id, FIRST_STACK_SLOT + i));
+			ret.append(create_out_going_connection(entry_id, FIRST_STACK_SLOT + i));
 		}
 	}
 
-	return connections;
+	return ret;
 }
 
 

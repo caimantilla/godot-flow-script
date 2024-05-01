@@ -55,16 +55,14 @@ void WaitSecondsFlowNodeEditor::_set_out_going_connection(const Ref<FlowNodeEdit
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> WaitSecondsFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
-	FlowNodeID next_id = get_ws_flow_node()->get_next_flow_node_id();
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
-	if (next_id != FLOW_NODE_ID_NIL)
+	if (get_ws_flow_node()->get_next_flow_node_id() != FLOW_NODE_ID_NIL)
 	{
-		Ref<FlowNodeEditorOutGoingConnectionParameters> connection = create_out_going_connection(next_id, 0);
-		connections.append(connection);
+		ret.append(create_out_going_connection(get_ws_flow_node()->get_next_flow_node_id(), 0));
 	}
 
-	return connections;
+	return ret;
 }
 
 

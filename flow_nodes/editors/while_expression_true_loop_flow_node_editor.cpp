@@ -37,22 +37,22 @@ void WhileExpressionTrueLoopFlowNodeEditor::_set_out_going_connection(const Ref<
 
 TypedArray<FlowNodeEditorOutGoingConnectionParameters> WhileExpressionTrueLoopFlowNodeEditor::_get_out_going_connections() const
 {
-	TypedArray<FlowNodeEditorOutGoingConnectionParameters> connections;
+	TypedArray<FlowNodeEditorOutGoingConnectionParameters> ret;
 
 	FlowNodeID loop_id = get_wetl_flow_node()->get_loop_flow_node_id();
 	FlowNodeID finished_id = get_wetl_flow_node()->get_finished_flow_node_id();
 
 	if (loop_id != FLOW_NODE_ID_NIL)
 	{
-		connections.append(create_out_going_connection(loop_id, LOOP_OUTPUT_SLOT));
+		ret.append(create_out_going_connection(loop_id, LOOP_OUTPUT_SLOT));
 	}
 
 	if (finished_id != FLOW_NODE_ID_NIL)
 	{
-		connections.append(create_out_going_connection(finished_id, FINISHED_OUTPUT_SLOT));
+		ret.append(create_out_going_connection(finished_id, FINISHED_OUTPUT_SLOT));
 	}
 
-	return connections;
+	return ret;
 }
 
 
