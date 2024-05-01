@@ -162,8 +162,6 @@ void FlowController::on_flow_fiber_finished(const Variant &p_return_value, const
 void FlowController::on_flow_fiber_new_fibers_creation_request(const FlowNodeIDArray &p_initial_flow_node_ids, const bool p_wait_fibers_completion, const FlowFiberID p_calling_fiber_id)
 {
 	ERR_FAIL_COND(!has_flow_fiber(p_calling_fiber_id));
-
-	print_verbose("Fiber #", p_calling_fiber_id, " requesting nodes: ", p_initial_flow_node_ids);
 	
 	FlowFiber *calling_fiber = get_flow_fiber(p_calling_fiber_id);
 	for (const FlowNodeID new_node_start_point_id : p_initial_flow_node_ids)
@@ -185,6 +183,7 @@ FlowFiber *FlowController::create_new_flow_fiber(const FlowNodeID p_initial_flow
 	new_fiber->flow_fiber_id = next_flow_fiber_id;
 	new_fiber->flow_bridge = flow_bridge;
 	new_fiber->flow_script = flow_script;
+	new_fiber->flow_controller = this;
 	new_fiber->finished_callback = p_finished_callback;
 
 	FlowFiberID new_fiber_id = new_fiber->get_flow_fiber_id();

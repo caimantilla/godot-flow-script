@@ -3,8 +3,11 @@
 
 #include "core/object/class_db.h"
 #include "core/object/object.h"
-#include "flow_bridge.hpp"
 #include "../flow_constants.hpp"
+#include "flow_bridge.hpp"
+
+class FlowController;
+class FlowScript;
 
 class FlowNodeExecutionState final : public Object
 {
@@ -14,6 +17,8 @@ class FlowNodeExecutionState final : public Object
 
 private:
 	FlowBridge *flow_bridge;
+	FlowController *flow_controller;
+	FlowScript *flow_script;
 
 	void resume();
 
@@ -22,6 +27,8 @@ protected:
 
 public:
 	FlowBridge *get_flow_bridge() const;
+	FlowController *get_flow_controller() const;
+	FlowScript *get_flow_script() const;
 
 	void set_temporary_variable(const StringName &p_name, const Variant &p_value);
 	Variant get_temporary_variable(const StringName &p_name) const;

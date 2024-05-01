@@ -1,9 +1,13 @@
 #include "flow_node_execution_state.hpp"
+#include "flow_controller.hpp"
+#include "flow_script.hpp"
 
 
 void FlowNodeExecutionState::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("get_flow_bridge"), &FlowNodeExecutionState::get_flow_bridge);
+	ClassDB::bind_method(D_METHOD("get_flow_controller"), &FlowNodeExecutionState::get_flow_controller);
+	ClassDB::bind_method(D_METHOD("get_flow_script"), &FlowNodeExecutionState::get_flow_script);
 
 	ClassDB::bind_method(D_METHOD("set_temporary_variable", "name", "value"), &FlowNodeExecutionState::set_temporary_variable);
 	ClassDB::bind_method(D_METHOD("get_temporary_variable", "name"), &FlowNodeExecutionState::get_temporary_variable);
@@ -17,6 +21,8 @@ void FlowNodeExecutionState::_bind_methods()
 	ClassDB::bind_method(D_METHOD("request_new_fiber", "flow_node_id", "wait_fiber_completion"), &FlowNodeExecutionState::request_new_fiber);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_bridge", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowBridge")), "", "get_flow_bridge");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_controller", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowController")), "", "get_flow_controller");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 
 	ADD_SIGNAL(MethodInfo("resumed")); // Used by FlowNodes
 	ADD_SIGNAL(MethodInfo("finished", PropertyInfo(TYPE_FLOW_NODE_ID, "next_flow_node_id"), PropertyInfo(Variant::NIL, "return_value")));
@@ -27,6 +33,18 @@ void FlowNodeExecutionState::_bind_methods()
 FlowBridge *FlowNodeExecutionState::get_flow_bridge() const
 {
 	return flow_bridge;
+}
+
+
+FlowController *FlowNodeExecutionState::get_flow_controller() const
+{
+	return flow_controller;
+}
+
+
+FlowScript *FlowNodeExecutionState::get_flow_script() const
+{
+	return flow_script;
 }
 
 

@@ -1,10 +1,12 @@
 #include "flow_fiber.hpp"
+#include "flow_controller.hpp"
 
 
 void FlowFiber::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("get_flow_fiber_id"), &FlowFiber::get_flow_fiber_id);
 	ClassDB::bind_method(D_METHOD("get_flow_bridge"), &FlowFiber::get_flow_bridge);
+	ClassDB::bind_method(D_METHOD("get_flow_controller"), &FlowFiber::get_flow_controller);
 	ClassDB::bind_method(D_METHOD("get_flow_script"), &FlowFiber::get_flow_script);
 	ClassDB::bind_method(D_METHOD("get_current_flow_node"), &FlowFiber::get_current_flow_node);
 	ClassDB::bind_method(D_METHOD("get_current_flow_node_id"), &FlowFiber::get_current_flow_node_id);
@@ -17,6 +19,7 @@ void FlowFiber::_bind_methods()
 
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_FIBER_ID, "flow_fiber_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_fiber_id");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_bridge", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowBridge")), "", "get_flow_bridge");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_controller", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowController")), "", "get_flow_controller");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowNode")), "", "get_current_flow_node");
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "current_flow_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_current_flow_node_id");
@@ -38,6 +41,12 @@ FlowFiberID FlowFiber::get_flow_fiber_id() const
 FlowBridge *FlowFiber::get_flow_bridge() const
 {
 	return flow_bridge;
+}
+
+
+FlowController *FlowFiber::get_flow_controller() const
+{
+	return flow_controller;
 }
 
 
@@ -123,14 +132,12 @@ bool FlowFiber::has_resume_dependencies() const
 
 void FlowFiber::start_using_id(const FlowNodeID p_initial_flow_node_id)
 {
-	print_verbose(vformat("Starting executing of FlowFiber #%d using FlowNode #%d.", flow_fiber_id, p_initial_flow_node_id));
 	execute_flow_node_using_id(p_initial_flow_node_id);
 }
 
 
 void FlowFiber::start_using_name(const String &p_initial_flow_node_name)
 {
-	print_verbose(vformat("Starting execution of FlowFiber #%d using FlowNode \"%s\".", flow_fiber_id, p_initial_flow_node_name));
 	execute_flow_node_using_name(p_initial_flow_node_name);
 }
 
@@ -154,6 +161,8 @@ void FlowFiber::execute_flow_node_using_id(const FlowNodeID p_flow_node_id)
 
 	current_flow_node_execution_state = memnew(FlowNodeExecutionState);
 	current_flow_node_execution_state->flow_bridge = flow_bridge;
+	current_flow_node_execution_state->flow_controller = flow_controller;
+	current_flow_node_execution_state->flow_script = flow_script;
 	current_flow_node_execution_state->connect(SNAME("finished"), callable_mp(this, &FlowFiber::on_flow_node_finished), CONNECT_ONE_SHOT);
 	// I was tearing my hair out trying to figure out why the while loop wasn't working and turns out this was a one-shot connection? why?????? leaving the original line just in case.......!!!!
 	// current_flow_node_execution_state->connect(SNAME("new_fibers_requested"), callable_mp(this, &FlowFiber::on_new_fibers_requested), CONNECT_ONE_SHOT);
@@ -252,7 +261,6 @@ void FlowFiber::on_external_fiber_finished(const FlowFiberID p_other_fiber_id)
 		return;
 	}
 
-	print_verbose(vformat("From fiber #%d: Resume-dependent fiber #%d finished.", flow_fiber_id, p_other_fiber_id));
 	remove_resume_dependent_fiber(p_other_fiber_id);
 
 	if (!has_resume_dependencies())

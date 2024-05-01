@@ -1,6 +1,3 @@
-# Godot 4+ specific ignores
-.godot/
-
 # Windows ignores
 **/desktop.ini
 

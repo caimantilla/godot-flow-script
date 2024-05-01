@@ -14,6 +14,7 @@ void FlowScript::_bind_methods()
 	ClassDB::bind_method(D_METHOD("has_flow_node", "flow_node_id"), &FlowScript::has_flow_node);
 	ClassDB::bind_method(D_METHOD("get_flow_node", "flow_node_id"), &FlowScript::get_flow_node);
 	ClassDB::bind_method(D_METHOD("get_flow_node_id_list"), &FlowScript::get_flow_node_id_list);
+	ClassDB::bind_method(D_METHOD("get_flow_node_name_list"), &FlowScript::get_flow_node_name_list);
 
 	ADD_SIGNAL(MethodInfo("clearing"));
 	ADD_SIGNAL(MethodInfo("cleared"));
@@ -167,6 +168,12 @@ bool FlowScript::has_flow_node(const FlowNodeID p_flow_node_id) const
 }
 
 
+bool FlowScript::has_flow_node_with_name(const String &p_flow_node_name) const
+{
+	return get_flow_node_by_name(p_flow_node_name) != nullptr;
+}
+
+
 FlowNode *FlowScript::get_flow_node(const FlowNodeID p_flow_node_id) const
 {
 	ERR_FAIL_COND_V(!has_flow_node(p_flow_node_id), nullptr);
@@ -208,6 +215,24 @@ FlowNodeIDArray FlowScript::get_flow_node_id_list() const
 	}
 
 	return id_list;
+}
+
+
+PackedStringArray FlowScript::get_flow_node_name_list() const
+{
+	PackedStringArray names;
+
+	for (const KeyValue<FlowNodeID, FlowNode *> &map_entry : flow_node_map)
+	{
+		// Names with spaces and such will be rejected, this is (probably) desirable
+		String current_name = map_entry.value->get_flow_node_name().strip_edges();
+		if (current_name.is_valid_identifier())
+		{
+			names.push_back(current_name);
+		}
+	}
+
+	return names;
 }
 
 

@@ -7,6 +7,8 @@
 #include "flow_node.hpp"
 #include "flow_node_execution_state.hpp"
 
+class FlowController;
+
 class FlowFiber final : public Object
 {
 	GDCLASS(FlowFiber, Object);
@@ -14,10 +16,9 @@ class FlowFiber final : public Object
 	friend class FlowController;
 
 private:
-	static void _bind_methods();
-
 	FlowFiberID flow_fiber_id;
 	FlowBridge *flow_bridge = nullptr;
+	FlowController *flow_controller = nullptr;
 	FlowScript *flow_script = nullptr;
 
 	FlowNode *current_flow_node = nullptr;
@@ -42,9 +43,13 @@ private:
 	void on_finished(const Variant &p_return_value);
 	void on_external_fiber_finished(const FlowFiberID p_other_fiber_id);
 
+protected:
+	static void _bind_methods();
+
 public:
 	FlowFiberID get_flow_fiber_id() const;
 	FlowBridge *get_flow_bridge() const;
+	FlowController *get_flow_controller() const;
 	FlowScript *get_flow_script() const;
 
 	FlowNode *get_current_flow_node() const;

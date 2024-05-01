@@ -44,9 +44,11 @@ public:
 
 	bool is_new_flow_node_id_valid(const FlowNodeID p_new_id) const;
 	bool has_flow_node(const FlowNodeID p_flow_node_id) const;
+	bool has_flow_node_with_name(const String &p_flow_node_name) const;
 	FlowNode *get_flow_node(const FlowNodeID p_flow_node_id) const;
 	FlowNode *get_flow_node_by_name(const String &p_flow_node_name) const;
 	FlowNodeIDArray get_flow_node_id_list() const;
+	PackedStringArray get_flow_node_name_list() const;
 	int get_flow_node_count() const;
 
 	FlowNode *create_new_flow_node(const String &p_flow_type_id);
