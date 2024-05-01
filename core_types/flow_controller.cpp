@@ -163,7 +163,7 @@ void FlowController::on_flow_fiber_new_fibers_creation_request(const FlowNodeIDA
 {
 	ERR_FAIL_COND(!has_flow_fiber(p_calling_fiber_id));
 
-	print_line("Fiber #", p_calling_fiber_id, " requesting nodes: ", p_initial_flow_node_ids);
+	print_verbose("Fiber #", p_calling_fiber_id, " requesting nodes: ", p_initial_flow_node_ids);
 	
 	FlowFiber *calling_fiber = get_flow_fiber(p_calling_fiber_id);
 	for (const FlowNodeID new_node_start_point_id : p_initial_flow_node_ids)

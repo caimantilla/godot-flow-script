@@ -2,7 +2,7 @@
 #include "register_types.h"
 #include "core/object/class_db.h"
 #include "core/string/ustring.h"
-#include "editor/editor_plugin.h"
+#include "editor/plugins/editor_plugin.h"
 
 
 // Core includes

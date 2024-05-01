@@ -1,7 +1,7 @@
 #ifndef FLOW_SCRIPT_EDITOR_PLUGIN_HPP
 #define FLOW_SCRIPT_EDITOR_PLUGIN_HPP
 
-#include "editor/editor_plugin.h"
+#include "editor/plugins/editor_plugin.h"
 #include "flow_editor_constants.hpp"
 #include "editor_inspector_plugin_flow_node.hpp"
 #include "flow_script_editor_panel.hpp"

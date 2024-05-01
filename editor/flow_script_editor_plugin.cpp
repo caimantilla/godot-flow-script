@@ -161,7 +161,6 @@ void FlowScriptEditorPlugin::inspect_flow_node(const FlowNodeID p_flow_node_id)
 
 	if (edited_flow_script != nullptr && edited_flow_script->has_flow_node(p_flow_node_id))
 	{
-		print_line(vformat("Inspecting FlowNode #%d.", p_flow_node_id));
 		node_to_inspect = edited_flow_script->get_flow_node(p_flow_node_id);
 	}
 

@@ -123,14 +123,14 @@ bool FlowFiber::has_resume_dependencies() const
 
 void FlowFiber::start_using_id(const FlowNodeID p_initial_flow_node_id)
 {
-	print_line(vformat("Starting executing of FlowFiber #%d using FlowNode #%d.", flow_fiber_id, p_initial_flow_node_id));
+	print_verbose(vformat("Starting executing of FlowFiber #%d using FlowNode #%d.", flow_fiber_id, p_initial_flow_node_id));
 	execute_flow_node_using_id(p_initial_flow_node_id);
 }
 
 
 void FlowFiber::start_using_name(const String &p_initial_flow_node_name)
 {
-	print_line(vformat("Starting execution of FlowFiber #%d using FlowNode \"%s\".", flow_fiber_id, p_initial_flow_node_name));
+	print_verbose(vformat("Starting execution of FlowFiber #%d using FlowNode \"%s\".", flow_fiber_id, p_initial_flow_node_name));
 	execute_flow_node_using_name(p_initial_flow_node_name);
 }
 
@@ -252,7 +252,7 @@ void FlowFiber::on_external_fiber_finished(const FlowFiberID p_other_fiber_id)
 		return;
 	}
 
-	print_line(vformat("From fiber #%d: Resume-dependent fiber #%d finished.", flow_fiber_id, p_other_fiber_id));
+	print_verbose(vformat("From fiber #%d: Resume-dependent fiber #%d finished.", flow_fiber_id, p_other_fiber_id));
 	remove_resume_dependent_fiber(p_other_fiber_id);
 
 	if (!has_resume_dependencies())

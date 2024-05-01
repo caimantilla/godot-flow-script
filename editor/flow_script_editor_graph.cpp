@@ -323,8 +323,6 @@ void FlowScriptEditorGraph::update_flow_node_editor_graph_position(FlowNodeEdito
 	Vector2i internal_position = p_flow_node_editor->get_flow_node()->get_flow_graph_position();
 	Vector2 screen_position = EDSCALE * Vector2(internal_position);
 
-	print_line("Updating position of FlowNodeEditor ", p_flow_node_editor->get_flow_node_id(), " to ", screen_position);
-
 	p_flow_node_editor->set_position_offset(screen_position.floor());
 }
 
@@ -520,10 +518,8 @@ void FlowScriptEditorGraph::on_flow_script_multiple_flow_nodes_removed(const Flo
 	{
 		FlowNodeID current_node_id = p_flow_node_ids.get(i);
 
-		print_line(vformat("is there editor for FlowNode %d?", current_node_id));
 		if (has_editor_for_flow_node_with_id(current_node_id))
 		{
-			print_line("yes");
 			delete_editor_for_flow_node(current_node_id);
 		}
 	}
