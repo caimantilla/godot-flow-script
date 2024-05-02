@@ -69,19 +69,11 @@ static void _register_singletons()
 	memnew(FlowConfigManager);
 	memnew(FlowTypeDB);
 	memnew(FlowFactory);
-
-	Engine::get_singleton()->add_singleton(Engine::Singleton("FlowConfigManager", FlowConfigManager::get_singleton(), "FlowConfigManager"));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("FlowTypeDB", FlowTypeDB::get_singleton(), "FlowTypeDB"));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("FlowFactory", FlowFactory::get_singleton(), "FlowFactory"));
 }
 
 
 static void _unregister_singletons()
 {
-	Engine::get_singleton()->remove_singleton("FlowConfigManager");
-	Engine::get_singleton()->remove_singleton("FlowTypeDB");
-	Engine::get_singleton()->remove_singleton("FlowFactory");
-
 	memdelete(BuiltInFlowTypes::get_singleton());
 	memdelete(FlowConfigManager::get_singleton());
 	memdelete(FlowTypeDB::get_singleton());
@@ -91,11 +83,6 @@ static void _unregister_singletons()
 
 static void _register_types()
 {
-	// Register singleton types
-	GDREGISTER_CLASS(FlowConfigManager);
-	GDREGISTER_CLASS(FlowTypeDB);
-	GDREGISTER_CLASS(FlowFactory);
-
 	// Register core types
 	GDREGISTER_CLASS(FlowType);
 	GDREGISTER_CLASS(FlowNode);
