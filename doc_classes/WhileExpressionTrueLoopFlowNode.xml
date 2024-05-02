@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="WhileExpressionTrueLoopFlowNode" inherits="FlowNode" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="expression" type="String" setter="set_expression" getter="get_expression" default="&quot;&quot;">
+		</member>
+		<member name="finished_flow_node_id" type="int" setter="set_finished_flow_node_id" getter="get_finished_flow_node_id" default="0">
+		</member>
+		<member name="loop_flow_node_id" type="int" setter="set_loop_flow_node_id" getter="get_loop_flow_node_id" default="0">
+		</member>
+	</members>
+</class>

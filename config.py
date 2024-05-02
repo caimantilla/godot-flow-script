@@ -27,6 +27,7 @@ def get_doc_classes():
 		"FlowController",
 		"FlowBridge",
 		"FlowNodeEditor",
+		"FlowNodeEditorOutGoingConnectionParameters",
 
 		"AssignExpressionToVariableFlowNode",
 		"AssignExpressionToLocalVariableFlowNode",

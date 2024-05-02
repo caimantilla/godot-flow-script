@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="FlowNodeEditor" inherits="GraphNode" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="_clean_up" qualifiers="virtual">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="_flow_node_updated" qualifiers="virtual">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="_get_editor_title" qualifiers="virtual const">
+			<return type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="_get_editor_tooltip_text" qualifiers="virtual const">
+			<return type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="_get_input_slot" qualifiers="virtual const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="_get_out_going_connections" qualifiers="virtual const">
+			<return type="Dictionary[]" />
+			<description>
+			</description>
+		</method>
+		<method name="_initialize" qualifiers="virtual">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="_set_out_going_connection" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="out_going_connection" type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="_update_style" qualifiers="virtual">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_editor_scale" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="flow_node" type="FlowNode" setter="" getter="get_flow_node">
+		</member>
+		<member name="flow_node_id" type="int" setter="" getter="get_flow_node_id">
+		</member>
+	</members>
+	<signals>
+		<signal name="graph_position_update_requested">
+			<description>
+			</description>
+		</signal>
+		<signal name="rename_dialog_requested">
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="PrintToConsoleFlowNode" inherits="FlowNode" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="console_message" type="String" setter="set_console_message" getter="get_console_message" default="&quot;&quot;">
+		</member>
+		<member name="format_expressions" type="String" setter="set_format_expressions" getter="get_format_expressions" default="&quot;&quot;">
+		</member>
+		<member name="next_flow_node_id" type="int" setter="set_next_flow_node_id" getter="get_next_flow_node_id" default="0">
+		</member>
+	</members>
+</class>

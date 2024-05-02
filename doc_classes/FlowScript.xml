@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="FlowScript" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="clear">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_flow_node" qualifiers="const">
+			<return type="FlowNode" />
+			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_flow_node_id_list" qualifiers="const">
+			<return type="PackedInt32Array" />
+			<description>
+			</description>
+		</method>
+		<method name="get_flow_node_name_list" qualifiers="const">
+			<return type="PackedStringArray" />
+			<description>
+			</description>
+		</method>
+		<method name="has_flow_node" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="cleared">
+			<description>
+			</description>
+		</signal>
+		<signal name="clearing">
+			<description>
+			</description>
+		</signal>
+		<signal name="flow_node_added">
+			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="flow_node_id_changed">
+			<param index="0" name="from" type="int" />
+			<param index="1" name="to" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="flow_node_list_changed">
+			<description>
+			</description>
+		</signal>
+		<signal name="flow_node_removed">
+			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="multiple_flow_nodes_removed">
+			<param index="0" name="flow_node_ids" type="PackedInt32Array" />
+			<description>
+			</description>
+		</signal>
+		<signal name="removing_flow_node">
+			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ExecuteExternalFlowScriptFlowNode" inherits="FlowNode" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="external_call_name" type="String" setter="set_external_call_name" getter="get_external_call_name" default="&quot;&quot;">
+		</member>
+		<member name="external_flow_script" type="FlowScript" setter="set_external_flow_script" getter="get_external_flow_script">
+		</member>
+		<member name="next_flow_node_id" type="int" setter="set_next_flow_node_id" getter="get_next_flow_node_id" default="0">
+		</member>
+		<member name="wait_external_flow_script_finished" type="bool" setter="set_wait_external_flow_script_finished" getter="is_wait_external_flow_script_finished_enabled" default="false">
+		</member>
+	</members>
+</class>

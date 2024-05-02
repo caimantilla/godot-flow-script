@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="FlowNodeExecutionState" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="finish">
+			<return type="void" />
+			<param index="0" name="next_flow_node_id" type="int" />
+			<param index="1" name="return_value" type="Variant" />
+			<description>
+			</description>
+		</method>
+		<method name="get_temporary_state" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="get_temporary_variable" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_temporary_variable_names" qualifiers="const">
+			<return type="PackedStringArray" />
+			<description>
+			</description>
+		</method>
+		<method name="has_temporary_variable" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="request_multiple_new_fibers">
+			<return type="void" />
+			<param index="0" name="initial_flow_node_ids" type="PackedInt32Array" />
+			<param index="1" name="wait_fibers_completion" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="request_new_fiber">
+			<return type="void" />
+			<param index="0" name="flow_node_id" type="int" />
+			<param index="1" name="wait_fiber_completion" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="restore_temporary_state">
+			<return type="void" />
+			<param index="0" name="temporary_state" type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="set_temporary_variable">
+			<return type="void" />
+			<param index="0" name="name" type="StringName" />
+			<param index="1" name="value" type="Variant" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="flow_bridge" type="FlowBridge" setter="" getter="get_flow_bridge">
+		</member>
+		<member name="flow_controller" type="FlowController" setter="" getter="get_flow_controller">
+		</member>
+		<member name="flow_script" type="FlowScript" setter="" getter="get_flow_script">
+		</member>
+	</members>
+	<signals>
+		<signal name="finished">
+			<param index="0" name="next_flow_node_id" type="int" />
+			<param index="1" name="return_value" type="Variant" />
+			<description>
+			</description>
+		</signal>
+		<signal name="new_fibers_requested">
+			<param index="0" name="initial_flow_node_ids" type="PackedInt32Array" />
+			<param index="1" name="wait_fibers_completion" type="bool" />
+			<description>
+			</description>
+		</signal>
+		<signal name="resumed">
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

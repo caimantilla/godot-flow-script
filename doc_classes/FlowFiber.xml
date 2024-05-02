@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="FlowFiber" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="is_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_finished" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="current_flow_node" type="FlowNode" setter="" getter="get_current_flow_node">
+		</member>
+		<member name="current_flow_node_execution_state" type="FlowNodeExecutionState" setter="" getter="get_current_flow_node_execution_state">
+		</member>
+		<member name="current_flow_node_id" type="int" setter="" getter="get_current_flow_node_id">
+		</member>
+		<member name="finished_callback" type="Callable" setter="set_finished_callback" getter="get_finished_callback">
+		</member>
+		<member name="flow_bridge" type="FlowBridge" setter="" getter="get_flow_bridge">
+		</member>
+		<member name="flow_controller" type="FlowController" setter="" getter="get_flow_controller">
+		</member>
+		<member name="flow_fiber_id" type="int" setter="" getter="get_flow_fiber_id">
+		</member>
+		<member name="flow_script" type="FlowScript" setter="" getter="get_flow_script">
+		</member>
+		<member name="return_value" type="Variant" setter="" getter="get_return_value">
+		</member>
+	</members>
+	<signals>
+		<signal name="finished">
+			<param index="0" name="return_value" type="Variant" />
+			<description>
+			</description>
+		</signal>
+		<signal name="new_fibers_requested">
+			<param index="0" name="initial_flow_node_ids" type="PackedInt32Array" />
+			<param index="1" name="wait_fibers_completion" type="bool" />
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>
