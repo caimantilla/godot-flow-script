@@ -15,6 +15,8 @@ void FlowScript::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_flow_node", "flow_node_id"), &FlowScript::get_flow_node);
 	ClassDB::bind_method(D_METHOD("get_flow_node_id_list"), &FlowScript::get_flow_node_id_list);
 	ClassDB::bind_method(D_METHOD("get_flow_node_name_list"), &FlowScript::get_flow_node_name_list);
+	ClassDB::bind_method(D_METHOD("has_flow_node_with_name", "flow_node_name"), &FlowScript::has_flow_node_with_name);
+	ClassDB::bind_method(D_METHOD("get_flow_node_by_name", "flow_node_name"), &FlowScript::get_flow_node_by_name);
 
 	ADD_SIGNAL(MethodInfo("clearing"));
 	ADD_SIGNAL(MethodInfo("cleared"));
