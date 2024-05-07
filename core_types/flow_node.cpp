@@ -36,76 +36,18 @@ void FlowNode::_bind_methods()
 }
 
 
-void FlowNode::_get_property_list(List<PropertyInfo> *p_list) const
+void FlowNode::_validate_property(PropertyInfo &p_property) const
 {
 	if (!is_flow_node_nameable())
 	{
 		return;
 	}
 
-	// Make the FlowNode stored and editable if the FlowType is nameable
-	for (PropertyInfo &p_info : *p_list)
+	if (p_property.name == "flow_node_name")
 	{
-		if (p_info.name == "flow_node_name")
-		{
-			p_info.usage = PROPERTY_USAGE_DEFAULT;
-		}
+		p_property.usage = PROPERTY_USAGE_DEFAULT;
 	}
-	// PropertyInfo p_info_flow_node_name = PropertyInfo(Variant::STRING, "flow_node_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);
-	// if (is_flow_node_nameable())
-	// {
-	// 	p_info_flow_node_name.usage |= PROPERTY_USAGE_DEFAULT;
-	// }
-
-	// p_list->push_back(p_info_flow_node_name);
 }
-
-
-// bool FlowNode::_set(const StringName &p_name, const Variant &p_value)
-// {
-// 	if (p_name == SNAME("flow_node_name"))
-// 	{
-// 		set_flow_node_name(p_value);
-// 		return true;
-// 	}
-
-// 	return false;
-// }
-
-
-// bool FlowNode::_get(const StringName &p_name, Variant &r_ret) const
-// {
-// 	if (p_name == SNAME("flow_node_name"))
-// 	{
-// 		r_ret = get_flow_node_name();
-// 		return true;
-// 	}
-
-// 	return false;
-// }
-
-
-// bool FlowNode::_property_can_revert(const StringName &p_name) const
-// {
-// 	if (p_name == SNAME("flow_node_name"))
-// 	{
-// 		return true;
-// 	}
-
-// 	return false;
-// }
-
-
-// bool FlowNode::_property_get_revert(const StringName &p_name, Variant &r_property) const
-// {
-// 	if (p_name == SNAME("flow_node_name"))
-// 	{
-// 		r_property = String();
-// 		return true;
-// 	}
-
-// 	return false;
-// }
 
 
 void FlowNode::emit_changed()
