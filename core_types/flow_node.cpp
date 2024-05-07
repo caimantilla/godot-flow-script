@@ -44,12 +44,11 @@ void FlowNode::_get_property_list(List<PropertyInfo> *p_list) const
 	}
 
 	// Make the FlowNode stored and editable if the FlowType is nameable
-	for (int i = 0; i < p_list->size(); i++)
+	for (PropertyInfo &p_info : *p_list)
 	{
-		PropertyInfo *p_info = &(p_list->operator[](i));
-		if (p_info->name == "flow_node_name")
+		if (p_info.name == "flow_node_name")
 		{
-			p_info->usage = PROPERTY_USAGE_DEFAULT;
+			p_info.usage = PROPERTY_USAGE_DEFAULT;
 		}
 	}
 	// PropertyInfo p_info_flow_node_name = PropertyInfo(Variant::STRING, "flow_node_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE);

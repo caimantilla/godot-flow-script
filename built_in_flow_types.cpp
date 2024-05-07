@@ -36,7 +36,7 @@ int BuiltInFlowTypes::get_type_count() const
 
 Ref<FlowType> BuiltInFlowTypes::get_type_at(const int p_idx) const
 {
-	return built_in_types[p_idx];
+	return built_in_types.get(p_idx);
 }
 
 

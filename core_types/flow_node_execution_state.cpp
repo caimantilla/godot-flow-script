@@ -74,9 +74,11 @@ PackedStringArray FlowNodeExecutionState::get_temporary_variable_names() const
 	PackedStringArray var_names;
 	var_names.resize(meta_keys.size());
 
-	for (int i = 0; i < meta_keys.size(); i++)
+	int i = 0;
+	for (const StringName &meta_key : meta_keys)
 	{
-		var_names.set(i, meta_keys[i]);
+		var_names.set(i, meta_key);
+		i += 1;
 	}
 
 	return var_names;

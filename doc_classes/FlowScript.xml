@@ -18,6 +18,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_flow_node_by_name" qualifiers="const">
+			<return type="FlowNode" />
+			<param index="0" name="flow_node_name" type="String" />
+			<description>
+			</description>
+		</method>
 		<method name="get_flow_node_id_list" qualifiers="const">
 			<return type="PackedInt32Array" />
 			<description>
@@ -31,6 +37,12 @@
 		<method name="has_flow_node" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="flow_node_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="has_flow_node_with_name" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="flow_node_name" type="String" />
 			<description>
 			</description>
 		</method>
