@@ -15,7 +15,8 @@ class FlowNode : public Object
 	friend class FlowScript;
 
 private:
-	FlowNodeID flow_node_id; // Used internally
+	FlowScript *flow_script = nullptr;
+	FlowNodeID flow_node_id = FLOW_NODE_ID_NIL; // Used internally
 	String flow_node_name; // Used to name procedures or any other label-style nodes
 	String flow_type_id; // The ID of the type used, this is not directly related to the FlowNode class
 	Vector2i flow_graph_position; // The node's position in the editor graph, without influence from DPI scaling
@@ -42,6 +43,7 @@ protected:
 public:
 	void emit_changed();
 
+	FlowScript *get_flow_script() const;
 	FlowNodeID get_flow_node_id() const;
 	void set_flow_node_name(const String &p_name);
 	String get_flow_node_name() const;

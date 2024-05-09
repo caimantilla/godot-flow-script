@@ -11,18 +11,24 @@
 			<return type="void" />
 			<param index="0" name="execution_state" type="FlowNodeExecutionState" />
 			<description>
+				Called when it's time for the [FlowNode] to execute.
+				[param execution_state] provides the execution context.
 			</description>
 		</method>
 		<method name="_is_property_flow_node_reference" qualifiers="virtual const">
 			<return type="bool" />
 			<param index="0" name="property" type="StringName" />
 			<description>
+				Return [code]true[/code] if [param property] is a reference to another [FlowNode].
+				The property must be of type [int].
 			</description>
 		</method>
 		<method name="_is_property_flow_node_reference_list" qualifiers="virtual const">
 			<return type="bool" />
 			<param index="0" name="property" type="StringName" />
 			<description>
+				Return [code]true[/code] if [param property] is a list of references to other [FlowNode]s.
+				The property must be of type [PackedInt32Array].
 			</description>
 		</method>
 		<method name="_on_external_flow_node_id_changed" qualifiers="virtual">
@@ -30,11 +36,14 @@
 			<param index="0" name="from" type="int" />
 			<param index="1" name="to" type="int" />
 			<description>
+				Called when the [member flow_node_id] of another [FlowNode] of the same [member flow_script] is changed.
+				Use this hook to update their references.
 			</description>
 		</method>
 		<method name="emit_changed">
 			<return type="void" />
 			<description>
+				See [signal changed].
 			</description>
 		</method>
 		<method name="is_flow_node_nameable" qualifiers="const">
@@ -47,35 +56,46 @@
 		<member name="flow_graph_position" type="Vector2i" setter="set_flow_graph_position" getter="get_flow_graph_position" default="Vector2i(0, 0)">
 		</member>
 		<member name="flow_node_id" type="int" setter="" getter="get_flow_node_id">
+			The [FlowNode]'s ID in its [FlowScript].
 		</member>
 		<member name="flow_node_name" type="String" setter="set_flow_node_name" getter="get_flow_node_name">
+			The [FlowNode]'s named identifier, for compatible [FlowType]s.
+		</member>
+		<member name="flow_script" type="FlowScript" setter="" getter="get_flow_script">
+			Reference to the [FlowScript] that owns this [FlowNode].
 		</member>
 		<member name="flow_type_id" type="String" setter="" getter="get_flow_type_id">
+			The ID of the [FlowNode]'s [FlowType].
 		</member>
 		<member name="flow_type_name" type="String" setter="" getter="get_flow_type_name">
+			The name of the [FlowNode]'s [FlowType].
 		</member>
 	</members>
 	<signals>
 		<signal name="changed">
 			<description>
+				Emitted when some property of the [FlowNode] changes and the state of its [FlowNodeEditor] should change.
 			</description>
 		</signal>
 		<signal name="flow_graph_position_changed">
 			<param index="0" name="from" type="Vector2i" />
 			<param index="1" name="to" type="Vector2i" />
 			<description>
+				Emitted when the [FlowNode] is repositioned.
 			</description>
 		</signal>
 		<signal name="id_changed">
 			<param index="0" name="from" type="int" />
 			<param index="1" name="to" type="int" />
 			<description>
+				Emitted when [member flow_node_id] is changed.
 			</description>
 		</signal>
 		<signal name="name_changed">
 			<param index="0" name="from" type="String" />
 			<param index="1" name="to" type="String" />
 			<description>
+				Emitted when [member flow_node_name] is changed.
 			</description>
 		</signal>
 	</signals>

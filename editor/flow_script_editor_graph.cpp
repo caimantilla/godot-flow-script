@@ -241,12 +241,12 @@ FlowNodeEditor *FlowScriptEditorGraph::instantiate_editor_for_flow_node(const Fl
 	// this needs to come AFTER adding the editor as a child!! PLEASE!!!!!!!!!!!!!!!!
 	flow_node_editor->set_flow_node(flow_node);
 
+	Callable cb_slot_updated = callable_mp(this, &FlowScriptEditorGraph::on_flow_node_editor_slot_updated).bind(flow_node_editor);
 	Callable cb_graph_position_update_requested = callable_mp(this, &FlowScriptEditorGraph::on_flow_node_editor_graph_position_update_requested).bind(flow_node_editor);
-	// Callable cb_rename_dialog_requested = callable_mp(this, &FlowScriptEditorGraph::on_flow_node_editor_rename_dialog_requested).bind(flow_node_editor);
 	Callable cb_delete_request = callable_mp(this, &FlowScriptEditorGraph::on_flow_node_editor_delete_request).bind(flow_node_editor);
 
+	flow_node_editor->connect(SNAME("slot_updated"), cb_slot_updated);
 	flow_node_editor->connect(SNAME("graph_position_update_requested"), cb_graph_position_update_requested);
-	// flow_node_editor->connect(SNAME("rename_dialog_requested"), cb_rename_dialog_requested);
 	flow_node_editor->connect(SNAME("delete_request"), cb_delete_request);
 
 	flow_node_editor->request_graph_position_update();
@@ -490,11 +490,10 @@ void FlowScriptEditorGraph::on_flow_script_flow_node_id_changed(const FlowNodeID
 }
 
 
-// void FlowScriptEditorGraph::on_flow_node_editor_rename_dialog_requested(FlowNodeEditor *p_editor)
-// {
-// 	StringName node_id = p_editor->get_flow_node()->get_flow_node_id();
-// 	request_flow_node_rename_dialog(node_id);
-// }
+void FlowScriptEditorGraph::on_flow_node_editor_slot_updated(const int p_slot_index, FlowNodeEditor *p_editor)
+{
+	queue_redraw_graph_connections();
+}
 
 
 void FlowScriptEditorGraph::on_flow_node_editor_graph_position_update_requested(FlowNodeEditor *p_editor)

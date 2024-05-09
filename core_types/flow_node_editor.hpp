@@ -27,13 +27,15 @@ private:
 
 	void initialize();
 	void clean_up();
+	void flow_node_updated();
+	void flow_node_updated_immediate();
+	void update_style();
 	void update_editor_title();
 	void update_editor_tooltip_text();
 
 	void queue_flow_node_update();
 
 	void set_safe_to_edit(bool p_edit_safe);
-	bool is_safe_to_edit() const;
 
 	void request_rename();
 	void request_deletion();
@@ -42,8 +44,9 @@ private:
 	bool is_flow_node_instance_valid() const;
 	bool is_flow_node_instance_invalid() const;
 
-
 	void on_flow_node_name_changed(const String &p_from, const String &p_to);
+
+	void readjust_graph_size();
 
 protected:
 	void _notification(int p_what);
@@ -61,6 +64,7 @@ protected:
 	virtual void _initialize();
 	virtual void _clean_up();
 	virtual void _flow_node_updated();
+	virtual void _flow_node_updated_immediate();
 	virtual void _update_style();
 	virtual String _get_editor_title() const;
 	virtual String _get_editor_tooltip_text() const;
@@ -72,6 +76,7 @@ protected:
 	GDVIRTUAL0(_initialize);
 	GDVIRTUAL0(_clean_up);
 	GDVIRTUAL0(_flow_node_updated);
+	GDVIRTUAL0(_flow_node_updated_immediate);
 	GDVIRTUAL0(_update_style);
 	GDVIRTUAL0RC(String, _get_editor_title);
 	GDVIRTUAL0RC(String, _get_editor_tooltip_text);
@@ -95,8 +100,7 @@ public:
 	int get_input_slot();
 	int get_input_port();
 
-	void flow_node_updated();
-	void update_style();
+	bool is_safe_to_edit() const;
 
 	void set_out_going_connection(Ref<FlowNodeEditorOutGoingConnectionParameters> p_out_going_connection);
 	TypedArray<FlowNodeEditorOutGoingConnectionParameters> get_out_going_connections() const;

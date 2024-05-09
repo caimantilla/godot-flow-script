@@ -72,6 +72,7 @@ private:
 	Callable on_flow_script_multiple_flow_nodes_removed_callback;
 
 	// void on_flow_node_editor_rename_dialog_requested(FlowNodeEditor *p_editor);
+	void on_flow_node_editor_slot_updated(const int p_slot_index, FlowNodeEditor *p_editor);
 	void on_flow_node_editor_graph_position_update_requested(FlowNodeEditor *p_editor);
 	void on_flow_node_editor_delete_request(FlowNodeEditor *p_editor);
 

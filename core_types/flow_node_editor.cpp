@@ -9,8 +9,8 @@ void FlowNodeEditor::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("get_flow_node"), &FlowNodeEditor::get_flow_node);
 	ClassDB::bind_method(D_METHOD("get_flow_node_id"), &FlowNodeEditor::get_flow_node_id);
-	// ClassDB::bind_method(D_METHOD("create_out_going_connection", "target_node_id", "output_slot"), &FlowNodeEditor::create_out_going_connection);
 	ClassDB::bind_method(D_METHOD("get_editor_scale"), &FlowNodeEditor::get_editor_scale);
+	ClassDB::bind_method(D_METHOD("is_safe_to_edit"), &FlowNodeEditor::is_safe_to_edit);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowNode")), "", "get_flow_node");
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "flow_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_node_id");
@@ -21,6 +21,7 @@ void FlowNodeEditor::_bind_methods()
 	GDVIRTUAL_BIND(_initialize);
 	GDVIRTUAL_BIND(_clean_up);
 	GDVIRTUAL_BIND(_flow_node_updated);
+	GDVIRTUAL_BIND(_flow_node_updated_immediate);
 	GDVIRTUAL_BIND(_update_style);
 	GDVIRTUAL_BIND(_get_editor_title);
 	GDVIRTUAL_BIND(_get_editor_tooltip_text);
@@ -48,6 +49,15 @@ void FlowNodeEditor::_notification(int p_what)
 			{
 				flow_node_updated();
 				flow_node_update_queued = false;
+			}
+			break;
+		
+		case NOTIFICATION_DRAW:
+			Vector2 curr_size = get_size();
+			Vector2 min_size = get_minimum_size();
+			if (curr_size != min_size)
+			{
+				set_size(min_size);
 			}
 			break;
 	}
@@ -229,6 +239,7 @@ void FlowNodeEditor::initialize()
 	ERR_FAIL_NULL_MSG(flow_node, "Cannot initialize FlowNodeEditor without a FlowNode.");
 
 	flow_node->connect(SNAME("flow_graph_position_changed"), callable_mp(this, &FlowNodeEditor::request_graph_position_update));
+	flow_node->connect(SNAME("changed"), callable_mp(this, &FlowNodeEditor::flow_node_updated_immediate));
 	flow_node->connect(SNAME("changed"), callable_mp(this, &FlowNodeEditor::queue_flow_node_update));
 	flow_node->connect(SNAME("name_changed"), callable_mp(this, &FlowNodeEditor::on_flow_node_name_changed));
 
@@ -263,6 +274,7 @@ void FlowNodeEditor::clean_up()
 	ERR_FAIL_NULL_MSG(flow_node, "Cannot clean up FlowNodeEditor without a FlowNode.");
 
 	flow_node->disconnect(SNAME("flow_graph_position_changed"), callable_mp(this, &FlowNodeEditor::request_graph_position_update));
+	flow_node->disconnect(SNAME("changed"), callable_mp(this, &FlowNodeEditor::flow_node_updated_immediate));
 	flow_node->disconnect(SNAME("changed"), callable_mp(this, &FlowNodeEditor::queue_flow_node_update));
 	flow_node->disconnect(SNAME("name_changed"), callable_mp(this, &FlowNodeEditor::on_flow_node_name_changed));
 
@@ -286,7 +298,20 @@ void FlowNodeEditor::flow_node_updated()
 	_flow_node_updated();
 	GDVIRTUAL_CALL(_flow_node_updated);
 
-	set_size(Vector2(0, 0));
+	set_safe_to_edit(true);
+}
+
+
+void FlowNodeEditor::flow_node_updated_immediate()
+{
+	ERR_FAIL_COND(is_flow_node_instance_invalid());
+	ERR_FAIL_COND(!has_initialized);
+
+	set_safe_to_edit(false);
+
+	_flow_node_updated_immediate();
+	GDVIRTUAL_CALL(_flow_node_updated_immediate);
+
 	set_safe_to_edit(true);
 }
 
@@ -367,6 +392,12 @@ void FlowNodeEditor::silent_copy_graph_position_to_flow_node()
 void FlowNodeEditor::on_flow_node_name_changed(const String &p_from, const String &p_to)
 {
 	queue_flow_node_update();
+}
+
+
+void FlowNodeEditor::readjust_graph_size()
+{
+	set_size(get_minimum_size());
 }
 
 
@@ -451,6 +482,11 @@ void FlowNodeEditor::_clean_up()
 
 
 void FlowNodeEditor::_flow_node_updated()
+{
+}
+
+
+void FlowNodeEditor::_flow_node_updated_immediate()
 {
 }
 

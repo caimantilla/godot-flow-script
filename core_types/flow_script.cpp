@@ -392,6 +392,7 @@ FlowNode *FlowScript::_create_new_flow_node(const FlowNodeID p_flow_node_id, con
 	FlowNode *new_node = FlowFactory::get_singleton()->create_flow_node_of_flow_type(p_flow_type_id);
 	ERR_FAIL_NULL_V(new_node, nullptr);
 
+	new_node->flow_script = this;
 	new_node->flow_node_id = p_flow_node_id;
 	new_node->connect(CoreStringNames::get_singleton()->property_list_changed, callable_mp(this, &FlowScript::on_flow_node_property_list_changed));
 

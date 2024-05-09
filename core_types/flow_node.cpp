@@ -1,10 +1,12 @@
 #include "flow_node.hpp"
+#include "flow_script.hpp"
 #include "core/core_string_names.h"
 #include "../singletons/flow_type_db.hpp"
 
 
 void FlowNode::_bind_methods()
 {
+	ClassDB::bind_method(D_METHOD("get_flow_script"), &FlowNode::get_flow_script);
 	ClassDB::bind_method(D_METHOD("get_flow_node_id"), &FlowNode::get_flow_node_id);
 	ClassDB::bind_method(D_METHOD("set_flow_node_name", "name"), &FlowNode::set_flow_node_name);
 	ClassDB::bind_method(D_METHOD("get_flow_node_name"), &FlowNode::get_flow_node_name);
@@ -18,6 +20,7 @@ void FlowNode::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("emit_changed"), &FlowNode::emit_changed);
 
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "flow_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "flow_node_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "set_flow_node_name", "get_flow_node_name");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "flow_type_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_type_id");
@@ -67,6 +70,12 @@ void FlowNode::set_flow_node_id(const FlowNodeID p_new_id)
 	flow_node_id = p_new_id;
 
 	emit_signal(SNAME("id_changed"), old_id, p_new_id);
+}
+
+
+FlowScript *FlowNode::get_flow_script() const
+{
+	return flow_script;
 }
 
 

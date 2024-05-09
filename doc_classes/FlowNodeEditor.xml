@@ -10,11 +10,22 @@
 		<method name="_clean_up" qualifiers="virtual">
 			<return type="void" />
 			<description>
+				Called just before the [FlowNodeEditor] is removed from the [SceneTree].
+				This can usually be ignored, but if the [FlowNodeEditor] is managing memory manually, free it here.
 			</description>
 		</method>
 		<method name="_flow_node_updated" qualifiers="virtual">
 			<return type="void" />
 			<description>
+				Called at the start of the frame after [signal FlowNode.changed] was emitted.
+				This is where most GUI updates should be performed, but for time-sensitive operations, use [method _flow_node_updated_immediate] instead.
+			</description>
+		</method>
+		<method name="_flow_node_updated_immediate" qualifiers="virtual">
+			<return type="void" />
+			<description>
+				Called immediately when the [signal FlowNode.changed] is emitted.
+				Typically, [method _flow_node_updated] should be used instead, as it is only executed once per frame to improve performance, but for time-sensitive operations like updating the [GraphNode] slots, use [method _flow_node_updated_immediate] instead.
 			</description>
 		</method>
 		<method name="_get_editor_title" qualifiers="virtual const">
@@ -25,11 +36,14 @@
 		<method name="_get_editor_tooltip_text" qualifiers="virtual const">
 			<return type="String" />
 			<description>
+				Override to change the [FlowNodeEditor]'s tooltip.
 			</description>
 		</method>
 		<method name="_get_input_slot" qualifiers="virtual const">
 			<return type="int" />
 			<description>
+				Returns the [GraphNode] input slot.
+				This must be overriden.
 			</description>
 		</method>
 		<method name="_get_out_going_connections" qualifiers="virtual const">
@@ -55,6 +69,11 @@
 		</method>
 		<method name="get_editor_scale" qualifiers="const">
 			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="is_safe_to_edit" qualifiers="const">
+			<return type="bool" />
 			<description>
 			</description>
 		</method>
