@@ -86,7 +86,7 @@ void BuiltInFlowTypes::_init_types_internal()
 	add_type(FlowType::create_native_type(
 		"floating_comment",
 		"Comment",
-		"",
+		"Debug",
 		"A disconnected text box.\nWrite whatever you want.",
 		"",
 		"CommentFlowNode",
@@ -126,7 +126,7 @@ void BuiltInFlowTypes::_init_types_internal()
 	add_type(FlowType::create_native_type(
 		"expression_branch",
 		"Conditional Branch",
-		"Flow/Control",
+		"Flow",
 		"Branches depending on the result of an evaluated expression.",
 		"",
 		"ExpressionBranchFlowNode",
@@ -146,7 +146,7 @@ void BuiltInFlowTypes::_init_types_internal()
 	add_type(FlowType::create_native_type(
 		"while_expression_true_loop",
 		"While Loop",
-		"Flow/Control",
+		"Flow",
 		"Repeats a section of code as long as the expressions written evaluate to true.",
 		"",
 		"WhileExpressionTrueLoopFlowNode",
@@ -156,27 +156,27 @@ void BuiltInFlowTypes::_init_types_internal()
 	add_type(FlowType::create_native_type(
 		"sequential_branch_execution",
 		"Execute Branches Sequentially",
-		"Flow/Control",
+		"Flow",
 		"Executes a list of branches one after another, waiting for each to complete before progressing to the next.",
 		"",
 		"SequentialBranchExecutionFlowNode",
-		"MultiBranchExecutionFlowNodeEditor",
+		"SequentialBranchExecutionFlowNodeEditor",
 		false
 	));
 	add_type(FlowType::create_native_type(
 		"simultaneous_branch_execution",
 		"Execute Branches Simultaneously",
-		"Flow/Control",
+		"Flow",
 		"Executes a list of branches simultaneously, waiting for all of them to complete before progressing.",
 		"",
 		"SimultaneousBranchExecutionFlowNode",
-		"MultiBranchExecutionFlowNodeEditor",
+		"SimultaneousBranchExecutionFlowNodeEditor",
 		false
 	));
 	add_type(FlowType::create_native_type(
 		"assign_expression_to_local_variable",
 		"Set Local Variable",
-		"Flow/Variables",
+		"Variable",
 		"Assigns a local variable to the result of some expression.",
 		"",
 		"AssignExpressionToLocalVariableFlowNode",
@@ -186,7 +186,7 @@ void BuiltInFlowTypes::_init_types_internal()
 	add_type(FlowType::create_native_type(
 		"assign_expression_to_global_variable",
 		"Set Global Variable",
-		"Flow/Variables",
+		"Variable",
 		"Assigns a global variable to the result of some expression.",
 		"",
 		"AssignExpressionToGlobalVariableFlowNode",

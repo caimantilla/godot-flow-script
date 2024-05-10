@@ -1,4 +1,5 @@
 #include "wait_seconds_flow_node_editor.hpp"
+#include "scene/gui/label.h"
 
 
 static const int INPUT_SLOT = 0;
@@ -17,24 +18,27 @@ void WaitSecondsFlowNodeEditor::on_duration_spinner_value_changed(float p_value)
 }
 
 
-void WaitSecondsFlowNodeEditor::_initialize()
-{
-	duration_spinner->connect(SNAME("value_changed"), callable_mp(this, &WaitSecondsFlowNodeEditor::on_duration_spinner_value_changed));
-
-	WaitSecondsFlowNode *node = get_ws_flow_node();
-	duration_spinner->set_value_no_signal(node->get_timer_duration());
-}
-
-
 void WaitSecondsFlowNodeEditor::_clean_up()
 {
-	duration_spinner->disconnect(SNAME("value_changed"), callable_mp(this, &WaitSecondsFlowNodeEditor::on_duration_spinner_value_changed));
+	text_label->set_text("No node to wait for.");
 }
 
 
 void WaitSecondsFlowNodeEditor::_flow_node_updated()
 {
-	duration_spinner->set_value_no_signal(get_ws_flow_node()->get_timer_duration());
+	String new_lbl_str;
+	float curr_duration = get_ws_flow_node()->get_timer_duration();
+
+	if (Math::is_equal_approx(1.0f, curr_duration))
+	{
+		new_lbl_str = "Wait 1 second.";
+	}
+	else
+	{
+		new_lbl_str = vformat("Wait %.1f seconds.", curr_duration);
+	}
+
+	text_label->set_text(new_lbl_str);
 }
 
 
@@ -68,12 +72,8 @@ TypedArray<FlowNodeEditorOutGoingConnectionParameters> WaitSecondsFlowNodeEditor
 
 WaitSecondsFlowNodeEditor::WaitSecondsFlowNodeEditor()
 {
-	duration_spinner = memnew(SpinBox);
-	duration_spinner->set_min(WaitSecondsFlowNode::MIN_DURATION);
-	duration_spinner->set_max(WaitSecondsFlowNode::MAX_DURATION);
-	duration_spinner->set_step(WaitSecondsFlowNode::STEP);
-	duration_spinner->set_suffix("Seconds(s)");
-	add_child(duration_spinner);
+	text_label = memnew(Label);
+	add_child(text_label);
 
 	set_slot_enabled_left(INPUT_SLOT, true);
 	set_slot_enabled_right(OUTPUT_SLOT, true);

@@ -19,19 +19,19 @@ bool EditorInspectorPluginFlowNode::parse_property(Object *p_object, const Varia
 
 	StringName property_sn = p_path;
 
-	// Hide the script property of FlowNodes to prevent the user from breaking anything by detaching a FlowNode's script.
+	// Hide the script property of FlowNodes to prevent the user from breaking anything by detaching a non-native FlowNode's script.
 	if (property_sn == SNAME("script"))
 	{
 		return true;
 	}
 	else if (node->is_property_flow_node_reference(property_sn))
 	{
-		// TODO: Add a custom button for picking a FlowNode in the graph, and make its selectability be synchronized with the visibility of the FlowScript editor.
+		// TODO: Add a custom EditorProperty with a Button for picking a FlowNode in the graph, and make its selectability be synchronized with the visibility of the FlowScript editor.
 		return true;
 	}
 	else if (node->is_property_flow_node_reference_list(property_sn))
 	{
-		// TODO: Add a custom GUI for FlowNode lists as well.
+		// TODO: Add a custom EditorProperty GUI for FlowNode lists as well.
 		return true;
 	}
 

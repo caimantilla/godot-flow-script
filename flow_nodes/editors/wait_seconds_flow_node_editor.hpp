@@ -10,14 +10,12 @@ class WaitSecondsFlowNodeEditor final : public FlowNodeEditor
 	GDCLASS(WaitSecondsFlowNodeEditor, FlowNodeEditor);
 
 private:
-	SpinBox *duration_spinner;
+	Label *text_label;
 
 	WaitSecondsFlowNode *get_ws_flow_node() const;
-
 	void on_duration_spinner_value_changed(float p_value);
 
 protected:
-	virtual void _initialize() override;
 	virtual void _clean_up() override;
 	virtual void _flow_node_updated() override;
 	virtual int _get_input_slot() const override;

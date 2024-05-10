@@ -9,6 +9,8 @@
 	<members>
 		<member name="execution_stack" type="PackedInt32Array" setter="set_execution_stack" getter="get_execution_stack" default="PackedInt32Array()">
 		</member>
+		<member name="execution_stack_size" type="int" setter="set_execution_stack_size" getter="get_execution_stack_size" default="0">
+		</member>
 		<member name="next_flow_node_id" type="int" setter="set_next_flow_node_id" getter="get_next_flow_node_id" default="0">
 		</member>
 	</members>

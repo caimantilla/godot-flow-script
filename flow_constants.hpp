@@ -11,7 +11,7 @@ typedef PackedInt32Array FlowNodeIDArray;
 
 const FlowNodeID FLOW_NODE_ID_NIL = 0;
 const FlowNodeID FLOW_NODE_ID_MIN = 1;
-const FlowNodeID FLOW_NODE_ID_MAX = 999;
+const FlowNodeID FLOW_NODE_ID_MAX = 9999;
 
 typedef int32_t FlowFiberID;
 #define TYPE_FLOW_FIBER_ID Variant::INT
@@ -20,6 +20,6 @@ typedef PackedInt32Array FlowFiberIDArray;
 
 const FlowFiberID FLOW_FIBER_ID_NIL = 0;
 const FlowFiberID FLOW_FIBER_ID_MIN = 1;
-const FlowFiberID FLOW_FIBER_ID_MAX = 99;
+const FlowFiberID FLOW_FIBER_ID_MAX = 999;
 
 #endif

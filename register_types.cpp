@@ -48,6 +48,8 @@
 #include "flow_nodes/editors/print_to_console_flow_node_editor.hpp"
 #include "flow_nodes/editors/procedure_flow_node_editor.hpp"
 #include "flow_nodes/editors/return_expression_flow_node_editor.hpp"
+#include "flow_nodes/editors/sequential_branch_execution_flow_node_editor.hpp"
+#include "flow_nodes/editors/simultaneous_branch_execution_flow_node_editor.hpp"
 #include "flow_nodes/editors/wait_seconds_flow_node_editor.hpp"
 #include "flow_nodes/editors/while_expression_true_loop_flow_node_editor.hpp"
 
@@ -119,7 +121,9 @@ static void _register_types()
 	GDREGISTER_CLASS(ExecuteExpressionFlowNodeEditor);
 	GDREGISTER_CLASS(ExpressionBranchFlowNodeEditor);
 	GDREGISTER_CLASS(ExecuteExternalFlowScriptFlowNodeEditor);
-	GDREGISTER_CLASS(MultiBranchExecutionFlowNodeEditor);
+	GDREGISTER_VIRTUAL_CLASS(MultiBranchExecutionFlowNodeEditor);
+	GDREGISTER_CLASS(SequentialBranchExecutionFlowNodeEditor);
+	GDREGISTER_CLASS(SimultaneousBranchExecutionFlowNodeEditor);
 	GDREGISTER_CLASS(PrintToConsoleFlowNodeEditor);
 	GDREGISTER_CLASS(WaitSecondsFlowNodeEditor);
 	GDREGISTER_CLASS(WhileExpressionTrueLoopFlowNodeEditor);

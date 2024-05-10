@@ -54,6 +54,8 @@ def get_doc_classes():
 		"PrintToConsoleFlowNodeEditor",
 		"ProcedureFlowNodeEditor",
 		"ReturnExpressionFlowNodeEditor",
+		"SequentialBranchExecutionFlowNodeEditor",
+		"SimultaneousBranchExecutionFlowNodeEditor",
 		"WaitSecondsFlowNodeEditor",
 		"WhileExpressionTrueLoopFlowNodeEditor",
 	]

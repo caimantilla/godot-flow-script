@@ -118,6 +118,7 @@ void FlowNodeCreationTree::reload_types()
 	root_item->set_selectable(MAIN_COLUMN, false);
 
 	PackedStringArray type_id_list = FlowTypeDB::get_singleton()->get_type_id_list();
+	type_id_list.sort(); // would be better to sort by names but idk how to use sort_custom in c++ so this will have to do
 
 	for (const String &type_id : type_id_list)
 	{
