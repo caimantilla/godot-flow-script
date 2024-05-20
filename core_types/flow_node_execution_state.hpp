@@ -16,9 +16,9 @@ class FlowNodeExecutionState final : public Object
 	friend class FlowFiber;
 
 private:
-	FlowBridge *flow_bridge;
-	FlowController *flow_controller;
-	FlowScript *flow_script;
+	FlowBridge *flow_bridge = nullptr;
+	FlowController *flow_controller = nullptr;
+	FlowScript *flow_script = nullptr;
 
 	void resume();
 

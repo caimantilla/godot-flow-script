@@ -14,7 +14,7 @@ class FlowType final : public Resource
 	friend class FlowTypeDB;
 
 private:
-	bool native; // native types are initialized by a module, should not be serialized
+	bool native = false; // native types are initialized by a module, should not be serialized
 	String id;
 	// String name;
 	String category;
@@ -22,7 +22,7 @@ private:
 	String icon; // icon name from EditorIcons, or a texture path
 	String node; // can be class name, script path...
 	String editor; // can be class name, script path, scene...
-	bool nameable; // user will be prompted to name new instances of the type, and be allowed to rename existing ones
+	bool nameable = false; // user will be prompted to name new instances of the type, and be allowed to rename existing ones
 
 	void set_native(const bool p_enabled);
 	void set_id(const String &p_id);

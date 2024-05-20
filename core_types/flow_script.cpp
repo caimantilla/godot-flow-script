@@ -497,7 +497,6 @@ FlowNodeIDArray FlowScript::_remove_multiple_flow_nodes(const FlowNodeIDArray &p
 
 FlowScript::FlowScript()
 {
-	next_flow_node_id = FLOW_NODE_ID_MIN;
 }
 
 

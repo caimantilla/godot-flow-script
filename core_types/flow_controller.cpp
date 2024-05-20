@@ -200,7 +200,6 @@ FlowFiber *FlowController::create_new_flow_fiber(const FlowNodeID p_initial_flow
 
 FlowController::FlowController()
 {
-	next_flow_fiber_id = FLOW_FIBER_ID_MIN;
 }
 
 

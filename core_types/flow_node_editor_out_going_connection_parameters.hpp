@@ -9,9 +9,9 @@ class FlowNodeEditorOutGoingConnectionParameters final : public RefCounted
 	GDCLASS(FlowNodeEditorOutGoingConnectionParameters, RefCounted);
 
 private:
-	FlowNodeID target_flow_node_id;
-	int origin_slot;
-	int origin_port;
+	FlowNodeID target_flow_node_id = FLOW_NODE_ID_NIL;
+	int origin_slot = -1;
+	int origin_port = -1;
 
 protected:
 	static void _bind_methods();

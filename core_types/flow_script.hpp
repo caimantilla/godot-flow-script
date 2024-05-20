@@ -15,7 +15,7 @@ class FlowScript final : public Node
 
 private:
 	HashMap<FlowNodeID, FlowNode *> flow_node_map;
-	FlowNodeID next_flow_node_id;
+	FlowNodeID next_flow_node_id = FLOW_NODE_ID_MIN;
 	
 	void on_flow_node_property_list_changed();
 	void on_flow_node_list_changed(const bool p_emit);

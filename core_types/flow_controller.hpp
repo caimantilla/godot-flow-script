@@ -16,7 +16,7 @@ private:
 	FlowScript *flow_script = nullptr;
 	Variant last_return_value = Variant();
 	HashMap<FlowFiberID, FlowFiber *> flow_fiber_map;
-	FlowFiberID next_flow_fiber_id;
+	FlowFiberID next_flow_fiber_id = FLOW_FIBER_ID_MIN;
 
 	void emit_flow_fiber_finished(const FlowFiberID flow_fiber_id, const Variant &p_return_value);
 	void emit_all_flow_fibers_finished(const Variant &p_return_value);
