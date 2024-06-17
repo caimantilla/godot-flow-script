@@ -20,7 +20,7 @@ void FlowNode::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("emit_changed"), &FlowNode::emit_changed);
 
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "flow_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "flow_node_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "set_flow_node_name", "get_flow_node_name");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "flow_type_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_type_id");
@@ -62,9 +62,7 @@ void FlowNode::emit_changed()
 void FlowNode::set_flow_node_id(const FlowNodeID p_new_id)
 {
 	if (p_new_id == flow_node_id)
-	{
 		return;
-	}
 
 	int old_id = flow_node_id;
 	flow_node_id = p_new_id;
@@ -73,9 +71,10 @@ void FlowNode::set_flow_node_id(const FlowNodeID p_new_id)
 }
 
 
-FlowScript *FlowNode::get_flow_script() const
+Ref<FlowScript> FlowNode::get_flow_script() const
 {
-	return flow_script;
+	Ref<FlowScript> ret = Ref<FlowScript>(flow_script);
+	return ret;
 }
 
 

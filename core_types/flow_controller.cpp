@@ -12,7 +12,7 @@ void FlowController::_bind_methods()
 	ClassDB::bind_method(D_METHOD("start", "initial_flow_node_name"), &FlowController::start);
 	ClassDB::bind_method(D_METHOD("start_with_return_callback", "initial_flow_node_name", "finished_callback"), &FlowController::start_with_return_callback);
 
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NODE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT), "set_flow_script", "get_flow_script");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT), "set_flow_script", "get_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_bridge", PROPERTY_HINT_NODE_TYPE, "FlowBridge", PROPERTY_USAGE_DEFAULT), "set_flow_bridge", "get_flow_bridge");
 
 	ADD_SIGNAL(MethodInfo("flow_fiber_finished", PropertyInfo(Variant::INT, "flow_fiber_id"), PropertyInfo(Variant::NIL, "return_value")));
@@ -20,13 +20,13 @@ void FlowController::_bind_methods()
 }
 
 
-void FlowController::set_flow_script(FlowScript *p_flow_script)
+void FlowController::set_flow_script(const Ref<FlowScript> &p_flow_script)
 {
 	flow_script = p_flow_script;
 }
 
 
-FlowScript *FlowController::get_flow_script() const
+Ref<FlowScript> FlowController::get_flow_script() const
 {
 	return flow_script;
 }
@@ -64,7 +64,7 @@ FlowFiber *FlowController::get_flow_fiber(const int p_flow_fiber_id) const
 
 void FlowController::start_with_return_callback(const String &p_initial_flow_node_name, const Callable &p_finished_callback)
 {
-	ERR_FAIL_NULL(flow_script);
+	ERR_FAIL_COND(!flow_script.is_valid());
 
 	FlowNode *initial_flow_node = flow_script->get_flow_node_by_name(p_initial_flow_node_name);
 	ERR_FAIL_NULL_MSG(initial_flow_node, vformat("Failed to find FlowNode with name \"%s\".", p_initial_flow_node_name));

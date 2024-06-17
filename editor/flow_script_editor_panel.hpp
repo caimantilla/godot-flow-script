@@ -14,7 +14,7 @@ class FlowScriptEditorPanel final : public MarginContainer
 	GDCLASS(FlowScriptEditorPanel, MarginContainer);
 
 private:
-	FlowScript *edited_flow_script = nullptr;
+	Ref<FlowScript> edited_flow_script;
 
 	VBoxContainer *main_vbox;
 	HBoxContainer *top_menu;
@@ -66,8 +66,8 @@ protected:
 	void _notification(int p_what);
 
 public:
-	void set_edited_flow_script(FlowScript *p_flow_script);
-	FlowScript *get_edited_flow_script() const;
+	void set_edited_flow_script(const Ref<FlowScript> &p_flow_script);
+	Ref<FlowScript> get_edited_flow_script() const;
 
 	Vector2 get_next_flow_node_editor_position() const;
 	Vector2 display_coordinates_to_graph_position(const Vector2i p_coordinates) const;

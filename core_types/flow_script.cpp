@@ -296,6 +296,12 @@ bool FlowScript::is_new_flow_node_id_valid(const FlowNodeID p_flow_node_id) cons
 }
 
 
+void FlowScript::on_flow_node_property_changed()
+{
+	emit_changed();
+}
+
+
 void FlowScript::on_flow_node_property_list_changed()
 {
 	notify_property_list_changed();
@@ -394,6 +400,7 @@ FlowNode *FlowScript::_create_new_flow_node(const FlowNodeID p_flow_node_id, con
 
 	new_node->flow_script = this;
 	new_node->flow_node_id = p_flow_node_id;
+	new_node->connect(CoreStringNames::get_singleton()->changed, callable_mp(this, &FlowScript::on_flow_node_property_changed));
 	new_node->connect(CoreStringNames::get_singleton()->property_list_changed, callable_mp(this, &FlowScript::on_flow_node_property_list_changed));
 
 	flow_node_map.insert(p_flow_node_id, new_node);

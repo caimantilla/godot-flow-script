@@ -22,7 +22,7 @@ void FlowNodeExecutionState::_bind_methods()
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_bridge", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowBridge")), "", "get_flow_bridge");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_controller", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowController")), "", "get_flow_controller");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 
 	ADD_SIGNAL(MethodInfo("resumed")); // Used by FlowNodes
 	ADD_SIGNAL(MethodInfo("finished", PropertyInfo(TYPE_FLOW_NODE_ID, "next_flow_node_id"), PropertyInfo(Variant::NIL, "return_value")));
@@ -42,7 +42,7 @@ FlowController *FlowNodeExecutionState::get_flow_controller() const
 }
 
 
-FlowScript *FlowNodeExecutionState::get_flow_script() const
+Ref<FlowScript> FlowNodeExecutionState::get_flow_script() const
 {
 	return flow_script;
 }

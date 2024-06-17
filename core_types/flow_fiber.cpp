@@ -20,7 +20,7 @@ void FlowFiber::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_FIBER_ID, "flow_fiber_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_flow_fiber_id");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_bridge", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowBridge")), "", "get_flow_bridge");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_controller", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowController")), "", "get_flow_controller");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_NONE, SNAME("FlowScript")), "", "get_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_node", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowNode")), "", "get_current_flow_node");
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "current_flow_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_current_flow_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_node_execution_state", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE, SNAME("FlowNodeExecutionState")), "", "get_current_flow_node_execution_state");
@@ -50,7 +50,7 @@ FlowController *FlowFiber::get_flow_controller() const
 }
 
 
-FlowScript *FlowFiber::get_flow_script() const
+Ref<FlowScript> FlowFiber::get_flow_script() const
 {
 	return flow_script;
 }
@@ -175,7 +175,7 @@ void FlowFiber::execute_flow_node_using_id(const FlowNodeID p_flow_node_id)
 
 void FlowFiber::execute_flow_node_using_name(const String &p_flow_node_name)
 {
-	ERR_FAIL_COND(flow_script == nullptr);
+	ERR_FAIL_COND(!flow_script.is_valid());
 	for (const KeyValue<FlowNodeID, FlowNode *> &map_entry : flow_script->flow_node_map)
 	{
 		FlowNode *current_flow_node = map_entry.value;

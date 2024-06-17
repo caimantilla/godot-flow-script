@@ -19,8 +19,8 @@ void ExecuteExternalFlowScriptFlowNode::_bind_methods()
 
 	ADD_PROPERTY(PropertyInfo(TYPE_FLOW_NODE_ID, "next_flow_node_id"), "set_next_flow_node_id", "get_next_flow_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "wait_external_flow_script_finished"), "set_wait_external_flow_script_finished", "is_wait_external_flow_script_finished_enabled");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "external_flow_script", PROPERTY_HINT_NODE_TYPE, "FlowScript"), "set_external_flow_script", "get_external_flow_script");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "external_call_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE), "set_external_call_name", "get_external_call_name");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "external_flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "set_external_flow_script", "get_external_flow_script");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "external_call_name", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT), "set_external_call_name", "get_external_call_name");
 }
 
 
@@ -31,7 +31,11 @@ void ExecuteExternalFlowScriptFlowNode::_validate_property(PropertyInfo &p_prope
 		if (p_property.name == "external_call_name")
 		{
 			PackedStringArray procedure_names = get_external_flow_script_procedure_names();
-			if (!procedure_names.is_empty())
+			if (procedure_names.is_empty())
+			{
+				p_property.usage = p_property.usage &~ PROPERTY_USAGE_EDITOR;
+			}
+			else
 			{
 				p_property.hint = PROPERTY_HINT_ENUM_SUGGESTION;
 				p_property.hint_string = String(",").join(procedure_names);
@@ -116,10 +120,11 @@ bool ExecuteExternalFlowScriptFlowNode::is_wait_external_flow_script_finished_en
 }
 
 
-void ExecuteExternalFlowScriptFlowNode::set_external_flow_script(FlowScript *p_external_flow_script)
+void ExecuteExternalFlowScriptFlowNode::set_external_flow_script(const Ref<FlowScript> &p_external_flow_script)
 {
 	bool is_same = p_external_flow_script == external_flow_script;
 	external_flow_script = p_external_flow_script;
+	
 	notify_property_list_changed();
 
 	if (!is_same)
@@ -129,7 +134,7 @@ void ExecuteExternalFlowScriptFlowNode::set_external_flow_script(FlowScript *p_e
 }
 
 
-FlowScript *ExecuteExternalFlowScriptFlowNode::get_external_flow_script() const
+Ref<FlowScript> ExecuteExternalFlowScriptFlowNode::get_external_flow_script() const
 {
 	return external_flow_script;
 }
@@ -155,10 +160,8 @@ String ExecuteExternalFlowScriptFlowNode::get_external_call_name() const
 
 PackedStringArray ExecuteExternalFlowScriptFlowNode::get_external_flow_script_procedure_names() const
 {
-	if (VariantUtilityFunctions::is_instance_valid(external_flow_script))
-	{
+	if (external_flow_script.is_valid())
 		return external_flow_script->get_flow_node_name_list();
-	}
 
 	return PackedStringArray();
 }

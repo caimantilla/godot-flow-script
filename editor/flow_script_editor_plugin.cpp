@@ -48,7 +48,7 @@ const Ref<Texture2D> FlowScriptEditorPlugin::get_icon() const
 {
 	if (!EditorInterface::get_singleton()->get_base_control()->has_theme_icon(SNAME("GraphEdit"), EditorStringNames::get_singleton()->EditorIcons))
 	{
-		return nullptr;
+		return Ref<Texture2D>();
 	}
 
 	Ref<Texture2D> base = EditorInterface::get_singleton()->get_base_control()->get_theme_icon(SNAME("GraphEdit"), EditorStringNames::get_singleton()->EditorIcons);
@@ -73,13 +73,13 @@ bool FlowScriptEditorPlugin::has_main_screen() const
 
 void FlowScriptEditorPlugin::edit(Object *p_object)
 {
-	FlowScript *flow_script = Object::cast_to<FlowScript>(p_object);
-	if (flow_script == nullptr)
-	{
-		return;
-	}
+	Ref<FlowScript> res;
+	res = p_object;
 
-	set_edited_flow_script(flow_script);
+	if (!res.is_valid())
+		return;
+
+	set_edited_flow_script(res);
 }
 
 
@@ -113,7 +113,7 @@ void FlowScriptEditorPlugin::make_visible(bool p_visible)
 }
 
 
-void FlowScriptEditorPlugin::set_edited_flow_script(FlowScript *p_flow_script)
+void FlowScriptEditorPlugin::set_edited_flow_script(const Ref<FlowScript> &p_flow_script)
 {
 	if (p_flow_script == edited_flow_script)
 	{
@@ -122,27 +122,27 @@ void FlowScriptEditorPlugin::set_edited_flow_script(FlowScript *p_flow_script)
 
 	clear_flow_node_inspector();
 
-	if (edited_flow_script != nullptr)
+	if (edited_flow_script.is_valid())
 	{
 		edited_flow_script->disconnect(SceneStringNames::get_singleton()->tree_exiting, on_flow_script_tree_exiting_callback);
 		edited_flow_script->disconnect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
-		edited_flow_script->disconnect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
+		// edited_flow_script->disconnect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
 	}
 
 	edited_flow_script = p_flow_script;
 
-	if (p_flow_script != nullptr)
+	if (edited_flow_script.is_valid())
 	{
-		p_flow_script->connect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
-		p_flow_script->connect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
-		p_flow_script->connect(SceneStringNames::get_singleton()->tree_exiting, on_flow_script_tree_exiting_callback);
+		edited_flow_script->connect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
+		edited_flow_script->connect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
+		// edited_flow_script->connect(SceneStringNames::get_singleton()->tree_exiting, on_flow_script_tree_exiting_callback);
 	}
 
 	flow_script_editor_panel->set_edited_flow_script(p_flow_script);
 }
 
 
-FlowScript *FlowScriptEditorPlugin::get_edited_flow_script() const
+Ref<FlowScript> FlowScriptEditorPlugin::get_edited_flow_script() const
 {
 	return edited_flow_script;
 }
@@ -159,7 +159,7 @@ void FlowScriptEditorPlugin::inspect_flow_node(const FlowNodeID p_flow_node_id)
 	current_inspected_flow_node_id = p_flow_node_id;
 	FlowNode *node_to_inspect = nullptr;
 
-	if (edited_flow_script != nullptr && edited_flow_script->has_flow_node(p_flow_node_id))
+	if (edited_flow_script.is_valid() && edited_flow_script->has_flow_node(p_flow_node_id))
 	{
 		node_to_inspect = edited_flow_script->get_flow_node(p_flow_node_id);
 	}
@@ -194,7 +194,7 @@ void FlowScriptEditorPlugin::on_flow_script_flow_node_id_changed(const FlowNodeI
 
 void FlowScriptEditorPlugin::on_flow_script_tree_exiting()
 {
-	set_edited_flow_script(nullptr);
+	set_edited_flow_script(Ref<FlowScript>());
 }
 
 

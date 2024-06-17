@@ -1,13 +1,13 @@
 #ifndef FLOW_SCRIPT_HPP
 #define FLOW_SCRIPT_HPP
 
-#include "scene/main/node.h"
+#include "core/io/resource.h"
 #include "flow_node.hpp"
 #include "../utilities/random_id_generator.hpp"
 
-class FlowScript final : public Node
+class FlowScript final : public Resource
 {
-	GDCLASS(FlowScript, Node);
+	GDCLASS(FlowScript, Resource);
 
 	friend class FlowFiber;
 	friend class FlowController;
@@ -17,6 +17,7 @@ private:
 	HashMap<FlowNodeID, FlowNode *> flow_node_map;
 	FlowNodeID next_flow_node_id = FLOW_NODE_ID_MIN;
 	
+	void on_flow_node_property_changed();
 	void on_flow_node_property_list_changed();
 	void on_flow_node_list_changed(const bool p_emit);
 	void on_flow_node_id_changed(const FlowNodeID p_old_id, const FlowNodeID p_new_id, const bool p_emit);

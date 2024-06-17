@@ -13,7 +13,7 @@ class FlowScriptEditorPlugin final : public EditorPlugin
 
 private:
 	FlowNodeID current_inspected_flow_node_id;
-	FlowScript *edited_flow_script = nullptr;
+	Ref<FlowScript> edited_flow_script;
 	// Store the editor location so that it can be used even if the user changes, since a restart is required for the location change to apply.
 	FlowEditorConstants::FlowGUIEditorLocation flow_script_editor_panel_location;
 	FlowScriptEditorPanel *flow_script_editor_panel;
@@ -47,8 +47,8 @@ public:
 	virtual bool handles(Object *p_object) const override;
 	virtual void make_visible(bool p_visible) override;
 
-	void set_edited_flow_script(FlowScript *p_flow_script);
-	FlowScript *get_edited_flow_script() const;
+	void set_edited_flow_script(const Ref<FlowScript> &p_flow_script);
+	Ref<FlowScript> get_edited_flow_script() const;
 
 	FlowScriptEditorPlugin();
 	~FlowScriptEditorPlugin();

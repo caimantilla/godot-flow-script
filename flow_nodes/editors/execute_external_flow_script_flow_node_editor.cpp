@@ -37,39 +37,34 @@ TypedArray<FlowNodeEditorOutGoingConnectionParameters> ExecuteExternalFlowScript
 void ExecuteExternalFlowScriptFlowNodeEditor::_flow_node_updated()
 {
 	String new_text;
-	if (!VariantUtilityFunctions::is_instance_valid(get_eefs_node()->get_external_flow_script()))
+
+	Ref<FlowScript> ext_script = get_eefs_node()->get_external_flow_script();
+	String ext_call_name = get_eefs_node()->get_external_call_name();
+
+	if (!ext_script.is_valid())
 	{
 		new_text = "No FlowScript assigned.";
 	}
 	else
 	{
 		String script_str;
-		if (get_eefs_node()->get_external_flow_script()->get_owner() != nullptr)
-		{
-			script_str = get_eefs_node()->get_external_flow_script()->get_owner()->get_path_to(get_eefs_node()->get_external_flow_script());
-		}
-		else
-		{
-			script_str = get_eefs_node()->get_external_flow_script()->get_name();
-		}
 
-		if (get_eefs_node()->get_external_flow_script()->has_flow_node_with_name(get_eefs_node()->get_external_call_name()))
-		{
-			String call_str = get_eefs_node()->get_external_call_name();
+		script_str = ext_script->get_path();
 
+		if (ext_script->has_flow_node_with_name(ext_call_name))
+		{
 			if (get_eefs_node()->is_wait_external_flow_script_finished_enabled())
 			{
-
-				new_text = vformat("Wait for %s to finish at %s.", call_str, script_str);
+				new_text = vformat("Wait for %s to finish on \"%s.\"", ext_call_name, script_str);
 			}
 			else
 			{
-				new_text = vformat("Trigger %s at %s.", call_str, script_str);
+				new_text = vformat("Trigger %s on \"%s\".", ext_call_name, script_str);
 			}
 		}
 		else
 		{
-			new_text = vformat("No valid procedure for %s.", script_str);
+			new_text = vformat("No valid procedure for \"%s\".", script_str);
 		}
 	}
 

@@ -25,7 +25,7 @@ void FlowScriptEditorGraph::_notification(int p_what)
 			init_signals();
 			break;
 		case NOTIFICATION_PROCESS:
-			if (edited_flow_script != nullptr)
+			if (edited_flow_script.is_valid())
 			{
 				if (graph_nodes_redraw_queued)
 				{
@@ -44,7 +44,7 @@ void FlowScriptEditorGraph::_notification(int p_what)
 }
 
 
-void FlowScriptEditorGraph::set_edited_flow_script(FlowScript *p_flow_script)
+void FlowScriptEditorGraph::set_edited_flow_script(const Ref<FlowScript> &p_flow_script)
 {
 	ERR_FAIL_COND_MSG(!is_ready(), "Attempted to assign a FlowScript to the FlowScriptEditorGraph before ready.");
 
@@ -54,7 +54,7 @@ void FlowScriptEditorGraph::set_edited_flow_script(FlowScript *p_flow_script)
 	}
 
 
-	if (edited_flow_script != nullptr)
+	if (edited_flow_script.is_valid())
 	{
 		edited_flow_script->disconnect(SNAME("flow_node_added"), on_flow_script_flow_node_added_callback);
 		edited_flow_script->disconnect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
@@ -66,13 +66,13 @@ void FlowScriptEditorGraph::set_edited_flow_script(FlowScript *p_flow_script)
 	edited_flow_script = p_flow_script;
 
 	// Immediately clear everything out if the new script is null, otherwise queue for the next frame
-	if (p_flow_script != nullptr)
+	if (edited_flow_script.is_valid())
 	{
-		p_flow_script->connect(SNAME("flow_node_added"), on_flow_script_flow_node_added_callback);
-		p_flow_script->connect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
-		p_flow_script->connect(SNAME("flow_node_removed"), on_flow_script_flow_node_removed_callback);
-		p_flow_script->connect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
-		p_flow_script->connect(SNAME("multiple_flow_nodes_removed"), on_flow_script_multiple_flow_nodes_removed_callback);
+		edited_flow_script->connect(SNAME("flow_node_added"), on_flow_script_flow_node_added_callback);
+		edited_flow_script->connect(SNAME("removing_flow_node"), on_flow_script_removing_flow_node_callback);
+		edited_flow_script->connect(SNAME("flow_node_removed"), on_flow_script_flow_node_removed_callback);
+		edited_flow_script->connect(SNAME("flow_node_id_changed"), on_flow_script_flow_node_id_changed_callback);
+		edited_flow_script->connect(SNAME("multiple_flow_nodes_removed"), on_flow_script_multiple_flow_nodes_removed_callback);
 	}
 
 	graph_nodes_redraw_queued = false;
@@ -81,7 +81,7 @@ void FlowScriptEditorGraph::set_edited_flow_script(FlowScript *p_flow_script)
 }
 
 
-FlowScript *FlowScriptEditorGraph::get_edited_flow_script() const
+Ref<FlowScript> FlowScriptEditorGraph::get_edited_flow_script() const
 {
 	return edited_flow_script;
 }
@@ -179,15 +179,11 @@ void FlowScriptEditorGraph::clear_graph_connections()
 void FlowScriptEditorGraph::redraw_graph_nodes()
 {
 	clear_graph_nodes();
-	if (edited_flow_script == nullptr)
-	{
+	if (!edited_flow_script.is_valid())
 		return;
-	}
 
 	for (const KeyValue<FlowNodeID, FlowNode *> &script_map_entry : edited_flow_script->flow_node_map)
-	{
 		instantiate_editor_for_flow_node(script_map_entry.key);
-	}
 
 	redraw_graph_connections();
 }
@@ -228,7 +224,7 @@ void FlowScriptEditorGraph::redraw_graph_connections()
 
 FlowNodeEditor *FlowScriptEditorGraph::instantiate_editor_for_flow_node(const FlowNodeID p_flow_node_id)
 {
-	ERR_FAIL_NULL_V(edited_flow_script, nullptr);
+	ERR_FAIL_COND_V(!edited_flow_script.is_valid(), nullptr);
 	ERR_FAIL_COND_V(!edited_flow_script->has_flow_node(p_flow_node_id), nullptr);
 	ERR_FAIL_COND_V(has_editor_for_flow_node_with_id(p_flow_node_id), nullptr);
 
@@ -268,7 +264,7 @@ void FlowScriptEditorGraph::delete_editor_for_flow_node(const FlowNodeID p_flow_
 
 void FlowScriptEditorGraph::delete_invalid_flow_node_editors()
 {
-	if (edited_flow_script == nullptr)
+	if (!edited_flow_script.is_valid())
 	{
 		clear_graph_nodes();
 		return;

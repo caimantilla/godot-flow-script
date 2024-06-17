@@ -19,7 +19,7 @@ private:
 	FlowFiberID flow_fiber_id;
 	FlowBridge *flow_bridge = nullptr;
 	FlowController *flow_controller = nullptr;
-	FlowScript *flow_script = nullptr;
+	Ref<FlowScript> flow_script;
 
 	FlowNode *current_flow_node = nullptr;
 	FlowNodeExecutionState *current_flow_node_execution_state = nullptr;
@@ -50,7 +50,7 @@ public:
 	FlowFiberID get_flow_fiber_id() const;
 	FlowBridge *get_flow_bridge() const;
 	FlowController *get_flow_controller() const;
-	FlowScript *get_flow_script() const;
+	Ref<FlowScript> get_flow_script() const;
 
 	FlowNode *get_current_flow_node() const;
 	FlowNodeID get_current_flow_node_id() const;

@@ -27,7 +27,7 @@ void FlowScriptEditorPanel::_notification(int p_what)
 }
 
 
-void FlowScriptEditorPanel::set_edited_flow_script(FlowScript *p_flow_script)
+void FlowScriptEditorPanel::set_edited_flow_script(const Ref<FlowScript> &p_flow_script)
 {
 	if (edited_flow_script == p_flow_script)
 	{
@@ -40,7 +40,7 @@ void FlowScriptEditorPanel::set_edited_flow_script(FlowScript *p_flow_script)
 }
 
 
-FlowScript* FlowScriptEditorPanel::get_edited_flow_script() const
+Ref<FlowScript> FlowScriptEditorPanel::get_edited_flow_script() const
 {
 	return edited_flow_script;
 }
@@ -77,10 +77,8 @@ int FlowScriptEditorPanel::get_editor_margin() const
 
 void FlowScriptEditorPanel::show_flow_node_creation_dialog()
 {
-	if (dlg_flow_node_creation_menu->is_visible() || edited_flow_script == nullptr)
-	{
+	if (dlg_flow_node_creation_menu->is_visible() || !edited_flow_script.is_valid())
 		return;
-	}
 
 	update_next_flow_node_editor_position();
 
@@ -140,7 +138,7 @@ void FlowScriptEditorPanel::update_next_flow_node_editor_position()
 
 void FlowScriptEditorPanel::update_menu_visibility()
 {
-	if (edited_flow_script == nullptr)
+	if (!edited_flow_script.is_valid())
 	{
 		main_vbox->hide();
 		no_flow_script_container->show();
@@ -170,7 +168,7 @@ void FlowScriptEditorPanel::initialize_position_of_flow_node_editor_to_mouse_cur
 
 void FlowScriptEditorPanel::create_new_flow_node(const String &p_flow_type_id)
 {
-	ERR_FAIL_NULL(edited_flow_script);
+	ERR_FAIL_COND(!edited_flow_script.is_valid());
 	ERR_FAIL_COND(!FlowTypeDB::get_singleton()->has_type(p_flow_type_id));
 
 	FlowNode *new_node = edited_flow_script->create_new_flow_node(p_flow_type_id);
@@ -194,14 +192,14 @@ void FlowScriptEditorPanel::create_new_flow_node(const String &p_flow_type_id)
 
 void FlowScriptEditorPanel::delete_multiple_flow_nodes(const FlowNodeIDArray &p_flow_node_id_list)
 {
-	ERR_FAIL_NULL(edited_flow_script);
+	ERR_FAIL_COND(!edited_flow_script.is_valid());
 	edited_flow_script->remove_multiple_flow_nodes(p_flow_node_id_list);
 }
 
 
 bool FlowScriptEditorPanel::change_flow_node_id(const FlowNodeID p_from, const FlowNodeID p_to)
 {
-	ERR_FAIL_NULL_V(edited_flow_script, false);
+	ERR_FAIL_COND_V(!edited_flow_script.is_valid(), false);
 	return edited_flow_script->change_flow_node_id(p_from, p_to);
 }
 
@@ -232,10 +230,10 @@ void FlowScriptEditorPanel::on_graph_flow_nodes_deletion_requested(const FlowNod
 
 void FlowScriptEditorPanel::on_dlg_flow_node_creation_menu_flow_type_chosen(const String &p_flow_type_id)
 {
-	ERR_FAIL_NULL(edited_flow_script);
+	ERR_FAIL_COND(!edited_flow_script.is_valid());
 	
 	dlg_flow_node_creation_menu->hide();
-	if (edited_flow_script != nullptr && FlowTypeDB::get_singleton()->has_type(p_flow_type_id))
+	if (FlowTypeDB::get_singleton()->has_type(p_flow_type_id))
 	{
 		Ref<FlowType> type = FlowTypeDB::get_singleton()->get_type(p_flow_type_id);
 		create_new_flow_node(p_flow_type_id);

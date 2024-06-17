@@ -13,7 +13,7 @@ class FlowController final : public Node
 
 private:
 	FlowBridge *flow_bridge = nullptr;
-	FlowScript *flow_script = nullptr;
+	Ref<FlowScript> flow_script;
 	Variant last_return_value = Variant();
 	HashMap<FlowFiberID, FlowFiber *> flow_fiber_map;
 	FlowFiberID next_flow_fiber_id = FLOW_FIBER_ID_MIN;
@@ -35,8 +35,8 @@ protected:
 	static void _bind_methods();
 
 public:
-	void set_flow_script(FlowScript *p_flow_script);
-	FlowScript *get_flow_script() const;
+	void set_flow_script(const Ref<FlowScript> &p_flow_script);
+	Ref<FlowScript> get_flow_script() const;
 
 	void set_flow_bridge(FlowBridge *p_flow_bridge);
 	FlowBridge *get_flow_bridge() const;

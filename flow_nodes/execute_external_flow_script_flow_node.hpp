@@ -11,7 +11,7 @@ class ExecuteExternalFlowScriptFlowNode final : public FlowNode {
 private:
 	FlowNodeID next_flow_node_id = FLOW_NODE_ID_NIL;
 	bool wait_external_flow_script_finished = false;
-	FlowScript *external_flow_script = nullptr;
+	Ref<FlowScript> external_flow_script;
 	String external_call_name;
 
 	PackedStringArray get_external_flow_script_procedure_names() const;
@@ -33,8 +33,8 @@ public:
 	void set_wait_external_flow_script_finished(const bool p_enabled);
 	bool is_wait_external_flow_script_finished_enabled() const;
 
-	void set_external_flow_script(FlowScript *p_external_flow_script);
-	FlowScript *get_external_flow_script() const;
+	void set_external_flow_script(const Ref<FlowScript> &p_external_flow_script);
+	Ref<FlowScript> get_external_flow_script() const;
 
 	void set_external_call_name(const String &p_external_call_name);
 	String get_external_call_name() const;

@@ -18,7 +18,7 @@ class FlowScriptEditorGraph final : public GraphEdit
 private:
 	bool graph_nodes_redraw_queued = false;
 	bool graph_connections_redraw_queued = false;
-	FlowScript *edited_flow_script = nullptr;
+	Ref<FlowScript> edited_flow_script;
 	HashMap<FlowNodeID, FlowNodeEditor *> flow_node_editor_map;
 
 	void init_signals();
@@ -81,8 +81,8 @@ protected:
 	void _notification(int p_what);
 
 public:
-	void set_edited_flow_script(FlowScript *p_flow_script);
-	FlowScript *get_edited_flow_script() const;
+	void set_edited_flow_script(const Ref<FlowScript> &p_flow_script);
+	Ref<FlowScript> get_edited_flow_script() const;
 	bool has_editor_for_flow_node_with_id(const FlowNodeID p_flow_node_id) const;
 	FlowNodeEditor *get_editor_for_flow_node_using_id(const FlowNodeID p_flow_node_id) const;
 	Vector<FlowNodeEditor *> get_flow_node_editor_list() const;
