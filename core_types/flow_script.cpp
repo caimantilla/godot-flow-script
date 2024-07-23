@@ -382,6 +382,36 @@ bool FlowScript::update_next_flow_node_id()
 }
 
 
+Dictionary FlowScript::get_snapshot_dict() const
+{
+	Dictionary snapshot;
+
+	for (const KeyValue<FlowNodeID, FlowNode *> &map_entry : flow_node_map)
+	{
+		Dictionary dat;
+		
+		List<PropertyInfo> node_p_list;
+		map_entry.value->get_property_list(&node_p_list);
+
+		for (const PropertyInfo &p : node_p_list)
+		{
+			if (!p.usage & PROPERTY_USAGE_STORAGE || p.name == "script")
+				continue;
+			
+			bool ok = false;
+			Variant val = map_entry.value->get(p.name, &ok);
+
+			if (ok)
+				dat[map_entry.key] = val;
+		}
+
+		snapshot[map_entry.key] = dat;
+	}
+
+	return snapshot;
+}
+
+
 FlowNode *FlowScript::_create_new_flow_node(const FlowNodeID p_flow_node_id, const String &p_flow_type_id, const bool p_emit)
 {
 	if (!is_new_flow_node_id_valid(p_flow_node_id))

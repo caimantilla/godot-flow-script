@@ -24,6 +24,8 @@ private:
 	void clear_references_to_multiple_flow_nodes(const FlowNodeIDArray &p_flow_node_ids);
 	bool parse_flow_node_property(const StringName &p_in_property, StringName &p_out_property, FlowNodeID &p_out_flow_node_id) const;
 	bool update_next_flow_node_id();
+	void set_snapshot_dict(const Dictionary &p_dict);
+	Dictionary get_snapshot_dict() const;
 
 	FlowNode *_create_new_flow_node(const FlowNodeID p_flow_node_id, const String &p_flow_type_id, const bool p_emit);
 	bool _remove_flow_node(const FlowNodeID p_flow_node_id, const bool p_emit);

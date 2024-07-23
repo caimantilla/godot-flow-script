@@ -104,7 +104,7 @@ FlowNodeEditor *FlowFactory::create_flow_node_editor_for_flow_type(const String 
 
 FlowFactory::FlowFactory()
 {
-	CRASH_COND_MSG(singleton != nullptr, "FlowFactory is a singleton and may not be instantiated multiple times.");
+	CRASH_COND_MSG(singleton != nullptr, "FlowFactory is a singleton and cannot be instantiated multiple times.");
 	singleton = this;
 }
 
