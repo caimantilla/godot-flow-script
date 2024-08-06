@@ -19,7 +19,7 @@ public:
 	enum : FlowScriptExecutionFiberID
 	{
 		FIBER_ID_INVALID = -1,
-		FIBERS_MAX = 28,
+		FIBERS_MAX = 31,
 	};
 
 private:
@@ -30,7 +30,7 @@ private:
 	FlowScriptNodeContext fiber_list[FIBERS_MAX];
 	FlowScriptExecutionFiberID cache_next_free_fiber_id = 0;
 
-	void update_cache_next_free_fiber_id(const FlowScriptExecutionFiberID p_min_new_id);
+	void update_cache_next_free_fiber_id();
 
 protected:
 	static void _bind_methods();

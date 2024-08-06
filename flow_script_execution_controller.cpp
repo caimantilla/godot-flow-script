@@ -75,7 +75,7 @@ void FlowScriptExecutionController::set_state(const Dictionary &p_state)
 			fiber_list[fiber_id].set_state(fiber_state);
 		}
 	}
-	update_cache_next_free_fiber_id(0);
+	update_cache_next_free_fiber_id();
 }
 
 
@@ -135,7 +135,7 @@ void FlowScriptExecutionController::execute_branch_with_finish_callback(const Fl
 	ERR_FAIL_COND(!flow_script.is_valid());
 	ERR_FAIL_COND(!can_create_fiber());
 
-	update_cache_next_free_fiber_id(cache_next_free_fiber_id + 1);
+	update_cache_next_free_fiber_id();
 
 	fiber_list[cache_next_free_fiber_id].finished_callback = p_finish_callback;
 	fiber_list[cache_next_free_fiber_id].advance_to_node(p_initial_node_id);
@@ -203,16 +203,16 @@ int32_t FlowScriptExecutionController::internal_execute_sub_branch_list(const Li
 			{
 				ret_await_ids = 1 << cache_next_free_fiber_id;
 			}
-			update_cache_next_free_fiber_id(cache_next_free_fiber_id + 1);
+			update_cache_next_free_fiber_id();
 		}
 	}
 	return ret_await_ids;
 }
 
 
-void FlowScriptExecutionController::update_cache_next_free_fiber_id(const FlowScriptExecutionFiberID p_min_new_id)
+void FlowScriptExecutionController::update_cache_next_free_fiber_id()
 {
-	for (FlowScriptExecutionFiberID curr_id = p_min_new_id; curr_id < FIBERS_MAX; curr_id++)
+	for (FlowScriptExecutionFiberID curr_id = 0; curr_id < FIBERS_MAX; curr_id++)
 	{
 		if (!fiber_list[curr_id].is_active())
 		{
