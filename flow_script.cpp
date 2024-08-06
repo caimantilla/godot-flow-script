@@ -280,6 +280,18 @@ FlowScriptNodeID FlowScript::get_node_id_by_name(const String &p_node_name) cons
 }
 
 
+FlowScriptNodeID FlowScript::add_node_to_first_available_slot(const Ref<FlowScriptNode> &p_node)
+{
+	update_cache_next_available_node_id();
+	ERR_FAIL_COND_V(cache_next_available_node_id == NODE_ID_INVALID, NODE_ID_INVALID);
+	FlowScriptNodeInstance instance;
+	instance.node = p_node;
+	node_map.insert(cache_next_available_node_id, instance);
+	emit_signal(SNAME("node_added"), cache_next_available_node_id);
+	return cache_next_available_node_id;
+}
+
+
 void FlowScript::update_cache_connection_data() const
 {
 	if (!cache_connection_data_dirty)
