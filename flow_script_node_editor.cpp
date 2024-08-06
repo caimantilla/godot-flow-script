@@ -224,3 +224,8 @@ int FlowScriptNodeEditor::output_slot_to_port(const int p_slot) const
 	}
 	return port;
 }
+
+
+FlowScriptNodeEditor::FlowScriptNodeEditor()
+{
+}

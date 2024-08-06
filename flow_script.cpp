@@ -67,7 +67,7 @@ bool FlowScript::_set(const StringName &p_name, const Variant &p_value)
 			if (node_instance_property == "node")
 			{
 				ERR_FAIL_COND(p_value.get_type() != Variant::OBJECT);
-				node_map.get(node_id).node = p_value;
+				node_map.get(node_id).set_node(p_value);
 			}
 			else if (node_instance_property == "position")
 			{
@@ -285,7 +285,7 @@ FlowScriptNodeID FlowScript::add_node_to_first_available_slot(const Ref<FlowScri
 	update_cache_next_available_node_id();
 	ERR_FAIL_COND_V(cache_next_available_node_id == NODE_ID_INVALID, NODE_ID_INVALID);
 	FlowScriptNodeInstance instance;
-	instance.node = p_node;
+	instance.set_node(p_node);
 	node_map.insert(cache_next_available_node_id, instance);
 	emit_signal(SNAME("node_added"), cache_next_available_node_id);
 	return cache_next_available_node_id;

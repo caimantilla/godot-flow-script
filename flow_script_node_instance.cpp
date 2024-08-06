@@ -2,6 +2,22 @@
 #include "flow_script.hpp"
 
 
+void FlowScriptNodeInstance::set_node(const Ref<FlowScriptNode> &p_node)
+{
+#ifdef TOOLS_ENABLED
+	if (node.is_valid())
+	{
+		node->editor_dependency_dec();
+	}
+	if (p_node.is_valid())
+	{
+		p_node->editor_dependency_inc();
+	}
+#endif // TOOLS_ENABLED
+	node = p_node;
+}
+
+
 void FlowScriptNodeInstance::get_state_json(Dictionary &r_state)
 {
 	if (node.is_valid())

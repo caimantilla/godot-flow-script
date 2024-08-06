@@ -19,6 +19,7 @@ public:
 	// Connections are stored as a map from a connection slot -> node ID list
 	HashMap<uint8_t, Vector<FlowScriptNodeID>> connections;
 
+	void set_node(const Ref<FlowScriptNode> &p_node);
 	void set_state_json(const Dictionary &p_state);
 	void get_state_json(Dictionary &r_state);
 	bool is_valid() const;

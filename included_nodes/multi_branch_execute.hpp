@@ -37,7 +37,7 @@ public:
 VARIANT_ENUM_CAST(FlowScriptNodeMultiBranchExecuteBase::ConnectionList);
 
 
-class FlowScriptNodeMultiBranchExecuteSequential : public FlowScriptNodeMultiBranchExecuteBase
+class FlowScriptNodeMultiBranchExecuteSequential final : public FlowScriptNodeMultiBranchExecuteBase
 {
 	GDCLASS(FlowScriptNodeMultiBranchExecuteSequential, FlowScriptNodeMultiBranchExecuteBase);
 
@@ -64,7 +64,7 @@ public:
 VARIANT_ENUM_CAST(FlowScriptNodeMultiBranchExecuteSequential::TemporaryVariable);
 
 
-class FlowScriptNodeMultiBranchExecuteSimultaneous : public FlowScriptNodeMultiBranchExecuteBase
+class FlowScriptNodeMultiBranchExecuteSimultaneous final : public FlowScriptNodeMultiBranchExecuteBase
 {
 	GDCLASS(FlowScriptNodeMultiBranchExecuteSimultaneous, FlowScriptNodeMultiBranchExecuteBase);
 
