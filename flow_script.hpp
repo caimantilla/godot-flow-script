@@ -5,6 +5,7 @@
 #include "core/templates/local_vector.h"
 #include "core/io/resource.h"
 #include "typedefs.hpp"
+#include "flow_script_include_instance.hpp"
 
 
 class FlowScriptNode;
@@ -22,8 +23,14 @@ public:
 		NODE_ID_MIN = 1,
 		NODE_ID_MAX = 9999,
 	};
+	enum : FlowScriptIncludeID
+	{
+		INCLUDE_FLOW_SCRIPT_ID_INVALID = -1,
+		INCLUDE_FLOW_SCRIPT_MAX = 20,
+	};
 
 private:
+	FlowScriptIncludeInstance script_includes[INCLUDE_FLOW_SCRIPT_MAX];
 	mutable PackedInt32Array cache_connection_data;
 	mutable bool cache_connection_data_dirty = true;
 	mutable Vector<FlowScriptNodeID> cache_node_id_array;
@@ -32,10 +39,7 @@ private:
 	mutable bool cache_next_available_node_id_dirty = true;
 	mutable FlowScriptNodeID cache_next_available_node_id = NODE_ID_MIN;
 
-	void update_cache_connection_data() const;
-	void update_cache_node_id_array() const;
 	void update_cache_next_available_node_id() const;
-	PackedInt32Array bind_get_node_ids() const;
 
 protected:
 	static void _bind_methods();
@@ -49,8 +53,10 @@ public:
 	void set_graph_connection_data(const PackedInt32Array &p_data);
 	PackedInt32Array get_graph_connection_data() const;
 
+	bool includes_flow_script(const Ref<FlowScript> &p_other_flow_script) const; // DO NOT ALLOW CIRCULAR DEPENDENCIES.
+	bool has_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
+	FlowScriptIncludeInstance get_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
 	bool is_node_slot_available(const FlowScriptNodeID p_node_id) const;
-	Vector<FlowScriptNodeID> *get_node_id_list() const;
 	bool has_node(const FlowScriptNodeID p_node_id) const;
 	Ref<FlowScriptNode> get_node_ref(const FlowScriptNodeID p_node_id) const;
 	FlowScriptNode *get_node_ptr(const FlowScriptNodeID p_node_id) const;
@@ -65,6 +71,10 @@ public:
 	bool remove_node(const FlowScriptNodeID p_node_id);
 	FlowScriptNodeID get_node_id_by_name(const String &p_node_name) const;
 	FlowScriptNodeID add_node_to_first_available_slot(const Ref<FlowScriptNode> &p_node);
+	void set_include_flow_script(const FlowScriptIncludeID p_include_id, const Ref<FlowScript> &p_flow_script);
+	Ref<FlowScript> get_include_flow_script(const FlowScriptIncludeID p_include_id) const;
+	void set_include_flow_script_position(const FlowScriptIncludeID p_include_id, const Point2i &p_position);
+	Point2i get_include_flow_script_position(const FlowScriptIncludeID p_include_id) const;
 
 	FlowScript();
 };

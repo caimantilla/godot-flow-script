@@ -19,13 +19,4 @@ public:
 };
 
 
-class FlowScriptNodeEditorProcedure : public FlowScriptNodeEditor
-{
-	GDCLASS(FlowScriptNodeEditorProcedure, FlowScriptNodeEditor);
-
-public:
-	FlowScriptNodeEditorProcedure();
-};
-
-
 #endif // FLOW_SCRIPT_NODE_PROCEDURE_HPP

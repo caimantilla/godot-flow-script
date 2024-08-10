@@ -1,4 +1,5 @@
 #include "flow_script_node_editor.hpp"
+#include "scene/gui/label.h"
 
 
 void FlowScriptNodeEditor::_bind_methods()
@@ -46,6 +47,13 @@ void FlowScriptNodeEditor::permit_editing()
 bool FlowScriptNodeEditor::is_editable() const
 {
 	return current_editable;
+}
+
+
+bool FlowScriptNodeEditor::is_edited_flow_script_root() const
+{
+	// TODO: Implement this method... SERIOUSLY!
+	return true;
 }
 
 
@@ -161,7 +169,7 @@ String FlowScriptNodeEditor::get_new_tooltip_text() const
 }
 
 
-void FlowScriptNodeEditor::set_outgoing_connection(FlowScriptNodeEditorOutgoingConnectionParameters p_connection)
+void FlowScriptNodeEditor::set_outgoing_connection(const FlowScriptNodeEditorOutgoingConnectionParameters &p_connection)
 {
 	Dictionary dict = p_connection.to_dictionary();
 	GDVIRTUAL_CALL(_set_outgoing_connection, dict);

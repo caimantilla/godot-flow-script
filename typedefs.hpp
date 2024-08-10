@@ -5,6 +5,7 @@
 #include "core/typedefs.h"
 
 
+typedef int8_t FlowScriptIncludeID;
 typedef int16_t FlowScriptNodeID;
 typedef int32_t FlowScriptExecutionFiberID;
 

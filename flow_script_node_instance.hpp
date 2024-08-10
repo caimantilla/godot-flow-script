@@ -2,10 +2,11 @@
 #define FLOW_SCRIPT_NODE_INSTANCE_HPP
 
 
+#include "flow_script_node.hpp"
+#include "flow_script_node_reference.hpp"
 #include "core/math/vector2i.h"
 #include "core/templates/hash_map.h"
 #include "core/variant/callable.h"
-#include "flow_script_node.hpp"
 
 
 class FlowScriptNodeInstance
@@ -17,7 +18,7 @@ public:
 	// Maybe position should be stored as Point2 instead?
 	Point2i position;
 	// Connections are stored as a map from a connection slot -> node ID list
-	HashMap<uint8_t, Vector<FlowScriptNodeID>> connections;
+	HashMap<uint8_t, Vector<FlowScriptNodeConnection>> connections;
 
 	void set_node(const Ref<FlowScriptNode> &p_node);
 	void set_state_json(const Dictionary &p_state);

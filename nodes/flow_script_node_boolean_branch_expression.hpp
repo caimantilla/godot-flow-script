@@ -3,6 +3,8 @@
 
 
 #include "common.hpp"
+#include "scene/gui/label.h"
+#include "scene/gui/rich_text_label.h"
 
 
 class FlowScriptNodeBooleanBranchExpression final : public FlowScriptNode

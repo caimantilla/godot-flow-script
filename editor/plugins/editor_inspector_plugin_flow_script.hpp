@@ -1,13 +1,13 @@
-#ifndef FLOW_SCRIPT_EDITOR_INSPECTOR_PLUGIN_HPP
-#define FLOW_SCRIPT_EDITOR_INSPECTOR_PLUGIN_HPP
+#ifndef EDITOR_INSPECTOR_PLUGIN_FLOW_SCRIPT_HPP
+#define EDITOR_INSPECTOR_PLUGIN_FLOW_SCRIPT_HPP
 
 
 #include "editor/editor_inspector.h"
 
 
-class FlowScriptEditorInspectorPlugin : public EditorInspectorPlugin
+class EditorInspectorPluginFlowScript : public EditorInspectorPlugin
 {
-	GDCLASS(FlowScriptEditorInspectorPlugin, EditorInspectorPlugin);
+	GDCLASS(EditorInspectorPluginFlowScript, EditorInspectorPlugin);
 
 public:
 	virtual bool can_handle(Object *p_object) override;
@@ -15,4 +15,4 @@ public:
 };
 
 
-#endif // FLOW_SCRIPT_EDITOR_INSPECTOR_PLUGIN_HPP
+#endif // EDITOR_INSPECTOR_PLUGIN_FLOW_SCRIPT_HPP

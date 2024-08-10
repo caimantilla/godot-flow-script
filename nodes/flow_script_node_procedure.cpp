@@ -1,4 +1,5 @@
 #include "procedure.hpp"
+#include "scene/gui/label.h"
 
 
 void FlowScriptNodeProcedure::exec_step(FlowScriptNodeContext *p_context)
@@ -10,9 +11,4 @@ void FlowScriptNodeProcedure::exec_step(FlowScriptNodeContext *p_context)
 bool FlowScriptNodeProcedure::can_name_node() const
 {
 	return true;
-}
-
-
-FlowScriptNodeEditorProcedure::FlowScriptNodeEditorProcedure()
-{
 }

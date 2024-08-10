@@ -3,11 +3,10 @@
 
 
 #include "scene/gui/graph_node.h"
-#include "scene/gui/label.h"
 #include "typedefs.hpp"
 #include "flow_script.hpp"
 #include "flow_script_node.hpp"
-#include "flow_script_node_editor_outgoing_connection_parameters.hpp"
+#include "editor/flow_script_node_editor_outgoing_connection_parameters.hpp"
 
 
 class FlowScriptNodeEditor : public GraphNode
@@ -37,6 +36,8 @@ public:
 	void block_editing();
 	void permit_editing();
 	bool is_editable() const;
+	// Returns false if edit context is an include script
+	bool is_edited_flow_script_root() const;
 
 	void set_edited_flow_script(FlowScript *p_flow_script);
 	Ref<FlowScript> get_edited_flow_script_ref() const;
@@ -57,7 +58,7 @@ public:
 	virtual void update_theme();
 	virtual String get_new_title() const;
 	virtual String get_new_tooltip_text() const;
-	virtual void set_outgoing_connection(FlowScriptNodeEditorOutgoingConnectionParameters p_connection);
+	virtual void set_outgoing_connection(const FlowScriptNodeEditorOutgoingConnectionParameters &p_connection);
 	virtual void get_outgoing_connections(List<FlowScriptNodeEditorOutgoingConnectionParameters> *p_list) const;
 	virtual int get_input_slot() const;
 

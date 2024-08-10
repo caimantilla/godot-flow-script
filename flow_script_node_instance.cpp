@@ -22,9 +22,10 @@ void FlowScriptNodeInstance::get_state_json(Dictionary &r_state)
 {
 	if (node.is_valid())
 	{
+		r_state["type"] = node->get_type_id();
 		Dictionary node_dict;
-		node_dict["type"] = node->get_type_id();
-		node_dict["state"]
+		node->get_json_data(node_dict);
+		r_state["data"] = node_dict;
 	}
 }
 
