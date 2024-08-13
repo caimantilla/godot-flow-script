@@ -75,7 +75,7 @@ void FlowScriptNodeInstance::set_connection_list_length(const uint8_t p_list, co
 	connection_lists.get(p_list).resize(p_length);
 	for (int64_t i = old_length; i < p_length; i++)
 	{
-		connection_lists.get(p_list).set(i, FlowScript::NODE_ID_INVALID);
+		connection_lists.get(p_list).write[i] = FlowScript::NODE_ID_INVALID;
 	}
 }
 
@@ -97,7 +97,7 @@ void FlowScriptNodeInstance::set_connection(const FlowScriptNodeOutputConnection
 {
 	ERR_FAIL_INDEX(p_connection.list, connection_lists.size());
 	ERR_FAIL_INDEX(p_connection.slot, connection_lists.get(p_connection.list).size());
-	connection_lists.get(p_connection.list).set(p_connection.slot, p_target);
+	connection_lists.get(p_connection.list).write[p_connection.slot] = p_target;
 }
 
 

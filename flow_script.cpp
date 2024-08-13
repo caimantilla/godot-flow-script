@@ -483,11 +483,20 @@ void FlowScript::update_connection_outputs_for_node(FlowScriptNodeID p_node_id)
 	List<int64_t> length_list;
 	node_map.get(p_node_id).node->get_output_connection_list_lengths(length_list);
 	node_map.get(p_node_id).set_connection_list_count(length_list.size());
-	int curr_slot_idx = 0;
+	bool conns_changed = false;
+	int curr_list_idx = 0;
 	for (const int64_t &curr_desired_length : length_list)
 	{
-		node_map.get(p_node_id).set_connection_list_length(curr_slot_idx, curr_desired_length);
-		curr_slot_idx++;
+		if (node_map.get(p_node_id).get_connection_list_length(curr_list_idx) != curr_desired_length)
+		{
+			node_map.get(p_node_id).set_connection_list_length(curr_list_idx, curr_desired_length);
+			conns_changed = true;
+		}
+		curr_list_idx++;
+	}
+	if (conns_changed)
+	{
+		emit_signal(SNAME("node_connections_changed"), p_node_id);
 	}
 }
 
