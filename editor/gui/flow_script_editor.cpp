@@ -21,9 +21,14 @@ void FlowScriptEditor::remake_graph()
 }
 
 
+void FlowScriptEditor::redraw_connections()
+{
+}
+
+
 FlowScriptEditor::FlowScriptEditor(const Ref<Theme> &p_graph_theme)
 {
-	graph->set_theme(p_graph_theme);
+	graph_theme = p_graph_theme;
 }
 
 

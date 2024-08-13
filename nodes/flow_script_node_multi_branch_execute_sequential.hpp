@@ -13,6 +13,7 @@ public:
 	enum TemporaryVariable
 	{
 		VARIABLE_CURRENT_BRANCH = 0,
+		VARIABLE_SAVE_RESTORE = 1,
 	};
 
 protected:
@@ -20,8 +21,8 @@ protected:
 
 public:
 	virtual String get_type_id() const override { return "multi_branch_execute_sequential"; }
-	virtual String get_type_name() const override { return "Execute Sub-Branches Sequentially"; }
-	virtual String get_type_description() const override { return "Executes a list of branches in order, then proceeds."; }
+	virtual String get_type_name() const override { return "Execute Queued Branches"; }
+	virtual String get_type_description() const override { return "Executes a list of branches in order, then advances."; }
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
 	virtual void set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;

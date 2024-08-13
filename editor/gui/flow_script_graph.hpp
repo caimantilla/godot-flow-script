@@ -2,6 +2,7 @@
 #define FLOW_SCRIPT_GRAPH_HPP
 
 
+#include "flow_script.hpp"
 #include "scene/gui/graph_edit.h"
 
 

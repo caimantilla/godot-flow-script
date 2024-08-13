@@ -14,9 +14,9 @@ void FlowScriptNodeEditor::_bind_methods()
 	GDVIRTUAL_BIND(_update_theme);
 	GDVIRTUAL_BIND(_get_new_title);
 	GDVIRTUAL_BIND(_get_new_tooltip_text);
-	GDVIRTUAL_BIND(_set_outgoing_connection, "connection");
-	GDVIRTUAL_BIND(_get_outgoing_connections);
 	GDVIRTUAL_BIND(_get_input_slot);
+	GDVIRTUAL_BIND(_output_graph_slot_to_connection, "graph_slot");
+	GDVIRTUAL_BIND(_output_connection_to_graph_slot, "list", "slot");
 }
 
 
@@ -26,7 +26,9 @@ void FlowScriptNodeEditor::_notification(int p_what)
 	{
 		case NOTIFICATION_THEME_CHANGED:
 			if (is_editable())
+			{
 				update_theme();
+			}
 			break;
 	}
 }
@@ -50,10 +52,21 @@ bool FlowScriptNodeEditor::is_editable() const
 }
 
 
-bool FlowScriptNodeEditor::is_edited_flow_script_root() const
+void FlowScriptNodeEditor::set_root_flow_script(FlowScript *p_flow_script)
 {
-	// TODO: Implement this method... SERIOUSLY!
-	return true;
+	root_flow_script = p_flow_script;
+}
+
+
+Ref<FlowScript> FlowScriptNodeEditor::get_root_flow_script_ref() const
+{
+	return Ref<FlowScript>(root_flow_script);
+}
+
+
+FlowScript *FlowScriptNodeEditor::get_root_flow_script_ptr() const
+{
+	return root_flow_script;
 }
 
 
@@ -84,6 +97,12 @@ Ref<FlowScriptNode> FlowScriptNodeEditor::get_edited_node_ref() const
  FlowScriptNode *FlowScriptNodeEditor::get_edited_node_ptr() const
 {
 	return edited_flow_script->get_node_ptr(edited_node_id);
+}
+
+
+bool FlowScriptNodeEditor::is_edited_flow_script_root() const
+{
+	return edited_flow_script != nullptr && edited_flow_script == root_flow_script;
 }
 
 
@@ -169,27 +188,6 @@ String FlowScriptNodeEditor::get_new_tooltip_text() const
 }
 
 
-void FlowScriptNodeEditor::set_outgoing_connection(const FlowScriptNodeEditorOutgoingConnectionParameters &p_connection)
-{
-	Dictionary dict = p_connection.to_dictionary();
-	GDVIRTUAL_CALL(_set_outgoing_connection, dict);
-}
-
-
-void FlowScriptNodeEditor::get_outgoing_connections(List<FlowScriptNodeEditorOutgoingConnectionParameters> *p_list) const
-{
-	TypedArray<Dictionary> virtual_connections;
-	GDVIRTUAL_CALL(_get_outgoing_connections, virtual_connections);
-
-	for (int i = 0; i < virtual_connections.size(); i++)
-	{
-		Dictionary curr_connection_virtual = virtual_connections.get(i);
-		FlowScriptNodeEditorOutgoingConnectionParameters curr_connection = FlowScriptNodeEditorOutgoingConnectionParameters::create_from_dictionary(curr_connection_virtual);
-		p_list->push_back(curr_connection);
-	}
-}
-
-
 int FlowScriptNodeEditor::get_input_slot() const
 {
 	int ret = -1;
@@ -201,6 +199,24 @@ int FlowScriptNodeEditor::get_input_slot() const
 int FlowScriptNodeEditor::input_port_to_slot(const int p_port) const
 {
 	return get_input_port_slot(p_port);
+}
+
+
+FlowScriptNodeOutputConnection FlowScriptNodeEditor::output_graph_slot_to_connection(const int p_graph_slot) const
+{
+	Dictionary virtual_ret;
+	GDVIRTUAL_CALL(_output_graph_slot_to_connection, p_graph_slot, virtual_ret);
+
+	FlowScriptNodeOutputConnection ret = FlowScriptNodeOutputConnection::create_from_dictionary(virtual_ret);
+	return ret;
+}
+
+
+int FlowScriptNodeEditor::output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const
+{
+	int ret = -1;
+	GDVIRTUAL_CALL(_output_connection_to_graph_slot, p_connection.list, p_connection.slot, ret);
+	return ret;
 }
 
 

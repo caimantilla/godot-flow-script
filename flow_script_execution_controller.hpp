@@ -50,6 +50,9 @@ public:
 	bool has_fiber(const FlowScriptExecutionFiberID p_fiber_id) const;
 	void internal_fiber_finish(const FlowScriptExecutionFiberID p_fiber_id);
 	int32_t internal_execute_sub_branch_list(const List<FlowScriptNodeID> p_initial_node_ids);
+	// Initializes a branch for later execution
+	FlowScriptExecutionFiberID internal_init_branch(const FlowScriptNodeReference &p_node_reference);
+	bool internal_exec_branch(const FlowScriptExecutionFiberID p_fiber_id);
 
 	FlowScriptExecutionController();
 	~FlowScriptExecutionController();

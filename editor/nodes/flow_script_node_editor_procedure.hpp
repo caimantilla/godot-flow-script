@@ -12,8 +12,8 @@ class FlowScriptNodeEditorProcedure : public FlowScriptNodeEditor
 public:
 	virtual void startup() override;
 	virtual int get_input_slot() const override;
-	virtual void set_outgoing_connection(const FlowScriptNodeEditorOutgoingConnectionParameters &p_connection) override;
-	virtual void get_outgoing_connections(List<FlowScriptNodeEditorOutgoingConnectionParameters> *p_list) const override;
+	virtual FlowScriptNodeOutputConnection output_graph_slot_to_connection(const int p_graph_slot) const override;
+	virtual int output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const override;
 
 	FlowScriptNodeEditorProcedure();
 };

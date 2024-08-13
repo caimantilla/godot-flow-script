@@ -1,4 +1,5 @@
 #include "flow_script_editor_plugin.hpp"
+#include "editor/editor_string_names.h"
 #include "editor/themes/editor_scale.h"
 #include "editor/editor_node.h"
 #include "editor/gui/editor_bottom_panel.h"

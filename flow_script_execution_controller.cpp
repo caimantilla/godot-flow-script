@@ -138,7 +138,7 @@ void FlowScriptExecutionController::execute_branch_with_finish_callback(const Fl
 	update_cache_next_free_fiber_id();
 
 	fiber_list[cache_next_free_fiber_id].finished_callback = p_finish_callback;
-	fiber_list[cache_next_free_fiber_id].advance_to_node(p_initial_node_id);
+	fiber_list[cache_next_free_fiber_id].start(flow_script, p_initial_node_id);
 }
 
 
@@ -189,24 +189,39 @@ void FlowScriptExecutionController::internal_fiber_finish(const FlowScriptExecut
 }
 
 
-int32_t FlowScriptExecutionController::internal_execute_sub_branch_list(const List<FlowScriptNodeID> p_initial_node_ids)
+FlowScriptExecutionFiberID FlowScriptExecutionController::internal_init_branch(const FlowScriptNodeReference &p_node_reference)
 {
-	int32_t ret_await_ids = 0;
-	for (const FlowScriptNodeID &curr_target_node_id : p_initial_node_ids)
+	ERR_FAIL_COND_V(!can_create_fiber(), FIBER_ID_INVALID);
+	Ref<FlowScript> target_flow_script;
+	if (p_node_reference.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
 	{
-		ERR_FAIL_COND_MSG(!can_create_fiber(), ERR_STR_NO_AVAILABLE_FIBERS);
-		if (flow_script.ptr()->has_node(curr_target_node_id))
-		{
-			fiber_list[cache_next_free_fiber_id].advance_to_node(curr_target_node_id);
-			// Don't await the fiber if it didn't immediately finish
-			if (fiber_list[cache_next_free_fiber_id].is_active())
-			{
-				ret_await_ids = 1 << cache_next_free_fiber_id;
-			}
-			update_cache_next_free_fiber_id();
-		}
+		ERR_FAIL_COND_V(!flow_script->has_include_flow_script_instance(p_node_reference.flow_script_id), FIBER_ID_INVALID);
+		target_flow_script = flow_script->get_include_flow_script(p_node_reference.flow_script_id);
 	}
-	return ret_await_ids;
+	else
+	{
+		target_flow_script = flow_script;
+	}
+	ERR_FAIL_COND_V(!target_flow_script->has_node(p_node_reference.node_id), FIBER_ID_INVALID);
+	FlowScriptExecutionFiberID new_fiber_id = cache_next_free_fiber_id;
+	if (fiber_list[new_fiber_id].prepare_for_execution(target_flow_script, p_node_reference.node_id))
+	{
+		update_cache_next_free_fiber_id();
+		return new_fiber_id;
+	}
+	else
+	{
+		ERR_FAIL_V(FIBER_ID_INVALID);
+	}
+}
+
+
+bool FlowScriptExecutionController::internal_exec_branch(const FlowScriptExecutionFiberID p_fiber_id)
+{
+	ERR_FAIL_INDEX_V(p_fiber_id, FIBERS_MAX, false);
+	ERR_FAIL_COND_V(!fiber_list[p_fiber_id].is_active(), false);
+	fiber_list[p_fiber_id].execute_current_node();
+	return true;
 }
 
 

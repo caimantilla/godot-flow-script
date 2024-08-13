@@ -18,6 +18,20 @@ void FlowScriptNodeInstance::set_node(const Ref<FlowScriptNode> &p_node)
 }
 
 
+void FlowScriptNodeInstance::set_state_json(const Dictionary &p_state)
+{
+	if (node.is_valid())
+	{
+		// Need to come up with some type database for this
+		// if (p_state.has("type"))
+		if (p_state.has("data"))
+		{
+			node->set_json_data(p_state["data"]);
+		}
+	}
+}
+
+
 void FlowScriptNodeInstance::get_state_json(Dictionary &r_state)
 {
 	if (node.is_valid())
@@ -38,60 +52,70 @@ bool FlowScriptNodeInstance::is_valid() const
 
 void FlowScriptNodeInstance::clear_connections()
 {
-	connections.clear();
+	connection_lists.clear();
+}
+
+
+void FlowScriptNodeInstance::set_connection_list_count(const uint8_t p_count)
+{
+	connection_lists.resize(p_count);
+}
+
+
+uint8_t FlowScriptNodeInstance::get_connection_list_count() const
+{
+	return connection_lists.size();
 }
 
 
 void FlowScriptNodeInstance::set_connection_list_length(const uint8_t p_list, const int64_t p_length)
 {
-	ERR_FAIL_COND(!connections.has(p_list));
-	int64_t old_length;
-	connections.get(p_list).resize(p_length);
+	ERR_FAIL_INDEX(p_list, connection_lists.size());
+	int64_t old_length = connection_lists.get(p_list).size();
+	connection_lists.get(p_list).resize(p_length);
 	for (int64_t i = old_length; i < p_length; i++)
 	{
-		connections.get(p_list).set(i, FlowScript::NODE_ID_INVALID);
+		connection_lists.get(p_list).set(i, FlowScript::NODE_ID_INVALID);
 	}
 }
 
 
 int64_t FlowScriptNodeInstance::get_connection_list_length(const uint8_t p_list) const
 {
-	if (connections.has(p_list))
-		return connections.get(p_list).size();
-	return 0;
+	ERR_FAIL_INDEX_V(p_list, connection_lists.size(), 0);
+	return connection_lists.get(p_list).size();
 }
 
 
-bool FlowScriptNodeInstance::has_connection_at(const uint8_t p_list, const int64_t p_slot) const
+bool FlowScriptNodeInstance::has_connection(const FlowScriptNodeOutputConnection &p_connection) const
 {
-	return p_slot > -1 && connections.has(p_list) && p_slot < connections.get(p_list).size();
+	return p_connection.list < connection_lists.size() && p_connection.slot > -1 && p_connection.slot < connection_lists[p_connection.list].size();
 }
 
 
-void FlowScriptNodeInstance::set_connection_at(const uint8_t p_list, const int64_t p_slot, const FlowScriptNodeID p_target_node_id)
+void FlowScriptNodeInstance::set_connection(const FlowScriptNodeOutputConnection &p_connection, const FlowScriptNodeReference p_target)
 {
-	if (!connections.has(p_list))
-	{
-		connections.insert(p_list, Vector<FlowScriptNodeID>());
-	}
-	if (p_slot >= connections.get(p_list).size())
-	{
-		set_connection_list_length(p_list, p_slot + 1);
-	}
-	connections.get(p_list).set(p_slot, p_target_node_id);
+	ERR_FAIL_INDEX(p_connection.list, connection_lists.size());
+	ERR_FAIL_INDEX(p_connection.slot, connection_lists.get(p_connection.list).size());
+	connection_lists.get(p_connection.list).set(p_connection.slot, p_target);
 }
 
 
-FlowScriptNodeID FlowScriptNodeInstance::get_connection_at(const uint8_t p_list, const int64_t p_slot) const
+FlowScriptNodeReference FlowScriptNodeInstance::get_connection(const FlowScriptNodeOutputConnection &p_connection) const
 {
-	ERR_FAIL_COND_V(!has_connection_at(p_list, p_slot), FlowScript::NODE_ID_INVALID);
-	return connections.get(p_list).get(p_slot);
+	ERR_FAIL_INDEX_V(p_connection.list, connection_lists.size(), FlowScriptNodeReference());
+	ERR_FAIL_INDEX_V(p_connection.slot, connection_lists.get(p_connection.list).size(), FlowScriptNodeReference());
+	return connection_lists.get(p_connection.list).get(p_connection.slot);
 }
 
 
-void FlowScriptNodeInstance::add_connection(const uint8_t p_list, const FlowScriptNodeID p_node_id)
+void FlowScriptNodeInstance::set_connection_flow_script_id(const FlowScriptNodeOutputConnection &p_connection, const FlowScriptIncludeID p_flow_script_id)
 {
-	if (!connections.has(p_list))
-		connections.insert(p_list, Vector<FlowScriptNodeID>());
-	connections.get(p_list).push_back(p_node_id);
+	set_connection(p_connection, FlowScriptNodeReference(p_flow_script_id, get_connection(p_connection).node_id));
+}
+
+
+void FlowScriptNodeInstance::set_connection_node_id(const FlowScriptNodeOutputConnection &p_connection, const FlowScriptNodeID p_node_id)
+{
+	set_connection(p_connection, FlowScriptNodeReference(get_connection(p_connection).flow_script_id, p_node_id));
 }

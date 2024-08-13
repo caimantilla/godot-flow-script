@@ -16,7 +16,7 @@ public:
 	};
 	enum ConnectionList
 	{
-		CONNECTION_LIST_PROCEED = 0,
+		CONNECTION_LIST_ADVANCE = 0,
 		CONNECTION_LIST_BRANCHES = 1,
 	};
 
@@ -27,7 +27,15 @@ protected:
 	static void _bind_methods();
 
 public:
+	virtual String get_type_id() const override { return "multi_branch_execute"; }
+	virtual String get_type_name() const override { return "Base"; }
+	virtual String get_type_category() const override { return "Multi-Branch Execution"; }
 	virtual String get_type_editor() const override { return "FlowScriptNodeEditorMultiBranchExecute"; }
+
+	virtual void set_json_data(const Dictionary &p_data) override;
+	virtual void get_json_data(Dictionary &r_data) const override;
+
+	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
 
 	void set_connection_count(const int64_t p_count);
 	int64_t get_connection_count() const;

@@ -9,15 +9,20 @@ void FlowScriptNodeContext::_bind_methods()
 {
 	BIND_CONSTANT(VARIABLES_MAX);
 
-	ClassDB::bind_method(D_METHOD("advance_to_node", "next_node_id"), &FlowScriptNodeContext::advance_to_node);
 	ClassDB::bind_method(D_METHOD("set_variable", "idx", "value"), &FlowScriptNodeContext::set_variable);
 	ClassDB::bind_method(D_METHOD("get_variable", "idx"), &FlowScriptNodeContext::get_variable);
 	ClassDB::bind_method(D_METHOD("has_variable", "idx"), &FlowScriptNodeContext::has_variable);
+	ClassDB::bind_method(D_METHOD("get_current_flow_script"), &FlowScriptNodeContext::get_current_flow_script_ptr);
 	ClassDB::bind_method(D_METHOD("get_current_node_id"), &FlowScriptNodeContext::get_current_node_id);
-	ClassDB::bind_method(D_METHOD("await_branch_list", "initial_node_ids"), &FlowScriptNodeContext::bind_await_branch_list);
-	ClassDB::bind_method(D_METHOD("await_branch_solo", "initial_node_id"), &FlowScriptNodeContext::await_branch_solo);
 	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ptr);
 
+	ClassDB::bind_method(D_METHOD("invoke_step"), &FlowScriptNodeContext::invoke_step);
+	ClassDB::bind_method(D_METHOD("advance", "connection_list", "connection_slot"), &FlowScriptNodeContext::bind_advance);
+	ClassDB::bind_method(D_METHOD("finish"), &FlowScriptNodeContext::finish);
+	ClassDB::bind_method(D_METHOD("add_await_branch", "connection_list", "connection_slot"), &FlowScriptNodeContext::bind_add_await_branch);
+	ClassDB::bind_method(D_METHOD("execute_await_branches"), &FlowScriptNodeContext::bind_execute_await_branches);
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "", "get_current_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_node_id"), "", "get_current_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "bridge", PROPERTY_HINT_NODE_TYPE, "FlowScriptBridge", PROPERTY_USAGE_NONE, "FlowScriptBridge"), "", "get_bridge");
 }
@@ -73,33 +78,140 @@ Variant FlowScriptNodeContext::get_return_value() const
 }
 
 
-void FlowScriptNodeContext::invoke_step()
+void FlowScriptNodeContext::execute_current_node()
 {
-	ERR_FAIL_COND(exec_blocked);
+	exec_blocked = true;
+	get_current_node_ptr()->exec_startup(this);
+	exec_blocked = false;
 	get_current_node_ptr()->exec_step(this);
 }
 
 
-void FlowScriptNodeContext::advance_to_node(const FlowScriptNodeID p_next_node_id)
+bool FlowScriptNodeContext::prepare_for_execution(const Ref<FlowScript> &p_flow_script, const FlowScriptNodeID p_node_id)
 {
-	ERR_FAIL_COND(exec_blocked);
-	exec_blocked = true;
-	if (get_flow_script_ptr()->has_node(current_node_id))
+	ERR_FAIL_COND_V(!p_flow_script.is_valid(), false);
+	ERR_FAIL_COND_V(!p_flow_script->has_node(p_node_id), false);
+	current_flow_script = p_flow_script;
+	current_node_id = p_node_id;
+	return true;
+}
+
+
+bool FlowScriptNodeContext::start(const Ref<FlowScript> &p_flow_script, const FlowScriptNodeID p_initial_node_id)
+{
+	if (!prepare_for_execution(p_flow_script, p_initial_node_id))
 	{
-		get_current_node_ptr()->exec_cleanup(this);
+		return false;
 	}
-	current_node_id = p_next_node_id;
-	if (get_flow_script_ptr()->has_node(current_node_id))
+	execute_current_node();
+	return true;
+}
+
+
+void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_connection)
+{
+	exec_blocked = true;
+	get_current_node_ptr()->exec_cleanup(this);
+	exec_blocked = false;
+	FlowScriptNodeReference next_node_ref = current_flow_script->get_node_connection(current_node_id, p_connection);
+	if (next_node_ref.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
 	{
-		get_current_node_ptr()->exec_startup(this);
-		exec_blocked = false;
-		get_current_node_ptr()->exec_step(this);
+		ERR_FAIL_COND(!current_flow_script->has_include_flow_script_instance(next_node_ref.flow_script_id));
+		current_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id);
+	}
+	if (current_flow_script->has_node(next_node_ref.node_id))
+	{
+		current_node_id = next_node_ref.node_id;
+		execute_current_node();
 	}
 	else
 	{
-		exec_blocked = false;
 		execution_controller_ptr->internal_fiber_finish(self_id);
 	}
+}
+
+
+void FlowScriptNodeContext::bind_advance(const uint8_t p_connection_list, const int64_t p_connection_slot)
+{
+	advance(FlowScriptNodeOutputConnection(p_connection_list, p_connection_slot));
+}
+
+
+void FlowScriptNodeContext::finish()
+{
+	exec_blocked = true;
+	get_current_node_ptr()->exec_cleanup(this);
+	exec_blocked = false;
+	execution_controller_ptr->internal_fiber_finish(self_id);
+}
+
+
+bool FlowScriptNodeContext::add_await_branch(const FlowScriptNodeOutputConnection &p_connection)
+{
+	FlowScriptNodeReference initial_node_ref = current_flow_script->get_node_connection(current_node_id, p_connection);
+	FlowScriptExecutionFiberID branch_fiber_id = execution_controller_ptr->internal_init_branch(initial_node_ref);
+	ERR_FAIL_COND_V(branch_fiber_id == FlowScriptExecutionController::FIBER_ID_INVALID, false);
+	awaiting_fibers_bits |= (1 << branch_fiber_id);
+	return true;
+}
+
+
+void FlowScriptNodeContext::bind_add_await_branch(const uint8_t p_connection_list, const int64_t p_connection_slot)
+{
+	add_await_branch(FlowScriptNodeOutputConnection(p_connection_list, p_connection_slot));
+}
+
+
+bool FlowScriptNodeContext::execute_await_branches()
+{
+	bool exec_ok = false;
+	for (FlowScriptExecutionFiberID curr_fiber_id = 0; curr_fiber_id < FlowScriptExecutionController::FIBERS_MAX; curr_fiber_id++)
+	{
+		if (curr_fiber_id == self_id || !(awaiting_fibers_bits & (1 << curr_fiber_id)))
+		{
+			continue;
+		}
+		if (execution_controller_ptr->internal_exec_branch(curr_fiber_id))
+		{
+			exec_ok = true;
+		}
+	}
+	if (!exec_ok)
+	{
+		invoke_step();
+	}
+	return exec_ok;
+}
+
+
+void FlowScriptNodeContext::bind_execute_await_branches()
+{
+	execute_await_branches();
+}
+
+
+bool FlowScriptNodeContext::is_node_reference_valid(const FlowScriptNodeReference &p_node_reference) const
+{
+	ERR_FAIL_COND_V(!current_flow_script.is_valid(), false);
+	if (p_node_reference.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
+	{
+		if (!current_flow_script->has_include_flow_script_instance(p_node_reference.flow_script_id))
+		{
+			return false;
+		}
+		return current_flow_script->get_include_flow_script(p_node_reference.flow_script_id)->has_node(p_node_reference.node_id);
+	}
+	else
+	{
+		return current_flow_script->has_node(p_node_reference.node_id);
+	}
+}
+
+
+void FlowScriptNodeContext::invoke_step()
+{
+	ERR_FAIL_COND(exec_blocked);
+	get_current_node_ptr()->exec_step(this);
 }
 
 
@@ -212,41 +324,9 @@ void FlowScriptNodeContext::get_state(Dictionary &r_state) const
 }
 
 
-bool FlowScriptNodeContext::await_branch_list(const List<FlowScriptNodeID> p_initial_node_ids)
-{
-	int32_t to_wait_bits = execution_controller_ptr->internal_execute_sub_branch_list(p_initial_node_ids);
-	if (to_wait_bits == 0)
-	{
-		return false;
-	}
-	else
-	{
-		awaiting_fibers_bits |= to_wait_bits;
-		return true;
-	}
-}
-
-
-bool FlowScriptNodeContext::await_branch_solo(const FlowScriptNodeID p_initial_node_id)
-{
-	List<FlowScriptNodeID> pass_list;
-	pass_list.push_back(p_initial_node_id);
-	return await_branch_list(pass_list);
-}
-
-
 String FlowScriptNodeContext::create_variable_idx_out_of_range_error(const uint8_t p_idx) const
 {
 	return "Variable index " + itos(p_idx) + " ouf of range 0-" + itos(VARIABLES_MAX);
-}
-
-
-bool FlowScriptNodeContext::bind_await_branch_list(const PackedInt32Array &p_initial_node_ids)
-{
-	List<FlowScriptNodeID> pass_list;
-	for (int32_t node_id_32 : p_initial_node_ids)
-		pass_list.push_back(node_id_32);
-	return await_branch_list(pass_list);
 }
 
 

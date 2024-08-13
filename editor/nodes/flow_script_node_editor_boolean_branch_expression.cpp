@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_boolean_branch_expression.hpp"
-#include "nodes/boolean_branch_expression.hpp"
+#include "nodes/flow_script_node_boolean_branch_expression.hpp"
 
 
 void FlowScriptNodeEditorBooleanBranchExpression::sync()
@@ -16,6 +16,40 @@ void FlowScriptNodeEditorBooleanBranchExpression::sync()
 		lbl_condition->push_list(0, RichTextLabel::LIST_ROMAN, false);
 		lbl_condition->add_text(node->get_expression());
 		lbl_condition->pop();
+	}
+}
+
+
+int FlowScriptNodeEditorBooleanBranchExpression::get_input_slot() const
+{
+	return 1;
+}
+
+
+FlowScriptNodeOutputConnection FlowScriptNodeEditorBooleanBranchExpression::output_graph_slot_to_connection(const int p_graph_slot) const
+{
+	switch (p_graph_slot)
+	{
+		case 0:
+			return FlowScriptNodeOutputConnection(FlowScriptNodeBooleanBranchExpression::CONNECTION_LIST_TRUE, 0);
+		case 2:
+			return FlowScriptNodeOutputConnection(FlowScriptNodeBooleanBranchExpression::CONNECTION_LIST_FALSE, 0);
+		default:
+			ERR_FAIL_V(FlowScriptNodeOutputConnection());
+	}
+}
+
+
+int FlowScriptNodeEditorBooleanBranchExpression::output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const
+{
+	switch (p_connection.list)
+	{
+		case FlowScriptNodeBooleanBranchExpression::CONNECTION_LIST_TRUE:
+			return 0;
+		case FlowScriptNodeBooleanBranchExpression::CONNECTION_LIST_FALSE:
+			return 2;
+		default:
+			ERR_FAIL_V(-1);
 	}
 }
 
