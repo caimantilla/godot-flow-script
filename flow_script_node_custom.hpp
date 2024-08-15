@@ -15,6 +15,7 @@ protected:
 	GDVIRTUAL1(_exec_startup, FlowScriptNodeContext *);
 	GDVIRTUAL1(_exec_cleanup, FlowScriptNodeContext *);
 	GDVIRTUAL1(_exec_step, FlowScriptNodeContext *);
+	GDVIRTUAL0RC(bool, _can_instantiate_type);
 	GDVIRTUAL0RC(String, _get_type_id);
 	GDVIRTUAL0RC(String, _get_type_name);
 	GDVIRTUAL0RC(String, _get_type_category);
@@ -32,11 +33,6 @@ public:
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_cleanup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
-	virtual String get_type_id() const override;
-	virtual String get_type_name() const override;
-	virtual String get_type_category() const override;
-	virtual String get_type_description() const override;
-	virtual String get_type_editor() const override;
 	virtual bool can_translate_text() const override;
 	virtual void init_text_translation(const FlowScriptNodeID p_node_id, FlowScriptNodeTranslation *p_translation) override;
 	virtual void set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
@@ -44,6 +40,13 @@ public:
 	virtual void set_json_data(const Dictionary &p_data) override;
 	virtual void get_json_data(Dictionary &r_data) const override;
 	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
+
+	bool can_instantiate_type() const;
+	String get_type_id() const;
+	String get_type_name() const;
+	String get_type_category() const;
+	String get_type_description() const;
+	String get_type_editor() const;
 };
 
 

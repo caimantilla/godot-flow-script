@@ -1,17 +1,19 @@
 #include "flow_script.hpp"
 #include "flow_script_node_custom.hpp"
+#include "core/object/script_language.h"
 
 
 void FlowScriptNodeCustom::_bind_methods()
 {
-	GDVIRTUAL_BIND(_exec_startup, "context");
-	GDVIRTUAL_BIND(_exec_cleanup, "context");
-	GDVIRTUAL_BIND(_exec_step, "context");
+	GDVIRTUAL_BIND(_can_instantiate_type);
 	GDVIRTUAL_BIND(_get_type_id);
 	GDVIRTUAL_BIND(_get_type_name);
 	GDVIRTUAL_BIND(_get_type_category);
 	GDVIRTUAL_BIND(_get_type_description);
 	GDVIRTUAL_BIND(_get_type_editor);
+	GDVIRTUAL_BIND(_exec_startup, "context");
+	GDVIRTUAL_BIND(_exec_cleanup, "context");
+	GDVIRTUAL_BIND(_exec_step, "context");
 	GDVIRTUAL_BIND(_can_translate_text);
 	GDVIRTUAL_BIND(_init_text_translation, "node_id", "translation");
 	GDVIRTUAL_BIND(_set_state, "context", "state");
@@ -37,55 +39,6 @@ void FlowScriptNodeCustom::exec_cleanup(FlowScriptNodeContext *p_context)
 void FlowScriptNodeCustom::exec_step(FlowScriptNodeContext *p_context)
 {
 	GDVIRTUAL_CALL(_exec_step, p_context);
-}
-
-
-String FlowScriptNodeCustom::get_type_id() const
-{
-	String ret;
-	if (!GDVIRTUAL_CALL(_get_type_id, ret))
-	{
-		ERR_PRINT("_get_type_id must be overriden.");
-	}
-	return ret;
-}
-
-
-String FlowScriptNodeCustom::get_type_name() const
-{
-	String ret;
-	if (!GDVIRTUAL_CALL(_get_type_name, ret))
-	{
-		ret = get_type_id();
-	}
-	return ret;
-}
-
-
-String FlowScriptNodeCustom::get_type_category() const
-{
-	String ret;
-	GDVIRTUAL_CALL(_get_type_category, ret);
-	return ret;
-}
-
-
-String FlowScriptNodeCustom::get_type_description() const
-{
-	String ret;
-	GDVIRTUAL_CALL(_get_type_description, ret);
-	return ret;
-}
-
-
-String FlowScriptNodeCustom::get_type_editor() const
-{
-	String ret;
-	if (!GDVIRTUAL_CALL(_get_type_editor, ret))
-	{
-		ERR_PRINT("_get_type_editor must be overriden.");
-	}
-	return ret;
 }
 
 
@@ -139,4 +92,71 @@ void FlowScriptNodeCustom::get_output_connection_list_lengths(List<int64_t> &r_l
 	{
 		r_lengths.push_back(curr_length);
 	}
+}
+
+
+bool FlowScriptNodeCustom::can_instantiate_type() const
+{
+	bool ret = false;
+	GDVIRTUAL_CALL(_can_instantiate_type, ret);
+	return ret;
+}
+
+
+String FlowScriptNodeCustom::get_type_id() const
+{
+	String ret;
+	GDVIRTUAL_CALL(_get_type_id, ret);
+	if (ret.is_empty())
+	{
+		Variant var_script = get_script();
+		if (var_script.get_type() == Variant::OBJECT)
+		{
+			Ref<Script> ref_script = var_script;
+			if (ref_script.is_valid())
+			{
+				ret = ref_script->get_path().get_basename().get_file();
+			}
+		}
+	}
+	return ret;
+}
+
+
+String FlowScriptNodeCustom::get_type_name() const
+{
+	String ret;
+	GDVIRTUAL_CALL(_get_type_name, ret);
+	if (ret.is_empty())
+	{
+		ret = get_type_id();
+	}
+	return ret;
+}
+
+
+String FlowScriptNodeCustom::get_type_category() const
+{
+	String ret;
+	GDVIRTUAL_CALL(_get_type_category, ret);
+	return ret;
+}
+
+
+String FlowScriptNodeCustom::get_type_description() const
+{
+	String ret;
+	GDVIRTUAL_CALL(_get_type_description, ret);
+	return ret;
+}
+
+
+String FlowScriptNodeCustom::get_type_editor() const
+{
+	String ret;
+	if (!GDVIRTUAL_CALL(_get_type_editor, ret))
+	{
+		ERR_PRINT("_get_type_editor must be overriden.");
+	}
+	return ret;
 }

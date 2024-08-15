@@ -27,11 +27,6 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual String get_type_id() const override { return "multi_branch_execute"; }
-	virtual String get_type_name() const override { return "Base"; }
-	virtual String get_type_category() const override { return "Multi-Branch Execution"; }
-	virtual String get_type_editor() const override { return "FlowScriptNodeEditorMultiBranchExecute"; }
-
 	virtual void set_json_data(const Dictionary &p_data) override;
 	virtual void get_json_data(Dictionary &r_data) const override;
 

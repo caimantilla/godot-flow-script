@@ -29,12 +29,6 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual String get_type_id() const override { return "loop_while_expression_result_true"; }
-	virtual String get_type_name() const override { return "While Loop"; }
-	virtual String get_type_category() const override { return "Loop"; }
-	virtual String get_type_description() const override { return "Loops as long as an expression evaluates to true."; }
-	virtual String get_type_editor() const override { return "FlowScriptNodeEditorLoopWhileExpressionResultTrue"; }
-
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
 

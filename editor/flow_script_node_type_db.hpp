@@ -9,6 +9,7 @@
 
 class FlowScriptNode;
 class FlowScriptNodeEditor;
+class FlowScriptNodeTypeInfo;
 class FlowScriptEditorPlugin;
 
 
@@ -17,30 +18,25 @@ class FlowScriptNodeTypeDB final
 private:
 	static FlowScriptNodeTypeDB *singleton;
 
-public:
-	static FlowScriptNodeTypeDB *get_singleton();
-
-	FlowScriptNode *create_node_using_type_id(const String &p_type_id);
-
-	FlowScriptNodeTypeDB();
-	~FlowScriptNodeTypeDB();
-
-#ifdef TOOLS_ENABLED
-
-private:
+	HashMap<StringName, int> map_native_class_to_type_idx;
+	HashMap<Script *, int> map_custom_node_script_to_type_idx;
+	Vector<FlowScriptNodeTypeInfo> native_types;
 	List<Ref<Script>> custom_node_script_delete_queue;
 
 	void process_custom_node_script_delete_queue();
-	
+
 	void on_resource_saved(const Ref<Resource> &p_resource);
 	void on_resource_removed(const Ref<Resource> &p_resource);
 	void on_script_created(const Ref<Script> &p_script);
 
 public:
+	static FlowScriptNodeTypeDB *get_singleton();
+
 	void init_editor(FlowScriptEditorPlugin *p_plugin);
 	FlowScriptNodeEditor *create_editor_for_node(FlowScriptNode *p_node);
 
-#endif // TOOLS_ENABLED
+	FlowScriptNodeTypeDB();
+	~FlowScriptNodeTypeDB();
 };
 
 

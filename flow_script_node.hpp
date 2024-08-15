@@ -30,19 +30,6 @@ public:
 	virtual void exec_cleanup(FlowScriptNodeContext *p_context) {};
 	// Main execution method
 	virtual void exec_step(FlowScriptNodeContext *p_context) {};
-	// ID of the type, can be used to override a native type or for JSON serialization
-	virtual String get_type_id() const = 0;
-	// The user-facing name of the node's type
-	virtual String get_type_name() const = 0;
-	// The category that the type belongs to (sub-categories separated using '/')
-	virtual String get_type_category() const = 0;
-	// The user-facing description of the node's type
-	virtual String get_type_description() const = 0;
-	// This can return a class name, scene path, or script path, it's just gotta be a FlowScriptNodeEditor
-	virtual String get_type_editor() const = 0;
-	// Determines if the GUI permits naming the node.
-	// I don't think that this should be exposed to scripting
-	virtual bool can_name_node() const { return false; }
 	// If true, the node can be translated
 	virtual bool can_translate_text() const { return false; }
 	// If can_translate returns true, a translation can be initialized here

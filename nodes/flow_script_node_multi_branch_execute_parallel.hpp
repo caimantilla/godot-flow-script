@@ -26,9 +26,6 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual String get_type_id() const override { return "multi_branch_execute_parallel"; }
-	virtual String get_type_name() const override { return "Execute Parallel Branches"; }
-	virtual String get_type_description() const override { return "Triggers execution of a list of branches all at once, then advances once all the branches have finished."; }
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
 	virtual void set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
