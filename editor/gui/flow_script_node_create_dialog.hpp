@@ -30,6 +30,7 @@ private:
 	{
 		_FORCE_INLINE_ bool operator()(const FlowScriptNodeTypeInfo &p_a, const FlowScriptNodeTypeInfo &p_b) const
 		{
+			// icl i copied this from visualshader
 			return p_a.category.count("/") > p_b.category.count("/") || (p_a.category + "/" + p_a.name).naturalnocasecmp_to(p_b.category + "/" + p_b.name) < 0;
 		}
 	};
