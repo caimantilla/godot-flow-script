@@ -69,6 +69,9 @@ private:
 	int get_node_type_index_by_class_name(const StringName &p_class_name) const;
 	// Used to refresh the recent and favorite node lists
 	void refresh_quick_access_node_item_list(ItemList *p_item_list, const PackedStringArray &p_type_class_name_list);
+	void on_node_filter_search_line_text_changed(const String &p_text);
+	void handle_node_filter_search_line_gui_input_event(const Ref<InputEvent> &p_event);
+	void on_this_confirmed();
 
 protected:
 	static void _bind_methods();

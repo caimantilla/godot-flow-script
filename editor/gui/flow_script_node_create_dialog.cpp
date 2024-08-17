@@ -146,13 +146,6 @@ void FlowScriptNodeCreateDialog::toggle_selected_node_favorite()
 }
 
 
-void FlowScriptNodeCreateDialog::clear_type_tree()
-{
-	tree_item_type_map.clear();
-	type_tree->clear();
-}
-
-
 void FlowScriptNodeCreateDialog::type_tree_expand_all()
 {
 	type_tree->get_root()->set_collapsed_recursive(false);
@@ -165,10 +158,16 @@ void FlowScriptNodeCreateDialog::type_tree_collapse_all()
 }
 
 
+void FlowScriptNodeCreateDialog::clear_type_tree()
+{
+	tree_item_type_map.clear();
+	type_tree->clear();
+}
+
+
 void FlowScriptNodeCreateDialog::refresh_type_tree()
 {
 	clear_type_tree();
-
 
 	String filter = get_current_search_filter_str();
 	List<int> displayed_type_idx_list;
@@ -246,6 +245,7 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 		type_item->set_text(MAIN_COLUMN, type.name);
 		tree_item_type_map.insert(type_item, type_idx);
 	}
+	type_tree_expand_all();
 }
 
 
@@ -397,8 +397,28 @@ void FlowScriptNodeCreateDialog::on_recent_list_item_selected(int p_item_idx)
 }
 
 
+void FlowScriptNodeCreateDialog::on_node_filter_search_line_text_changed(const String &p_text)
+{
+	refresh_type_tree();
+}
+
+
+void FlowScriptNodeCreateDialog::handle_node_filter_search_line_gui_input_event(const Ref<InputEvent> &p_event)
+{
+	// do some stuff later idk like use ui_accept to choose the closest-matching node or something
+}
+
+
+void FlowScriptNodeCreateDialog::on_this_confirmed()
+{
+	emit_selected_type_chosen();
+}
+
+
 FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 {
+	connect("confirmed", callable_mp(this, &FlowScriptNodeCreateDialog::on_this_confirmed));
+
 	set_flag(FLAG_RESIZE_DISABLED, false);
 	set_wrap_controls(true);
 	set_min_size((Size2(400, 250) * EDSCALE));
@@ -444,8 +464,8 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 	node_filter_line->set_editable(false);
 	node_filter_line->set_placeholder(TTR("Search"));
 	node_filter_line->set_tooltip_text(TTR("The search filter will be enabled in a future release."));
-	// node_filter_line->connect("text_changed", callable_mp(this, &FlowScriptNodeCreateDialog::set_node_filter));
-	// node_filter_line->connect(SceneStringName(gui_input), callable_mp(this, &FlowScriptNodeCreateDialog::handle_node_search_line_input));
+	node_filter_line->connect("text_changed", callable_mp(this, &FlowScriptNodeCreateDialog::on_node_filter_search_line_text_changed));
+	node_filter_line->connect(SceneStringName(gui_input), callable_mp(this, &FlowScriptNodeCreateDialog::handle_node_filter_search_line_gui_input_event));
 	top_hbox->add_child(node_filter_line);
 
 	fold_action_menu = memnew(MenuButton);
