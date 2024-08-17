@@ -55,6 +55,7 @@ public:
 	void get_node_type_list(List<FlowScriptNodeTypeInfo> *p_list) const;
 	void add_type(const FlowScriptNodeTypeInfo &p_type);
 	Ref<FlowScriptNode> instantiate_node_for_type(const FlowScriptNodeTypeInfo &p_type);
+	const FlowScriptNodeTypeInfo &get_type_of_node(FlowScriptNode *p_node) const;
 	FlowScriptNodeEditor *create_editor_for_node(FlowScriptNode *p_node);
 
 	FlowScriptNodeTypeDB();

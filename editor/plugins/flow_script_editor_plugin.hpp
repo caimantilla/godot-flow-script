@@ -8,8 +8,6 @@
 #include "editor/nodes/flow_script_node_editor.hpp"
 #include "editor/gui/flow_script_include_editor_frame.hpp"
 #include "flow_script_node_create_dialog.hpp"
-#include "core/templates/paged_array.h"
-#include "editor_inspector_plugin_flow_script.hpp"
 #include "editor/plugins/editor_plugin.h"
 #include "editor/window_wrapper.h"
 #include "scene/resources/theme.h"
@@ -85,7 +83,7 @@ private:
 
 private:
 	Ref<Theme> graph_theme;
-	PagedArray<EditedScript *> open_script_list;
+	LocalVector<EditedScript *> open_script_list;
 	int current_edited_script_idx = -1;
 
 	Button *bottom_panel_button = nullptr; // default to nullptr in case not in use

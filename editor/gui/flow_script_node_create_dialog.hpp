@@ -16,14 +16,18 @@ class FlowScriptNodeCreateDialog final : public ConfirmationDialog
 	GDCLASS(FlowScriptNodeCreateDialog, ConfirmationDialog);
 
 private:
-	enum
+	enum Column
 	{
 		MAIN_COLUMN = 0,
 	};
-	enum
+	enum FoldOption
 	{
 		FOLD_OPTION_EXPAND_ALL = 0,
 		FOLD_OPTION_COLLAPSE_ALL = 1,
+	};
+	enum
+	{
+		RECENT_HISTORY_MAX_SIZE = 15,
 	};
 
 	struct NodeTypeAlphaComparator final
@@ -36,6 +40,7 @@ private:
 	};
 
 private:
+	bool reload_types_on_open_queued = true;
 	Vector<FlowScriptNodeTypeInfo> local_node_type_list;
 	HashMap<TreeItem *, int> tree_item_type_map;
 	PackedStringArray favorite_type_str_list;
@@ -59,9 +64,12 @@ private:
 	void type_tree_collapse_all();
 	void on_fold_action_button_item_pressed(int p_option_idx);
 	void toggle_selected_node_favorite();
+	void save_quick_access_type_list(const PackedStringArray &p_class_list, const String &p_filename);
+	void load_quick_access_type_list(PackedStringArray &p_class_list, const String &p_filename);
 	void save_favorite_types();
 	void load_favorite_types();
-	void gui_update_favorite_item_list();
+	void save_recent_types();
+	void load_recent_types();
 	void on_mark_favorite_button_toggled(bool p_toggled_on);
 	void update_mark_favorite_button_toggle_state();
 	void handle_quick_access_node_item_list_item_selected(ItemList *p_item_list, int p_item_idx);
@@ -69,10 +77,14 @@ private:
 	void on_recent_list_item_selected(int p_item_idx);
 	int get_node_type_index_by_class_name(const StringName &p_class_name) const;
 	// Used to refresh the recent and favorite node lists
-	void refresh_quick_access_node_item_list(ItemList *p_item_list, const PackedStringArray &p_type_class_name_list);
+	void step_add_class_to_quick_access_node_item_list(ItemList *p_item_list, const StringName &p_class_name);
+	void refresh_quick_access_node_item_list(ItemList *p_item_list, const PackedStringArray &p_type_class_name_list, const bool p_reverse);
+	//
 	void on_node_filter_search_line_text_changed(const String &p_text);
 	void handle_node_filter_search_line_gui_input_event(const Ref<InputEvent> &p_event);
 	void on_this_confirmed();
+	void on_node_type_db_changed();
+	void add_node_type_to_recent(const FlowScriptNodeTypeInfo &p_type);
 
 protected:
 	static void _bind_methods();

@@ -1,6 +1,8 @@
 #include "editor_inspector_plugin_flow_script.hpp"
-#include "../../flow_script_node.hpp"
-#include "../../flow_script_node_custom.hpp"
+#include "flow_script_node.hpp"
+#include "flow_script_node_custom.hpp"
+#include "editor/flow_script_node_type_db.hpp"
+#include "editor/flow_script_node_type_info.hpp"
 
 
 bool EditorInspectorPluginFlowScript::can_handle(Object *p_object)
@@ -14,10 +16,18 @@ bool EditorInspectorPluginFlowScript::parse_property(Object *p_object, const Var
 	FlowScriptNode *node = Object::cast_to<FlowScriptNode>(p_object);
 	if (node == nullptr)
 		return false;
-	
-	if (p_path == "script" && (node->has_editor_dependencies() || Object::cast_to<FlowScriptNodeCustom>(node) == nullptr))
+
+	const FlowScriptNodeTypeInfo &node_type = FlowScriptNodeTypeDB::get_singleton()->get_type_of_node(node);
+	if (!node_type.enabled)
+	{
+		return false;
+	}
+	if (
+		(p_path == "script" && (node->has_editor_dependencies() || Object::cast_to<FlowScriptNodeCustom>(node) == nullptr))
+		|| (p_path == "resource_path" && !node_type.name_assignable)
+	)
+	{
 		return true;
-	if (p_path == "resource_path" && !node->can_name_node())
-		return true;
+	}
 	return false;
 }

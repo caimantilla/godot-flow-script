@@ -77,6 +77,29 @@ Ref<FlowScriptNode> FlowScriptNodeTypeDB::instantiate_node_for_type(const FlowSc
 }
 
 
+const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptNode *p_node) const
+{
+	ERR_FAIL_NULL_V(p_node, FlowScriptNodeTypeInfo());
+
+	Ref<Script> script = p_node->get_script();
+	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
+
+	if (custom_node == nullptr || !script.is_valid())
+	{
+		StringName native_class = p_node->get_class_name();
+		ERR_FAIL_COND_V(!map_native_class_to_type_idx.has(native_class), FlowScriptNodeTypeInfo());
+		int idx = map_native_class_to_type_idx[native_class];
+		return native_types[idx];
+	}
+	else
+	{
+		ERR_FAIL_COND_V(!map_custom_node_script_to_type_idx.has(script), FlowScriptNodeTypeInfo());
+		int idx = map_custom_node_script_to_type_idx[script];
+		return custom_script_types[idx];
+	}
+}
+
+
 FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(FlowScriptNode *p_node)
 {
 	ERR_FAIL_NULL_V(p_node, nullptr);
@@ -306,8 +329,8 @@ FlowScriptNodeTypeDB::FlowScriptNodeTypeDB()
 
 	add_type(FlowScriptNodeTypeInfo::create_native_type("procedure", "FlowScriptNodeProcedure", "FlowScriptNodeEditorProcedure", true, "Procedure", "", "A named entrypoint into the FlowScript."));
 	add_type(FlowScriptNodeTypeInfo::create_native_type("text_comment", "FlowScriptNodeTextComment", "FlowScriptNodeEditorTextComment", false, "Comment", "", "A box to take notes in."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("return_expression_result", "FlowScriptNodeReturnExpressionResult", "FlowScriptNodeEditorReturnExpressionResult", false, "Evaluate and Return Expression", "", "Returns the result of an expression evaluation to the caller."));
 
+	add_type(FlowScriptNodeTypeInfo::create_native_type("return_expression_result", "FlowScriptNodeReturnExpressionResult", "FlowScriptNodeEditorReturnExpressionResult", false, "Evaluate and Return Expression", "Logic", "Returns the result of an expression evaluation to the caller."));
 	add_type(FlowScriptNodeTypeInfo::create_native_type("loop_while_expression_result_true", "FlowScriptNodeLoopWhileExpressionResultTrue", "FlowScriptNodeEditorLoopWhileExpressionResultTrue", false, "While Loop Expression", "Logic/Loops", "Loops while an expression result is true."));
 	add_type(FlowScriptNodeTypeInfo::create_native_type("boolean_branch_expression", "FlowScriptNodeBooleanBranchExpression", "FlowScriptNodeEditorBooleanBranchExpression", false, "Branch Expression", "Logic/Branching", "Branches based on the result of a list of expression evaluations."));
 

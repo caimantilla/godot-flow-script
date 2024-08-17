@@ -19,6 +19,11 @@ void FlowScriptNodeCreateDialog::_notification(int p_what)
 	{
 		if (is_visible())
 		{
+			if (reload_types_on_open_queued)
+			{
+				reload_types_on_open_queued = false;
+				reload_local_type_list();
+			}
 			node_filter_line->call_deferred(SNAME("grab_focus"));
 		}
 	}
@@ -64,6 +69,9 @@ void FlowScriptNodeCreateDialog::reload_local_type_list()
 	}
 	local_node_type_list.sort_custom<NodeTypeAlphaComparator>();
 	refresh_type_tree();
+
+	load_favorite_types();
+	load_recent_types();
 }
 
 
@@ -89,6 +97,7 @@ void FlowScriptNodeCreateDialog::update_type_description_display()
 
 void FlowScriptNodeCreateDialog::emit_type_chosen(const FlowScriptNodeTypeInfo &p_type)
 {
+	add_node_type_to_recent(p_type);
 	emit_signal(SNAME("type_chosen"), p_type.node_class, p_type.node_script_class_name);
 }
 
@@ -101,6 +110,27 @@ void FlowScriptNodeCreateDialog::emit_selected_type_chosen()
 	}
 	const FlowScriptNodeTypeInfo &selected_type = get_selected_node_type();
 	emit_type_chosen(selected_type);
+}
+
+
+void FlowScriptNodeCreateDialog::add_node_type_to_recent(const FlowScriptNodeTypeInfo &p_type)
+{
+	String target_name;
+	if (p_type.node_script_class_name == StringName())
+	{
+		target_name = p_type.node_class;
+	}
+	else
+	{
+		target_name = p_type.node_script_class_name;
+	}
+	recent_type_str_list.erase(target_name);
+	recent_type_str_list.push_back(target_name);
+	if (recent_type_str_list.size() > RECENT_HISTORY_MAX_SIZE)
+	{
+		recent_type_str_list.remove_at(0);
+	}
+	save_recent_types();
 }
 
 
@@ -232,6 +262,11 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 		last_item->set_text(MAIN_COLUMN, split[split.size() - 1]);
 		category_item_map.insert(category, super_item->create_child());
 	}
+
+	// variables for search filter
+	TreeItem *item_to_auto_select = nullptr;
+	real_t last_item_similarity = INFINITY;
+
 	for (const int type_idx : displayed_type_idx_list)
 	{
 		const FlowScriptNodeTypeInfo &type = local_node_type_list[type_idx];
@@ -244,21 +279,37 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 		type_item->set_selectable(MAIN_COLUMN, true);
 		type_item->set_text(MAIN_COLUMN, type.name);
 		tree_item_type_map.insert(type_item, type_idx);
+
+		if (!filter.is_empty())
+		{
+			real_t curr_similarity = filter.similarity(type.name);
+			if (curr_similarity < last_item_similarity)
+			{
+				last_item_similarity = curr_similarity;
+				item_to_auto_select = type_item;
+			}
+		}
 	}
+
 	type_tree_expand_all();
+
+	if (item_to_auto_select != nullptr)
+	{
+		type_tree->set_selected(item_to_auto_select, MAIN_COLUMN);
+	}
 }
 
 
-void FlowScriptNodeCreateDialog::save_favorite_types()
+void FlowScriptNodeCreateDialog::save_quick_access_type_list(const PackedStringArray &p_class_list, const String &p_filename)
 {
-	Ref<FileAccess> file = FileAccess::open(EditorPaths::get_singleton()->get_project_settings_dir().path_join("favorites.FlowScriptNode"), FileAccess::WRITE);
+	Ref<FileAccess> file = FileAccess::open(EditorPaths::get_singleton()->get_project_settings_dir().path_join(p_filename), FileAccess::WRITE);
 	if (file.is_valid())
 	{
-		for (const String &fav_type_name : favorite_type_str_list)
+		for (const String &type_name : p_class_list)
 		{
-			if (fav_type_name.is_valid_identifier() && EditorNode::get_editor_data().is_type_recognized(fav_type_name))
+			if (type_name.is_valid_identifier() && EditorNode::get_editor_data().is_type_recognized(type_name))
 			{
-				file->store_line(fav_type_name);
+				file->store_line(type_name);
 			}
 		}
 		file->close();
@@ -266,21 +317,47 @@ void FlowScriptNodeCreateDialog::save_favorite_types()
 }
 
 
-void FlowScriptNodeCreateDialog::load_favorite_types()
+void FlowScriptNodeCreateDialog::load_quick_access_type_list(PackedStringArray &p_class_list, const String &p_filename)
 {
-	favorite_type_str_list.clear();
-	Ref<FileAccess> file = FileAccess::open(EditorPaths::get_singleton()->get_project_data_dir().path_join("favorites.FlowScriptNode"), FileAccess::READ);
+	p_class_list.clear();
+	Ref<FileAccess> file = FileAccess::open(EditorPaths::get_singleton()->get_project_settings_dir().path_join(p_filename), FileAccess::READ);
 	if (file.is_valid())
 	{
 		while (!file->eof_reached())
 		{
-			String fav_type_name = file->get_line().strip_edges();
-			if (fav_type_name.is_valid_identifier() && EditorNode::get_editor_data().is_type_recognized(fav_type_name))
+			String type_name = file->get_line().strip_edges().get_slicec(' ', 0);
+			if (type_name.is_valid_identifier() && EditorNode::get_editor_data().is_type_recognized(type_name))
 			{
-				favorite_type_str_list.push_back(fav_type_name);
+				p_class_list.push_back(type_name);
 			}
 		}
 	}
+}
+
+
+void FlowScriptNodeCreateDialog::save_favorite_types()
+{
+	save_quick_access_type_list(favorite_type_str_list, "favorites.FlowScriptNode");
+}
+
+
+void FlowScriptNodeCreateDialog::load_favorite_types()
+{
+	load_quick_access_type_list(favorite_type_str_list, "favorites.FlowScriptNode");
+	refresh_quick_access_node_item_list(item_list_favorites, favorite_type_str_list, false);
+}
+
+
+void FlowScriptNodeCreateDialog::save_recent_types()
+{
+	save_quick_access_type_list(recent_type_str_list, "create_recent.FlowScriptNode");
+	refresh_quick_access_node_item_list(item_list_recents, recent_type_str_list, true);
+}
+
+
+void FlowScriptNodeCreateDialog::load_recent_types()
+{
+	load_quick_access_type_list(recent_type_str_list, "create_recent.FlowScriptNode");
 }
 
 
@@ -297,28 +374,39 @@ int FlowScriptNodeCreateDialog::get_node_type_index_by_class_name(const StringNa
 }
 
 
-void FlowScriptNodeCreateDialog::refresh_quick_access_node_item_list(ItemList *p_item_list, const PackedStringArray &p_type_class_name_list)
+void FlowScriptNodeCreateDialog::step_add_class_to_quick_access_node_item_list(ItemList *p_item_list, const StringName &p_class_name)
 {
-	p_item_list->clear();
-	for (const String &class_name : p_type_class_name_list)
+	int type_idx = get_node_type_index_by_class_name(p_class_name);
+	if (type_idx == -1)
 	{
-		int type_idx = get_node_type_index_by_class_name(class_name);
-		if (type_idx == -1)
-		{
-			continue;
-		}
-		const FlowScriptNodeTypeInfo &type = local_node_type_list[type_idx];
-		int item_idx = p_item_list->add_item(type.name);
-		p_item_list->set_item_metadata(item_idx, StringName(class_name));
-		p_item_list->set_item_tooltip(item_idx, class_name);
-		p_item_list->set_item_tooltip_enabled(item_idx, true);
+		return;
 	}
+	const FlowScriptNodeTypeInfo &type = local_node_type_list[type_idx];
+	int item_idx = p_item_list->add_item(type.name);
+	p_item_list->set_item_metadata(item_idx, p_class_name);
+	p_item_list->set_item_tooltip(item_idx, p_class_name);
+	p_item_list->set_item_tooltip_enabled(item_idx, true);
 }
 
 
-void FlowScriptNodeCreateDialog::gui_update_favorite_item_list()
+void FlowScriptNodeCreateDialog::refresh_quick_access_node_item_list(ItemList *p_item_list, const PackedStringArray &p_type_class_name_list, const bool p_reverse)
 {
-	refresh_quick_access_node_item_list(item_list_favorites, favorite_type_str_list);
+	p_item_list->clear();
+
+	if (p_reverse)
+	{
+		for (int i = 0; i < p_type_class_name_list.size(); i++)
+		{
+			step_add_class_to_quick_access_node_item_list(p_item_list, p_type_class_name_list[i]);
+		}
+	}
+	else
+	{
+		for (int i = p_type_class_name_list.size() - 1; i > -1; i--)
+		{
+			step_add_class_to_quick_access_node_item_list(p_item_list, p_type_class_name_list[i]);
+		}
+	}
 }
 
 
@@ -405,7 +493,15 @@ void FlowScriptNodeCreateDialog::on_node_filter_search_line_text_changed(const S
 
 void FlowScriptNodeCreateDialog::handle_node_filter_search_line_gui_input_event(const Ref<InputEvent> &p_event)
 {
-	// do some stuff later idk like use ui_accept to choose the closest-matching node or something
+	Ref<InputEventKey> key_event = p_event;
+	if (key_event.is_valid())
+	{
+		if (key_event->is_action(SNAME("ui_up")) || key_event->is_action(SNAME("ui_down")) || key_event->is_action(SNAME("ui_accept")))
+		{
+			type_tree->gui_input(key_event);
+			node_filter_line->accept_event();
+		}
+	}
 }
 
 
@@ -415,9 +511,26 @@ void FlowScriptNodeCreateDialog::on_this_confirmed()
 }
 
 
+// rebuilt the type db if needed otherwise queue it for when the window opens
+void FlowScriptNodeCreateDialog::on_node_type_db_changed()
+{
+	if (is_visible())
+	{
+		reload_types_on_open_queued = true;
+	}
+	else
+	{
+		reload_types_on_open_queued = false;
+		reload_local_type_list();
+	}
+}
+
+
 FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 {
 	connect("confirmed", callable_mp(this, &FlowScriptNodeCreateDialog::on_this_confirmed));
+
+	FlowScriptNodeTypeDB::get_singleton()->connect(CoreStringName(changed), callable_mp(this, &FlowScriptNodeCreateDialog::on_node_type_db_changed));
 
 	set_flag(FLAG_RESIZE_DISABLED, false);
 	set_wrap_controls(true);
@@ -435,6 +548,7 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 	left_vsplit->add_child(favorites_vbox);
 
 	item_list_favorites = memnew(ItemList);
+	item_list_favorites->set_allow_reselect(true);
 	item_list_favorites->connect("item_selected", callable_mp(this, &FlowScriptNodeCreateDialog::on_favorite_list_item_selected));
 	favorites_vbox->add_margin_child(TTR("Favorites:"), item_list_favorites, true);
 
@@ -444,6 +558,7 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 	left_vsplit->add_child(recents_vbox);
 
 	item_list_recents = memnew(ItemList);
+	item_list_recents->set_allow_reselect(true);
 	item_list_recents->connect("item_selected", callable_mp(this, &FlowScriptNodeCreateDialog::on_recent_list_item_selected));
 	recents_vbox->add_margin_child(TTR("Recent:"), item_list_recents, true);
 
@@ -481,6 +596,7 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 	top_hbox->add_child(mark_favorite_button);
 
 	type_tree = memnew(Tree);
+	type_tree->set_focus_mode(Control::FOCUS_NONE); // inputs SHOULD be passed to the type tree from the search bar
 	type_tree->connect("item_selected", callable_mp(this, &FlowScriptNodeCreateDialog::update_mark_favorite_button_toggle_state));
 	type_tree->connect("item_selected", callable_mp(this, &FlowScriptNodeCreateDialog::update_type_description_display));
 	type_tree->connect("item_activated", callable_mp(this, &FlowScriptNodeCreateDialog::emit_selected_type_chosen));

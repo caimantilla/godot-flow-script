@@ -19,14 +19,24 @@
 #include "nodes/flow_script_node_boolean_branch_expression.hpp"
 
 #ifdef TOOLS_ENABLED
+
 // Include node editors
+#include "editor/flow_script_node_type_db.hpp"
+#include "editor/plugins/flow_script_editor_plugin.hpp"
 #include "editor/nodes/flow_script_node_editor.hpp"
 #include "editor/nodes/flow_script_node_editor_procedure.hpp"
+#include "editor/nodes/flow_script_node_editor_text_comment.hpp"
+#include "editor/nodes/flow_script_node_editor_return_expression_result.hpp"
+#include "editor/nodes/flow_script_node_editor_loop_while_expression_result_true.hpp"
 #include "editor/nodes/flow_script_node_editor_set_expression_result_to_variable.hpp"
 #include "editor/nodes/flow_script_node_editor_boolean_branch_expression.hpp"
 #include "editor/nodes/flow_script_node_editor_multi_branch_execute.hpp"
 #include "editor/nodes/flow_script_node_editor_wait_duration_fixed_seconds.hpp"
 #include "editor/nodes/flow_script_node_editor_wait_duration_expression_result.hpp"
+
+
+static FlowScriptNodeTypeDB *node_type_db = nullptr;
+
 #endif // TOOLS_ENABLED
 
 
@@ -57,21 +67,38 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 		GDREGISTER_CLASS(FlowScriptNodeSetExpressionResultToVariableGlobal);
 		GDREGISTER_CLASS(FlowScriptNodeLoopWhileExpressionResultTrue);
 		GDREGISTER_CLASS(FlowScriptNodeBooleanBranchExpression);
+	}
 
 #ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
+	{
 		// Register node editors
 		GDREGISTER_CLASS(FlowScriptNodeEditor);
 		GDREGISTER_CLASS(FlowScriptNodeEditorProcedure);
-		GDREGISTER_CLASS(FlowScriptNodeEditorMultiBranchExecute);
+		GDREGISTER_CLASS(FlowScriptNodeEditorTextComment);
 		GDREGISTER_CLASS(FlowScriptNodeEditorSetExpressionResultToVariable);
+		GDREGISTER_CLASS(FlowScriptNodeEditorMultiBranchExecute);
 		GDREGISTER_CLASS(FlowScriptNodeEditorBooleanBranchExpression);
 		GDREGISTER_CLASS(FlowScriptNodeEditorWaitDurationFixedSeconds);
 		GDREGISTER_CLASS(FlowScriptNodeEditorWaitDurationExpressionResult);
-#endif TOOLS_ENABLED
+		GDREGISTER_CLASS(FlowScriptNodeEditorReturnExpressionResult);
+		GDREGISTER_CLASS(FlowScriptNodeEditorLoopWhileExpressionResultTrue);
 	}
+	else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
+	{
+		node_type_db = memnew(FlowScriptNodeTypeDB);
+		EditorPlugins::add_by_type<FlowScriptEditorPlugin>();
+	}
+#endif // TOOLS_ENABLED
 }
 
 
 void uninitialize_flow_script_module(ModuleInitializationLevel p_level)
 {
+#ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
+	{
+		memdelete(node_type_db);
+	}
+#endif // TOOLS_ENABLED
 }
