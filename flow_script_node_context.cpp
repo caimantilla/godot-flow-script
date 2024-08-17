@@ -1,6 +1,5 @@
 #include "flow_script_node_context.hpp"
 #include "flow_script.hpp"
-#include "flow_script_execution_controller.hpp"
 #include "flow_script_bridge.hpp"
 #include "flow_script_node.hpp"
 
@@ -14,7 +13,7 @@ void FlowScriptNodeContext::_bind_methods()
 	ClassDB::bind_method(D_METHOD("has_variable", "idx"), &FlowScriptNodeContext::has_variable);
 	ClassDB::bind_method(D_METHOD("get_current_flow_script"), &FlowScriptNodeContext::get_current_flow_script_ptr);
 	ClassDB::bind_method(D_METHOD("get_current_node_id"), &FlowScriptNodeContext::get_current_node_id);
-	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ptr);
+	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ref);
 
 	ClassDB::bind_method(D_METHOD("invoke_step"), &FlowScriptNodeContext::invoke_step);
 	ClassDB::bind_method(D_METHOD("advance", "connection_list", "connection_slot"), &FlowScriptNodeContext::bind_advance);
@@ -24,7 +23,7 @@ void FlowScriptNodeContext::_bind_methods()
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "", "get_current_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_node_id"), "", "get_current_node_id");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "bridge", PROPERTY_HINT_NODE_TYPE, "FlowScriptBridge", PROPERTY_USAGE_NONE, "FlowScriptBridge"), "", "get_bridge");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "bridge", PROPERTY_HINT_NONE, "FlowScriptBridge", PROPERTY_USAGE_NONE, "FlowScriptBridge"), "", "get_bridge");
 }
 
 
@@ -126,7 +125,7 @@ void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_conn
 	}
 	else
 	{
-		execution_controller_ptr->internal_fiber_finish(self_id);
+		bridge_ptr->internal_fiber_finish(self_id);
 	}
 }
 
@@ -142,15 +141,15 @@ void FlowScriptNodeContext::finish()
 	exec_blocked = true;
 	get_current_node_ptr()->exec_cleanup(this);
 	exec_blocked = false;
-	execution_controller_ptr->internal_fiber_finish(self_id);
+	bridge_ptr->internal_fiber_finish(self_id);
 }
 
 
 bool FlowScriptNodeContext::add_await_branch(const FlowScriptNodeOutputConnection &p_connection)
 {
 	FlowScriptNodeReference initial_node_ref = current_flow_script->get_node_connection(current_node_id, p_connection);
-	FlowScriptExecutionFiberID branch_fiber_id = execution_controller_ptr->internal_init_branch(initial_node_ref);
-	ERR_FAIL_COND_V(branch_fiber_id == FlowScriptExecutionController::FIBER_ID_INVALID, false);
+	FlowScriptExecutionFiberID branch_fiber_id = bridge_ptr->internal_init_branch(initial_node_ref);
+	ERR_FAIL_COND_V(branch_fiber_id == FlowScriptBridge::FIBER_ID_INVALID, false);
 	awaiting_fibers_bits |= (1 << branch_fiber_id);
 	return true;
 }
@@ -165,13 +164,13 @@ void FlowScriptNodeContext::bind_add_await_branch(const uint8_t p_connection_lis
 bool FlowScriptNodeContext::execute_await_branches()
 {
 	bool exec_ok = false;
-	for (FlowScriptExecutionFiberID curr_fiber_id = 0; curr_fiber_id < FlowScriptExecutionController::FIBERS_MAX; curr_fiber_id++)
+	for (FlowScriptExecutionFiberID curr_fiber_id = 0; curr_fiber_id < FlowScriptBridge::FIBERS_MAX; curr_fiber_id++)
 	{
 		if (curr_fiber_id == self_id || !(awaiting_fibers_bits & (1 << curr_fiber_id)))
 		{
 			continue;
 		}
-		if (execution_controller_ptr->internal_exec_branch(curr_fiber_id))
+		if (bridge_ptr->internal_exec_branch(curr_fiber_id))
 		{
 			exec_ok = true;
 		}
@@ -258,31 +257,37 @@ FlowScriptNodeID FlowScriptNodeContext::get_current_node_id() const
 
 Ref<FlowScriptNode> FlowScriptNodeContext::get_current_node_ref() const
 {
-	return execution_controller_ptr->get_flow_script_ptr()->get_node_ref(current_node_id);
+	return bridge_ptr->get_flow_script_ptr()->get_node_ref(current_node_id);
 }
 
 
 FlowScriptNode *FlowScriptNodeContext::get_current_node_ptr() const
 {
-	return execution_controller_ptr->get_flow_script_ptr()->get_node_ptr(current_node_id);
+	return bridge_ptr->get_flow_script_ptr()->get_node_ptr(current_node_id);
 }
 
 
 Ref<FlowScript> FlowScriptNodeContext::get_flow_script_ref() const
 {
-	return execution_controller_ptr->get_flow_script();
+	return bridge_ptr->get_flow_script();
 }
 
 
 FlowScript *FlowScriptNodeContext::get_flow_script_ptr() const
 {
-	return execution_controller_ptr->get_flow_script_ptr();
+	return bridge_ptr->get_flow_script_ptr();
+}
+
+
+Ref<FlowScriptBridge> FlowScriptNodeContext::get_bridge_ref() const
+{
+	return Ref<FlowScriptBridge>(bridge_ptr);
 }
 
 
 FlowScriptBridge *FlowScriptNodeContext::get_bridge_ptr() const
 {
-	return execution_controller_ptr->get_bridge();
+	return bridge_ptr;
 }
 
 
@@ -332,6 +337,6 @@ String FlowScriptNodeContext::create_variable_idx_out_of_range_error(const uint8
 
 FlowScriptNodeContext::FlowScriptNodeContext()
 {
-	self_id = FlowScriptExecutionController::FIBER_ID_INVALID;
+	self_id = FlowScriptBridge::FIBER_ID_INVALID;
 	current_node_id = FlowScript::NODE_ID_INVALID;
 }

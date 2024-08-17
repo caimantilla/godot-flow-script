@@ -6,6 +6,7 @@ FlowScriptNodeTypeInfo FlowScriptNodeTypeInfo::create_native_type(const String &
 {
 	FlowScriptNodeTypeInfo ret;
 
+	ret.enabled = true;
 	ret.native = true;
 	ret.custom = false;
 
@@ -24,6 +25,7 @@ FlowScriptNodeTypeInfo FlowScriptNodeTypeInfo::create_native_type(const String &
 FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script_type(const Ref<Script> &p_script)
 {
 	ScriptCreateResult ret;
+	ret.error = ScriptCreateResult::OK;
 
 	if (!p_script.is_valid())
 	{
@@ -40,6 +42,10 @@ FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script
 	else if (!p_script->is_tool())
 	{
 		ret.error = ScriptCreateResult::ERR_NOT_TOOL;
+	}
+	else if (p_script->get_global_name() == StringName())
+	{
+		ret.error = ScriptCreateResult::ERR_NAME_NOT_GLOBAL;
 	}
 	else
 	{
@@ -62,11 +68,19 @@ FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script
 			ret.type.name_assignable = false;
 			ret.type.name = node->get_type_name();
 			ret.type.category = node->get_type_category();
+			ret.type.validate_category(ret.type.category);
 			ret.type.description = node->get_type_category();
 
 			ret.type.node_script = p_script;
+			ret.type.node_script_class_name = p_script->get_global_name();
 
 			String editor_path = node->get_type_editor();
+			bool editor_ok = false;
+			// Support relative path
+			if (!ResourceLoader::exists(editor_path))
+			{
+				editor_path = p_script->get_path().get_base_dir().path_join(editor_path);
+			}
 			if (ResourceLoader::exists(editor_path))
 			{
 				Ref<Resource> editor_res = ResourceLoader::load(editor_path);
@@ -76,7 +90,7 @@ FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script
 					if (editor_scn->can_instantiate())
 					{
 						ret.type.editor_scene = editor_scn;
-						return ret;
+						editor_ok = true;
 					}
 				}
 				else
@@ -87,38 +101,32 @@ FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script
 						if (editor_script->can_instantiate() && editor_script->get_instance_base_type() == SNAME("FlowScriptNodeEditor"))
 						{
 							ret.type.editor_script = editor_script;
-							return ret;
+							editor_ok = true;
 						}
 					}
 				}
 			}
-			ret.error = ScriptCreateResult::ERR_NO_EDITOR;
+			if (!editor_ok)
+			{
+				ret.error = ScriptCreateResult::ERR_NO_EDITOR;
+			}
 		}
 	}
+	ret.type.enabled = ret.error == ScriptCreateResult::OK;
 	return ret;
+}
 
-	ERR_FAIL_COND_V(!p_script.is_valid(), ret);
-	ERR_FAIL_COND_V(!p_script->can_instantiate(), ret);
-	ERR_FAIL_COND_V(p_script->get_instance_base_type() != SNAME("FlowScriptNodeCustom"), ret);
-	ERR_FAIL_COND_V(!p_script->is_tool(), ret);
 
-	Ref<FlowScriptNodeCustom> node;
-	node.instantiate();
-	node->set_script(p_script);
-
-	ret.native = false;
-	ret.custom = true;
-
-	ret.id = node->get_type_id();
-	ret.node_class = "FlowScriptNodeCustom";
-	ret.editor_class = node->get_type_editor();
-	ret.name_assignable = false;
-	ret.name = node->get_type_name();
-	ret.category = node->get_type_category();
-	ret.description = node->get_type_description();
-	ret.node_script = p_script;
-
-	return ret;
+void FlowScriptNodeTypeInfo::validate_category(String &r_category)
+{
+	// Clean up double-slashes.
+	for (int char_idx = r_category.length() - 1; char_idx > 0; char_idx--)
+	{
+		if (r_category[char_idx] == '/' && r_category[char_idx - 1] == '/')
+		{
+			r_category.remove_at(char_idx);
+		}
+	}
 }
 
 

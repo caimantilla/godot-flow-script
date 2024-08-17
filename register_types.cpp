@@ -20,7 +20,7 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 		GDREGISTER_CLASS(FlowScript);
 		GDREGISTER_CLASS(FlowScriptNodeEditor);
 		GDREGISTER_CLASS(FlowScriptNodeTranslation);
-		GDREGISTER_CLASS(FlowScriptExecutionController);
+		GDREGISTER_CLASS(FlowScriptBridge);
 		GDREGISTER_CLASS(FlowScriptNodeCustom);
 		GDREGISTER_CLASS(FlowScriptBridge);
 

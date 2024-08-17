@@ -3,6 +3,7 @@
 
 
 #include "core/string/ustring.h"
+#include "core/object/object.h"
 #include "core/io/resource.h"
 #include "core/object/script_language.h"
 
@@ -13,17 +14,32 @@ class FlowScriptNodeTypeInfo;
 class FlowScriptEditorPlugin;
 
 
-class FlowScriptNodeTypeDB final
+class FlowScriptNodeTypeDB final : public Object
 {
 private:
 	static FlowScriptNodeTypeDB *singleton;
 
-	HashMap<StringName, int> map_native_class_to_type_idx;
-	HashMap<Script *, int> map_custom_node_script_to_type_idx;
 	Vector<FlowScriptNodeTypeInfo> native_types;
+	Vector<FlowScriptNodeTypeInfo> custom_script_types;
+
+	mutable HashMap<StringName, int> map_native_class_to_type_idx;
+	mutable bool native_node_info_map_dirty = true;
+
+	mutable HashMap<Ref<Script>, int> map_custom_node_script_to_type_idx;
+	mutable bool script_node_info_map_dirty = true;
+
+	bool type_list_changed_notification_queued = false;
 	List<Ref<Script>> custom_node_script_delete_queue;
 
+	void refresh_custom_script_types();
+
+	void update_native_node_info_map() const;
+	void update_script_node_info_map() const;
+
+	void emit_type_list_changed();
+	void queue_notify_type_list_changed();
 	void process_custom_node_script_delete_queue();
+	void queue_process_custom_node_script_delete_queue();
 
 	void on_resource_saved(const Ref<Resource> &p_resource);
 	void on_resource_removed(const Ref<Resource> &p_resource);
@@ -32,10 +48,13 @@ private:
 public:
 	static FlowScriptNodeTypeDB *get_singleton();
 
-	void init_editor(FlowScriptEditorPlugin *p_plugin);
+	void refresh_types();
+	void get_node_type_list(List<FlowScriptNodeTypeInfo> *p_list) const;
+	void add_type(const FlowScriptNodeTypeInfo &p_type);
+	Ref<FlowScriptNode> instantiate_node_for_type(const FlowScriptNodeTypeInfo &p_type);
 	FlowScriptNodeEditor *create_editor_for_node(FlowScriptNode *p_node);
 
-	FlowScriptNodeTypeDB();
+	FlowScriptNodeTypeDB(FlowScriptEditorPlugin *p_plugin);
 	~FlowScriptNodeTypeDB();
 };
 

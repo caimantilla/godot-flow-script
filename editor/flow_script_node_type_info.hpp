@@ -7,7 +7,7 @@
 #include "scene/resources/packed_scene.h"
 
 
-class FlowScriptNodeTypeInfo
+class FlowScriptNodeTypeInfo final
 {
 public:
 	class ScriptCreateResult;
@@ -16,6 +16,7 @@ private:
 	void validate_category(String &r_category);
 
 public:
+	bool enabled = false;
 	bool custom = false;
 	bool native = false;
 	String id;
@@ -26,6 +27,7 @@ public:
 	String category;
 	String description;
 	Ref<Script> node_script;
+	StringName node_script_class_name;
 	Ref<Script> editor_script;
 	Ref<PackedScene> editor_scene;
 
@@ -48,6 +50,7 @@ public:
 		ERR_NOT_TOOL = 4,
 		ERR_TYPE_INSTANTIATE_BAN = 5,
 		ERR_NO_EDITOR = 6,
+		ERR_NAME_NOT_GLOBAL = 7,
 	};
 
 public:

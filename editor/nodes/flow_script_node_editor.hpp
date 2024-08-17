@@ -10,11 +10,17 @@
 #include "editor/flow_script_node_editor_outgoing_connection_parameters.hpp"
 
 
+class FlowScriptEditorPlugin;
+
+
 class FlowScriptNodeEditor : public GraphNode
 {
+	friend class FlowScriptEditorPlugin;
+
 	GDCLASS(FlowScriptNodeEditor, GraphNode);
 
 private:
+	FlowScriptEditorPlugin *plugin = nullptr;
 	FlowScript *root_flow_script = nullptr;
 	FlowScript *edited_flow_script = nullptr;
 	FlowScriptNodeID edited_node_id = FlowScript::NODE_ID_INVALID;

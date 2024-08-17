@@ -7,6 +7,31 @@
 #include "editor/editor_command_palette.h"
 
 
+void FlowScriptEditorPlugin::EditedNode::copy_position_to_node()
+{
+}
+
+
+FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin, FlowScriptNodeEditor *p_editor)
+{
+	plugin = p_plugin;
+	editor = p_editor;
+
+	editor->connect(SNAME("delete_request"), callable_mp(this, &EditedNode::on_delete_request));
+	editor->connect(SNAME("dragged"), callable_mp(this, &FlowScriptEditorPlugin::EditedNode::on_dragged));
+	editor->connect(SNAME("node_deselected"), callable_mp(this, &EditedNode::on_node_deselected));
+	editor->connect(SNAME("node_selected"), callable_mp(this, &EditedNode::on_node_selected));
+	editor->connect(SNAME("position_offset_changed"), callable_mp(this, &EditedNode::on_position_offset_changed));
+	editor->connect(SNAME("raise_request"), callable_mp(this, &EditedNode::on_raise_request));
+}
+
+
+bool FlowScriptEditorPlugin::EditedScript::is_selected() const
+{
+	return index == plugin->current_edited_script_idx;
+}
+
+
 bool FlowScriptEditorPlugin::handles(Object *p_object) const
 {
 	return Object::cast_to<FlowScript>(p_object) != nullptr;
@@ -36,8 +61,37 @@ void FlowScriptEditorPlugin::update_graph_theme()
 }
 
 
+Point2 FlowScriptEditorPlugin::graph_data_to_screen_position(const Point2i &p_data_position) const
+{
+	Point2 ret = p_data_position;
+	ret *= EDSCALE;
+	return ret;
+}
+
+
+Point2i FlowScriptEditorPlugin::graph_screen_to_data_position(const Point2 &p_screen_position) const
+{
+	Point2 retf;
+	retf /= EDSCALE;
+	retf = retf.round();
+	// autoconvert type
+	return retf;
+}
+
+
+Point2 FlowScriptEditorPlugin::graph_rect_position_to_screen_position(const Point2 &p_rect_position) const
+{
+	Point2 ret = p_rect_position;
+	ret += graph->get_scroll_offset();
+	ret /= graph->get_zoom();
+	return ret;
+}
+
+
 FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 {
+	graph_theme.instantiate();
+
 	window_wrapper = memnew(WindowWrapper);
 	window_wrapper->set_window_title(vformat(TTR("%s - Godot Engine"), TTR("FlowScript Editor")));
 	window_wrapper->set_margins_enabled(true);
@@ -84,11 +138,24 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	}
 	menu_hbox->add_child(make_floating_button);
 
-	script_list = memnew(ItemList);
-	script_list->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
-	script_list->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	script_list->connect("item_selected", callable_mp(this, &FlowScriptEditorPlugin::on_script_list_item_selected));
-	script_list->connect("item_clicked", callable_mp(this, &FlowScriptEditorPlugin::on_script_list_item_clicked));
+	script_item_list = memnew(ItemList);
+	script_item_list->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
+	script_item_list->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+	script_item_list->connect("item_selected", callable_mp(this, &FlowScriptEditorPlugin::on_script_item_list_item_selected));
+	script_item_list->connect("item_clicked", callable_mp(this, &FlowScriptEditorPlugin::on_script_item_list_item_clicked));
 	// SET_DRAG_FORWARDING_GCD(script_list, FlowScriptEditorPlugin);
-	left_vbox->add_child(script_list);
+	left_vbox->add_child(script_item_list);
+
+	graph = memnew(FlowScriptGraph);
+	graph->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	graph->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+	main_split->add_child(graph);
+
+	node_create_dialog = memnew(FlowScriptNodeCreateDialog);
+	add_child(node_create_dialog);
+}
+
+
+FlowScriptEditorPlugin::~FlowScriptEditorPlugin()
+{
 }

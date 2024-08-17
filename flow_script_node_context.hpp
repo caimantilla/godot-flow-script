@@ -11,13 +11,12 @@
 
 class FlowScript;
 class FlowScriptNode;
-class FlowScriptExecutionController;
 class FlowScriptBridge;
 
 
 class FlowScriptNodeContext final : public Object
 {
-	friend class FlowScriptExecutionController;
+	friend class FlowScriptBridge;
 
 	GDCLASS(FlowScriptNodeContext, Object);
 
@@ -32,7 +31,7 @@ private:
 	};
 
 	FlowScriptExecutionFiberID self_id;
-	FlowScriptExecutionController *execution_controller_ptr = nullptr;
+	FlowScriptBridge *bridge_ptr = nullptr;
 
 	Ref<FlowScript> current_flow_script;
 	FlowScriptNodeID current_node_id;
@@ -81,8 +80,8 @@ public:
 	FlowScript *get_current_flow_script_ptr() const;
 	Ref<FlowScript> get_flow_script_ref() const;
 	FlowScript *get_flow_script_ptr() const;
+	Ref<FlowScriptBridge> get_bridge_ref() const;
 	FlowScriptBridge *get_bridge_ptr() const;
-	FlowScriptExecutionController *get_execution_controller_ptr() const;
 	void set_state(const Dictionary &p_state);
 	void get_state(Dictionary &r_state) const;
 
