@@ -5,7 +5,7 @@
 #include "flow_script_node_editor.hpp"
 
 
-class FlowScriptNodeEditorProcedure : public FlowScriptNodeEditor
+class FlowScriptNodeEditorProcedure final : public FlowScriptNodeEditor
 {
 	GDCLASS(FlowScriptNodeEditorProcedure, FlowScriptNodeEditor);
 

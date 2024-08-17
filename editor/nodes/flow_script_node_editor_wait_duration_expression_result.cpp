@@ -7,20 +7,7 @@
 void FlowScriptNodeEditorWaitDurationExpressionResult::sync()
 {
 	FlowScriptNodeWaitDurationExpressionResult *node = Object::cast_to<FlowScriptNodeWaitDurationExpressionResult>(get_edited_node_ptr());
-
-	String expression = node->get_expression();
-	if (expression.strip_edges().is_empty())
-	{
-		expression_label->hide();
-		no_expression_defined_label->show();
-		expression_label->set_text("");
-	}
-	else
-	{
-		no_expression_defined_label->hide();
-		expression_label->set_text(expression);
-		expression_label->show();
-	}
+	expression_box->set_expression(node->get_expression());
 }
 
 
@@ -53,16 +40,8 @@ FlowScriptNodeEditorWaitDurationExpressionResult::FlowScriptNodeEditorWaitDurati
 	bottom_hbox->add_spacer();
 	add_child(bottom_hbox);
 
-	MarginContainer *expression_parent = memnew(MarginContainer);
-	bottom_hbox->add_child(expression_parent);
-
-	no_expression_defined_label = memnew(Label);
-	no_expression_defined_label->set_text(TTR("No expression defined."));
-	expression_parent->add_child(no_expression_defined_label);
-
-	expression_label = memnew(RichTextLabel);
-	expression_label->set_auto_translate(false);
-	expression_parent->add_child(expression_label);
+	expression_box = memnew(FlowScriptEditorExpressionDisplayBox);
+	bottom_hbox->add_child(expression_box);
 
 	set_slot_enabled_left(0, true);
 	set_slot_enabled_right(1, true);

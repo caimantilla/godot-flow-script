@@ -31,19 +31,22 @@ private:
 	bool type_list_changed_notification_queued = false;
 	List<Ref<Script>> custom_node_script_delete_queue;
 
+	void emit_changed();
+
 	void refresh_custom_script_types();
 
 	void update_native_node_info_map() const;
 	void update_script_node_info_map() const;
 
-	void emit_type_list_changed();
-	void queue_notify_type_list_changed();
 	void process_custom_node_script_delete_queue();
 	void queue_process_custom_node_script_delete_queue();
 
 	void on_resource_saved(const Ref<Resource> &p_resource);
 	void on_resource_removed(const Ref<Resource> &p_resource);
 	void on_script_created(const Ref<Script> &p_script);
+
+protected:
+	static void _bind_methods();
 
 public:
 	static FlowScriptNodeTypeDB *get_singleton();
@@ -54,7 +57,7 @@ public:
 	Ref<FlowScriptNode> instantiate_node_for_type(const FlowScriptNodeTypeInfo &p_type);
 	FlowScriptNodeEditor *create_editor_for_node(FlowScriptNode *p_node);
 
-	FlowScriptNodeTypeDB(FlowScriptEditorPlugin *p_plugin);
+	FlowScriptNodeTypeDB();
 	~FlowScriptNodeTypeDB();
 };
 

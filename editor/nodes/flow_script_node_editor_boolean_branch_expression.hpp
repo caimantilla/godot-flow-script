@@ -4,7 +4,7 @@
 
 #include "flow_script_node_editor.hpp"
 #include "scene/gui/label.h"
-#include "scene/gui/rich_text_label.h"
+#include "editor/gui/flow_script_editor_expression_display_box.hpp"
 
 
 class FlowScriptNodeEditorBooleanBranchExpression final : public FlowScriptNodeEditor
@@ -14,7 +14,7 @@ class FlowScriptNodeEditorBooleanBranchExpression final : public FlowScriptNodeE
 private:
 	Label *lbl_true;
 	Label *lbl_false;
-	RichTextLabel *lbl_condition;
+	FlowScriptEditorExpressionDisplayBox *expression_box;
 
 	Label *create_result_label(const String &p_text, const Color &p_color);
 

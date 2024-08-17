@@ -4,17 +4,16 @@
 
 #include "flow_script_node_editor.hpp"
 #include "scene/gui/label.h"
-#include "scene/gui/rich_text_label.h"
+#include "editor/gui/flow_script_editor_expression_display_box.hpp"
 
 
-class FlowScriptNodeEditorWaitDurationExpressionResult : public FlowScriptNodeEditor
+class FlowScriptNodeEditorWaitDurationExpressionResult final : public FlowScriptNodeEditor
 {
 	GDCLASS(FlowScriptNodeEditorWaitDurationExpressionResult, FlowScriptNodeEditor);
 
 private:
 	Label *prefix_label;
-	Label *no_expression_defined_label;
-	RichTextLabel *expression_label;
+	FlowScriptEditorExpressionDisplayBox *expression_box;
 
 public:
 	virtual void sync() override;

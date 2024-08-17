@@ -5,7 +5,7 @@
 #include "common.hpp"
 
 
-class FlowScriptNodeReturnExpressionResult : public FlowScriptNode
+class FlowScriptNodeReturnExpressionResult final : public FlowScriptNode
 {
 	GDCLASS(FlowScriptNodeReturnExpressionResult, FlowScriptNode);
 

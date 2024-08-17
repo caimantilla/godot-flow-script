@@ -1,5 +1,5 @@
-#ifndef FLOW_SCRIPT_NODE_EDITOR_SET_EXPRESSION_RESULT_TO_VARIABLE_HPP
-#define FLOW_SCRIPT_NODE_EDITOR_SET_EXPRESSION_RESULT_TO_VARIABLE_HPP
+#ifndef FLOW_SCRIPT_NODE_EDITOR_LOOP_WHILE_EXPRESSION_RESULT_TRUE_HPP
+#define FLOW_SCRIPT_NODE_EDITOR_LOOP_WHILE_EXPRESSION_RESULT_TRUE_HPP
 
 
 #include "flow_script_node_editor.hpp"
@@ -7,13 +7,12 @@
 #include "editor/gui/flow_script_editor_expression_display_box.hpp"
 
 
-class FlowScriptNodeEditorSetExpressionResultToVariable final : public FlowScriptNodeEditor
+class FlowScriptNodeEditorLoopWhileExpressionResultTrue final : public FlowScriptNodeEditor
 {
-	GDCLASS(FlowScriptNodeEditorSetExpressionResultToVariable, FlowScriptNodeEditor);
+	GDCLASS(FlowScriptNodeEditorLoopWhileExpressionResultTrue, FlowScriptNodeEditor);
 
 private:
-	Label *lbl_variable;
-	Label *lbl_whitespace_warning;
+	Label *expression_undefined_label;
 	FlowScriptEditorExpressionDisplayBox *expression_box;
 
 public:
@@ -22,8 +21,8 @@ public:
 	virtual int output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const override;
 	virtual int get_input_slot() const override;
 
-	FlowScriptNodeEditorSetExpressionResultToVariable();
+	FlowScriptNodeEditorLoopWhileExpressionResultTrue();
 };
 
 
-#endif // FLOW_SCRIPT_NODE_EDITOR_SET_EXPRESSION_RESULT_TO_VARIABLE_HPP
+#endif // FLOW_SCRIPT_NODE_EDITOR_LOOP_WHILE_EXPRESSION_RESULT_TRUE_HPP

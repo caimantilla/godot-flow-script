@@ -15,6 +15,12 @@
 FlowScriptNodeTypeDB *FlowScriptNodeTypeDB::singleton = nullptr;
 
 
+void FlowScriptNodeTypeDB::_bind_methods()
+{
+	ADD_SIGNAL(MethodInfo("changed"));
+}
+
+
 FlowScriptNodeTypeDB *FlowScriptNodeTypeDB::get_singleton()
 {
 	return singleton;
@@ -47,6 +53,7 @@ void FlowScriptNodeTypeDB::add_type(const FlowScriptNodeTypeInfo &p_type)
 {
 	ERR_FAIL_COND(!p_type.native);
 	native_types.push_back(p_type);
+	emit_changed();
 }
 
 
@@ -150,6 +157,7 @@ void FlowScriptNodeTypeDB::refresh_custom_script_types()
 		}
 		custom_script_types.push_back(create_result.type);
 	}
+	emit_changed();
 }
 
 
@@ -183,23 +191,6 @@ void FlowScriptNodeTypeDB::update_script_node_info_map() const
 }
 
 
-void FlowScriptNodeTypeDB::emit_type_list_changed()
-{
-	type_list_changed_notification_queued = false;
-	// emit_signal(SNAME("type_list_changed"));
-}
-
-
-void FlowScriptNodeTypeDB::queue_notify_type_list_changed()
-{
-	if (!type_list_changed_notification_queued)
-	{
-		type_list_changed_notification_queued = true;
-		callable_mp(this, &FlowScriptNodeTypeDB::emit_type_list_changed).call_deferred();
-	}
-}
-
-
 void FlowScriptNodeTypeDB::process_custom_node_script_delete_queue()
 {
 	// i don't feel like writing this code better so basically resize the type idx vector all zeroed
@@ -222,13 +213,19 @@ void FlowScriptNodeTypeDB::process_custom_node_script_delete_queue()
 	{
 		script_node_info_map_dirty = true;
 		delete_idx_list.sort();
+		bool any_deleted = false;
 		for (int i = delete_idx_list.size() - 1; i > -1; i--)
 		{
 			int type_idx = delete_idx_list[i] - 1;
 			if (type_idx != -1)
 			{
 				custom_script_types.remove_at(delete_idx_list[i] - 1);
+				any_deleted = true;
 			}
+		}
+		if (any_deleted)
+		{
+			emit_changed();
 		}
 	}
 }
@@ -255,6 +252,7 @@ void FlowScriptNodeTypeDB::on_resource_saved(const Ref<Resource> &p_resource)
 	{
 		FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(script);
 		custom_script_types.write[map_custom_node_script_to_type_idx[script]] = create_result.type;
+		emit_changed();
 	}
 	else
 	{
@@ -265,6 +263,7 @@ void FlowScriptNodeTypeDB::on_resource_saved(const Ref<Resource> &p_resource)
 		script_node_info_map_dirty = true;
 		FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(script);
 		custom_script_types.push_back(create_result.type);
+		emit_changed();
 	}
 }
 
@@ -290,10 +289,17 @@ void FlowScriptNodeTypeDB::on_script_created(const Ref<Script> &p_script)
 	script_node_info_map_dirty = true;
 	FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(p_script);
 	custom_script_types.push_back(create_result.type);
+	emit_changed();
 }
 
 
-FlowScriptNodeTypeDB::FlowScriptNodeTypeDB(FlowScriptEditorPlugin *p_plugin)
+void FlowScriptNodeTypeDB::emit_changed()
+{
+	emit_signal(CoreStringName(changed));
+}
+
+
+FlowScriptNodeTypeDB::FlowScriptNodeTypeDB()
 {
 	CRASH_COND_MSG(singleton != nullptr, "FlowScriptNodeTypeDB is a singleton. Do not instantiate it multiple times.");
 	singleton = this;
@@ -310,6 +316,9 @@ FlowScriptNodeTypeDB::FlowScriptNodeTypeDB(FlowScriptEditorPlugin *p_plugin)
 
 	add_type(FlowScriptNodeTypeInfo::create_native_type("set_expression_result_to_variable_local", "FlowScriptNodeSetExpressionResultToVariableLocal", "FlowScriptNodeEditorSetExpressionResultToVariable", false, "Assign Local Variable", "Variables", "Evaluates an expression, then assigns the result to a local variable."));
 	add_type(FlowScriptNodeTypeInfo::create_native_type("set_expression_result_to_variable_global", "FlowScriptNodeSetExpressionResultToVariableGlobal", "FlowScriptNodeEditorSetExpressionResultToVariable", false, "Assign Global Variable", "Variables", "Evaluates an expression, then assigns the result to a global variable."));
+
+	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_fixed_seconds", "FlowScriptNodeWaitDurationFixedSeconds", "FlowScriptNodeEditorWaitDurationFixedSeconds", false, "Wait Fixed Seconds", "Timing", "Waits a defined amount of time."));
+	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_expression_result", "FlowScriptNodeWaitDurationExpressionResult", "FlowScriptNodeEditorWaitDurationExpressionResult", false, "Wait Expression", "Timing", "Waits the number of seconds evaluated from an expression."));
 
 	EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
 	FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));

@@ -10,20 +10,15 @@ void FlowScriptNodeEditorSetExpressionResultToVariable::sync()
 	lbl_whitespace_warning->set_visible(node->get_variable() != node->get_variable().strip_edges());
 	if (node->get_variable().is_empty())
 	{
-		lbl_variable->set_text("UNDEFINED VARIABLE");
+		lbl_variable->set_text("Undefined Variable");
+		lbl_variable->set_modulate(Color::named("red"));
 	}
 	else
 	{
 		lbl_variable->set_text(node->get_variable());
+		lbl_variable->set_modulate(Color::named("white"));
 	}
-	if (node->get_expression().is_empty())
-	{
-		lbl_expression->set_text("UNDEFINED EXPRESSION");
-	}
-	else
-	{
-		lbl_expression->set_text(node->get_expression());
-	}
+	expression_box->set_expression(node->get_expression());
 }
 
 
@@ -51,13 +46,10 @@ FlowScriptNodeEditorSetExpressionResultToVariable::FlowScriptNodeEditorSetExpres
 	lbl_equals->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
 	hbox->add_child(lbl_equals);
 
-	lbl_expression = memnew(Label);
-	lbl_expression->set_auto_translate(false);
-	lbl_expression->set_h_size_flags(SIZE_SHRINK_BEGIN);
-	lbl_expression->set_v_size_flags(SIZE_SHRINK_CENTER);
-	lbl_expression->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_LEFT);
-	lbl_expression->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
-	hbox->add_child(lbl_expression);
+	expression_box = memnew(FlowScriptEditorExpressionDisplayBox);
+	expression_box->set_h_size_flags(SIZE_SHRINK_BEGIN);
+	expression_box->set_v_size_flags(SIZE_SHRINK_CENTER);
+	hbox->add_child(expression_box);
 
 	lbl_whitespace_warning = memnew(Label);
 	lbl_whitespace_warning->set_text("WARNING: Whitespace found at variable key edge(s).");
