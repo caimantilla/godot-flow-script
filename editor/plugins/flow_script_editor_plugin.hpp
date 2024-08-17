@@ -7,7 +7,7 @@
 #include "flow_script_node.hpp"
 #include "editor/nodes/flow_script_node_editor.hpp"
 #include "editor/gui/flow_script_include_editor_frame.hpp"
-#include "flow_script_node_create_dialog.hpp"
+#include "editor/gui/flow_script_node_create_dialog.hpp"
 #include "editor/plugins/editor_plugin.h"
 #include "editor/window_wrapper.h"
 #include "scene/resources/theme.h"
@@ -29,6 +29,7 @@ private:
 		FILE_SAVE,
 		FILE_SAVE_AS,
 		FILE_CLOSE,
+		FILE_CLOSE_ALL,
 		FILE_MAX,
 	};
 
@@ -42,7 +43,11 @@ private:
 		void on_node_selected();
 		void on_position_offset_changed();
 		void on_raise_request();
-	
+
+		void inspect_edited_node();
+		void nullify_current_node_inspection();
+		bool is_edit_permitted() const;
+
 	public:
 		FlowScriptEditorPlugin *plugin;
 		FlowScriptNodeEditor *editor;
@@ -56,7 +61,7 @@ private:
 	{
 	private:
 		void on_dragged(Point2 p_from, Point2 p_to);
-	
+
 	public:
 		FlowScriptEditorPlugin *plugin;
 		FlowScript *parent_script;
@@ -70,7 +75,7 @@ private:
 	{
 	private:
 		void on_changed();
-	
+
 	public:
 		FlowScriptEditorPlugin *plugin;
 		Ref<FlowScript> flow_script;
@@ -79,6 +84,13 @@ private:
 		bool is_selected() const;
 
 		EditedScript(FlowScriptEditorPlugin *p_plugin, Ref<FlowScript> &p_flow_script);
+	};
+
+	struct GraphHoverConnectionBreakSpot
+	{
+		Point2 position;
+		FlowScriptNodeID node_id;
+		FlowScriptNodeOutputConnection connection;
 	};
 
 private:
@@ -94,7 +106,15 @@ private:
 	ItemList *script_item_list;
 	FlowScriptGraph *graph;
 	FlowScriptNodeCreateDialog *node_create_dialog;
+	Button *create_node_prompt_button;
+	Button *script_include_manager_popup_button;
 
+	// The point that the next node should be created at
+	// Basically, adjust this as needed before displaying the node creation dialog
+	Point2 next_node_create_point;
+
+	void close_edited_script();
+	void close_all_scripts();
 	void file_menu_update_clickable();
 	void update_graph_theme();
 	void update_script_item_list();
@@ -109,6 +129,20 @@ private:
 	void on_window_visibility_changed(bool p_visible);
 	void on_script_item_list_item_selected(int p_idx);
 	void on_script_item_list_item_clicked(int p_item, Point2 p_local_mouse_pos, MouseButton p_btn_idx);
+	void on_node_create_dialog_type_chosen(const StringName &p_native_class, const StringName &p_script_class);
+	
+	void on_graph_connection_drag_ended();
+	void on_graph_connection_drag_started(const StringName &p_from_node_name, const int p_from_port, const bool p_is_output);
+	void on_graph_connection_from_empty(const StringName &p_to_node_name, const int p_to_port, const Point2 &p_release_position);
+	void on_graph_connection_request(const StringName &p_from_node_name, const int p_from_port, const StringName &p_to_node_name, const int p_to_port);
+	void on_graph_connection_to_empty(const StringName &p_from_node, const int p_from_port, const Point2 &p_release_position);
+	void on_graph_copy_nodes_request();
+	void on_graph_delete_nodes_request(const TypedArray<StringName> &p_node_names);
+	void on_graph_disconnection_request(const StringName &p_from_node_name, const int p_from_port, const StringName &p_to_node_name, const int p_to_port);
+	void on_graph_duplicate_nodes_request();
+	void on_graph_end_node_move();
+	void on_graph_frame_rect_changed(GraphFrame *p_frame, const Size2 &p_new_rect);
+
 
 public:
 	virtual String get_name() const override;

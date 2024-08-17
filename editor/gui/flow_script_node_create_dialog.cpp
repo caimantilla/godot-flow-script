@@ -464,11 +464,14 @@ void FlowScriptNodeCreateDialog::update_mark_favorite_button_toggle_state()
 
 void FlowScriptNodeCreateDialog::handle_quick_access_node_item_list_item_selected(ItemList *p_item_list, int p_item_idx)
 {
+	p_item_list->deselect_all();
+
 	Variant meta = p_item_list->get_item_metadata(p_item_idx);
 	ERR_FAIL_COND(meta.get_type() != Variant::STRING_NAME);
 	StringName class_name = meta;
 	int type_idx = get_node_type_index_by_class_name(class_name);
 	ERR_FAIL_COND(type_idx == -1);
+	
 	emit_type_chosen(local_node_type_list[type_idx]);
 }
 

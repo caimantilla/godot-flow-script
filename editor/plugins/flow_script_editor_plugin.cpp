@@ -1,7 +1,11 @@
 #include "flow_script_editor_plugin.hpp"
+#include "editor/flow_script_node_type_db.hpp"
+#include "editor/flow_script_node_type_info.hpp"
 #include "editor/editor_string_names.h"
-#include "editor/themes/editor_scale.h"
 #include "editor/editor_node.h"
+#include "editor/editor_interface.h"
+#include "editor/editor_inspector.h"
+#include "editor/themes/editor_scale.h"
 #include "editor/gui/editor_bottom_panel.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_command_palette.h"
@@ -9,6 +13,76 @@
 
 void FlowScriptEditorPlugin::EditedNode::copy_position_to_node()
 {
+	if (!is_edit_permitted())
+	{
+		return;
+	}
+	Point2i new_pos = plugin->graph_screen_to_data_position(editor->get_position_offset());
+	editor->get_edited_flow_script_ptr()->set_node_position(editor->get_edited_node_id(), new_pos);
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_delete_request()
+{
+	if (!is_edit_permitted())
+	{
+		return;
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_dragged(Point2 p_from, Point2 p_to)
+{
+	copy_position_to_node();
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_node_deselected()
+{
+	nullify_current_node_inspection();
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_node_selected()
+{
+	inspect_edited_node();
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_position_offset_changed()
+{
+	copy_position_to_node();
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::on_raise_request()
+{
+	inspect_edited_node();
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::inspect_edited_node()
+{
+	if (is_edit_permitted())
+	{
+		EditorInterface::get_singleton()->edit_resource(editor->get_edited_node_ref());
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::nullify_current_node_inspection()
+{
+	FlowScriptNode *inspected_node = Object::cast_to<FlowScriptNode>(EditorInterface::get_singleton()->get_inspector()->get_edited_object());
+	if (inspected_node == editor->get_edited_node_ptr())
+	{
+		EditorInterface::get_singleton()->get_inspector()->edit(nullptr);
+	}
+}
+
+
+bool FlowScriptEditorPlugin::EditedNode::is_edit_permitted() const
+{
+	return editor->is_edited_flow_script_root();
 }
 
 
@@ -29,6 +103,48 @@ FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin,
 bool FlowScriptEditorPlugin::EditedScript::is_selected() const
 {
 	return index == plugin->current_edited_script_idx;
+}
+
+
+void FlowScriptEditorPlugin::on_file_menu_item_pressed(int p_idx)
+{
+	switch (p_idx)
+	{
+		case FILE_NEW:
+			break;
+		case FILE_OPEN:
+			break;
+		case FILE_SAVE:
+			break;
+		case FILE_SAVE_AS:
+			break;
+		case FILE_CLOSE:
+			close_edited_script();
+			break;
+	}
+}
+
+
+void FlowScriptEditorPlugin::on_node_create_dialog_type_chosen(const StringName &p_native_class, const StringName &p_script_class)
+{
+	node_create_dialog->hide();
+
+	List<FlowScriptNodeTypeInfo> type_list;
+	FlowScriptNodeTypeDB::get_singleton()->get_node_type_list(&type_list);
+
+	Ref<FlowScriptNode> node;
+
+	for (const FlowScriptNodeTypeInfo &type : type_list)
+	{
+		if (type.enabled && (type.node_script_class_name == p_script_class || type.node_class == p_native_class))
+		{
+			node = FlowScriptNodeTypeDB::get_singleton()->instantiate_node_for_type(type);
+			break;
+		}
+	}
+
+	ERR_FAIL_COND(!node.is_valid());
+	// pass
 }
 
 
@@ -119,7 +235,8 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("flow_script_editor/save", TTR("Save File"), KeyModifierMask::ALT | KeyModifierMask::CMD_OR_CTRL | Key::S), FILE_SAVE);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("flow_script_editor/save_as", TTR("Save File As...")), FILE_SAVE_AS);
 	file_menu->get_popup()->add_separator();
-	file_menu->get_popup()->add_item(TTR("Close File"), FILE_CLOSE);
+	file_menu->get_popup()->add_item(TTR("Close"), FILE_CLOSE);
+	file_menu->get_popup()->add_item(TTR("Close All"), FILE_CLOSE_ALL);
 	file_menu->connect(SceneStringName(id_pressed), callable_mp(this, &FlowScriptEditorPlugin::on_file_menu_item_pressed));
 	menu_hbox->add_child(file_menu);
 
@@ -152,6 +269,7 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	main_split->add_child(graph);
 
 	node_create_dialog = memnew(FlowScriptNodeCreateDialog);
+	node_create_dialog->connect("type_chosen", callable_mp(this, &FlowScriptEditorPlugin::on_node_create_dialog_type_chosen));
 	add_child(node_create_dialog);
 }
 

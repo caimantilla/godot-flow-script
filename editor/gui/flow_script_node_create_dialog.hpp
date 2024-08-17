@@ -2,6 +2,7 @@
 #define FLOW_SCRIPT_NODE_CREATE_DIALOG_HPP
 
 
+#include "editor/flow_script_node_type_info.hpp"
 #include "core/templates/hash_map.h"
 #include "core/templates/list.h"
 #include "scene/gui/dialogs.h"

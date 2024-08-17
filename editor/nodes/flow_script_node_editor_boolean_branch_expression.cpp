@@ -70,4 +70,7 @@ FlowScriptNodeEditorBooleanBranchExpression::FlowScriptNodeEditorBooleanBranchEx
 	set_slot_enabled_left(1, true);
 	set_slot_enabled_right(0, true);
 	set_slot_enabled_right(2, true);
+
+	set_slot_color_right(0, Color::named("green"));
+	set_slot_color_right(2, Color::named("red"));
 }
