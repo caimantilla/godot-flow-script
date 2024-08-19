@@ -1,4 +1,6 @@
 #include "flow_script_node_editor.hpp"
+#include "editor/flow_script_node_type_db.hpp"
+#include "editor/flow_script_node_type_info.hpp"
 #include "scene/gui/label.h"
 
 
@@ -144,21 +146,24 @@ void FlowScriptNodeEditor::update_theme()
 
 String FlowScriptNodeEditor::get_new_title() const
 {
-	String ret;
+	String ret = "ERROR: NO NODE";
 	if (!GDVIRTUAL_CALL(_get_new_title, ret))
 	{
 		FlowScriptNode *node = get_edited_node_ptr();
-		if (node == nullptr)
+		if (node != nullptr)
 		{
-			ret = "ERROR: NO NODE";
-		}
-		else
-		{
-			ret = node->get_type_name() + " #" + itos(edited_node_id);
-			String node_res_name = node->get_name();
-			if (!node_res_name.is_empty())
+			const FlowScriptNodeTypeInfo &type_info = FlowScriptNodeTypeDB::get_singleton()->get_type_of_node(node);
+			if (type_info.enabled)
 			{
-				ret = node_res_name + ": " + ret;
+				String node_res_name = node->get_name();
+				if (node_res_name.is_empty())
+				{
+					ret = vformat("#%d - %s", edited_node_id, type_info.name);
+				}
+				else
+				{
+					ret = vformat("(#%d - %s - %s", edited_node_id, type_info.name, node_res_name);
+				}
 			}
 		}
 	}
@@ -171,18 +176,16 @@ String FlowScriptNodeEditor::get_new_tooltip_text() const
 	String ret;
 	if (!GDVIRTUAL_CALL(_get_new_tooltip_text, ret))
 	{
-		PackedStringArray lines;
 		FlowScriptNode *node = get_edited_node_ptr();
-		String node_res_name = node->get_name();
-		if (!node_res_name.is_empty())
+		Ref<Script> script = node->get_script();
+		if (script.is_valid() && script->get_global_name() != StringName())
 		{
-			lines.push_back("Name: " + node_res_name);
+			ret = script->get_global_name();
 		}
-		lines.push_back("ID: " + itos(edited_node_id));
-		lines.push_back("Type: " + node->get_type_name());
-
-		const static String nl_sep = "\n";
-		ret = nl_sep.join(lines);
+		else
+		{
+			ret = node->get_class();
+		}
 	}
 	return ret;
 }
@@ -193,12 +196,6 @@ int FlowScriptNodeEditor::get_input_slot() const
 	int ret = -1;
 	GDVIRTUAL_CALL(_get_input_slot, ret);
 	return ret;
-}
-
-
-int FlowScriptNodeEditor::input_port_to_slot(const int p_port) const
-{
-	return get_input_port_slot(p_port);
 }
 
 
@@ -220,36 +217,10 @@ int FlowScriptNodeEditor::output_connection_to_graph_slot(const FlowScriptNodeOu
 }
 
 
-int FlowScriptNodeEditor::input_slot_to_port(const int p_slot) const
-{
-	int port = p_slot;
-	for (int i = 0; i < p_slot; i++)
-	{
-		if (!is_slot_enabled_left(i))
-			port--;
-	}
-	return port;
-}
-
-
-int FlowScriptNodeEditor::output_port_to_slot(const int p_port) const
-{
-	return get_output_port_slot(p_port);
-}
-
-
-int FlowScriptNodeEditor::output_slot_to_port(const int p_slot) const
-{
-	int port = p_slot;
-	for (int i = 0; i < p_slot; i++)
-	{
-		if (!is_slot_enabled_right(i))
-			port--;
-	}
-	return port;
-}
-
-
 FlowScriptNodeEditor::FlowScriptNodeEditor()
 {
+	set_h_size_flags(SIZE_SHRINK_CENTER);
+	set_v_size_flags(SIZE_SHRINK_CENTER);
+	set_h_grow_direction(GROW_DIRECTION_BOTH);
+	set_v_grow_direction(GROW_DIRECTION_BOTH);
 }

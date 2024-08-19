@@ -57,11 +57,6 @@ public:
 	Ref<FlowScriptNode> get_edited_node_ref() const;
 	FlowScriptNode *get_edited_node_ptr() const;
 
-	int input_port_to_slot(const int p_port) const;
-	int input_slot_to_port(const int p_slot) const;
-	int output_port_to_slot(const int p_port) const;
-	int output_slot_to_port(const int p_slot) const;
-
 	virtual void startup();
 	virtual void cleanup();
 	virtual void sync();

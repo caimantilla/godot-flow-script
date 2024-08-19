@@ -28,7 +28,7 @@ public:
 	enum : FlowScriptIncludeID
 	{
 		INCLUDE_FLOW_SCRIPT_ID_INVALID = -1,
-		INCLUDE_FLOW_SCRIPT_MAX = 20,
+		INCLUDE_FLOW_SCRIPT_MAX = 100,
 	};
 
 private:

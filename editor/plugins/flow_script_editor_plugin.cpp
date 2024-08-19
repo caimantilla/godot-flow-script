@@ -1,4 +1,5 @@
 #include "flow_script_editor_plugin.hpp"
+#include "flow_script_node_instance.hpp"
 #include "editor/flow_script_node_type_db.hpp"
 #include "editor/flow_script_node_type_info.hpp"
 #include "editor/editor_string_names.h"
@@ -11,14 +12,143 @@
 #include "editor/editor_command_palette.h"
 
 
+FlowScriptEditorPlugin::ScriptItemList::ScriptItemList(FlowScriptEditorPlugin *p_plugin)
+{
+	plugin = p_plugin;
+	set_auto_translate(false);
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::_notification(int p_what)
+{
+	if (p_what == NOTIFICATION_THEME_CHANGED)
+	{
+		Ref<Font> main_font = EditorNode::get_singleton()->get_editor_theme()->get_font("main_msdf", EditorStringName(EditorFonts));
+		Ref<Font> bold_font = EditorNode::get_singleton()->get_editor_theme()->get_font("main_bold_msdf", EditorStringName(EditorFonts));
+
+		msdf_theme->set_default_font(main_font);
+		msdf_theme->set_font("font", "Label", main_font);
+		msdf_theme->set_font("font", "GraphNodeTitleLabel", bold_font);
+		msdf_theme->set_font("normal_font", "RichTextLabel", main_font);
+		msdf_theme->set_font("bold_font", "RichTextLabel", bold_font);
+	}
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::add_node_editor(FlowScriptNodeEditor *p_editor)
+{
+	p_editor->set_theme(msdf_theme);
+	add_child(p_editor);
+}
+
+
+Point2 FlowScriptEditorPlugin::ScriptGraph::point_convert_data_to_graph(const Point2i &p_data_position) const
+{
+	Point2 ret = p_data_position;
+	ret *= EDSCALE;
+	return ret;
+}
+
+
+Point2i FlowScriptEditorPlugin::ScriptGraph::point_convert_graph_to_data(const Point2 &p_screen_position) const
+{
+	Point2 retf;
+	retf /= EDSCALE;
+	retf = retf.round();
+	// autoconvert type
+	return retf;
+}
+
+
+Point2 FlowScriptEditorPlugin::ScriptGraph::point_convert_rect_to_graph(const Point2 &p_rect_position) const
+{
+	Point2 ret = p_rect_position;
+	ret += get_scroll_offset();
+	ERR_FAIL_COND_V_MSG(Math::is_zero_approx(get_zoom()), ret, "WHY IS THE ZOOM ZERO!!!");
+	ret /= get_zoom();
+	return ret;
+}
+
+
+Point2 FlowScriptEditorPlugin::ScriptGraph::point_convert_graph_to_rect(const Point2 &p_graph_position) const
+{
+	// TODO: WRITE THIS!! STOP BEING LAZY!!!!!
+	ERR_FAIL_V(p_graph_position);
+}
+
+
+const Vector<FlowScriptEditorPlugin::EditedNode *> &FlowScriptEditorPlugin::ScriptGraph::get_selected_nodes() const
+{
+	return selected_nodes;
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::on_begin_node_move()
+{
+	plugin->set_drag_state(DRAG_NODE_EDITOR);
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::on_end_node_move()
+{
+	plugin->set_drag_state(DRAG_NONE);
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::on_node_selected(Node *p_node)
+{
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::on_node_deselected(Node *p_node)
+{
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::on_copy_nodes_request()
+{
+}
+
+
+FlowScriptEditorPlugin::ScriptGraph::ScriptGraph(FlowScriptEditorPlugin *p_plugin)
+{
+	plugin = p_plugin;
+	msdf_theme.instantiate();
+}
+
+
+void FlowScriptEditorPlugin::GraphHoverConnectionBreakElement::_notification(int p_what)
+{
+}
+
+
+FlowScriptEditorPlugin::GraphHoverConnectionBreakElement::GraphHoverConnectionBreakElement()
+{
+}
+
+
 void FlowScriptEditorPlugin::EditedNode::copy_position_to_node()
 {
 	if (!is_edit_permitted())
 	{
 		return;
 	}
-	Point2i new_pos = plugin->graph_screen_to_data_position(editor->get_position_offset());
-	editor->get_edited_flow_script_ptr()->set_node_position(editor->get_edited_node_id(), new_pos);
+	Point2 input_scr_pos = editor->get_position_offset();
+	input_scr_pos += editor->get_size() * 0.5;
+	Point2i new_data_pos = plugin->graph->point_convert_graph_to_data(input_scr_pos);
+	editor->get_edited_flow_script_ptr()->set_node_position(editor->get_edited_node_id(), new_data_pos);
+}
+
+
+void FlowScriptEditorPlugin::EditedNode::match_position_of_node()
+{
+	edit_block_counter++;
+
+	Point2 new_scr_pos = plugin->graph->point_convert_data_to_graph(editor->get_edited_flow_script_ptr()->get_node_position(editor->get_edited_node_id()));
+	new_scr_pos -= editor->get_size() * 0.5;
+	editor->set_position_offset(new_scr_pos);
+
+	edit_block_counter--;
 }
 
 
@@ -82,7 +212,7 @@ void FlowScriptEditorPlugin::EditedNode::nullify_current_node_inspection()
 
 bool FlowScriptEditorPlugin::EditedNode::is_edit_permitted() const
 {
-	return editor->is_edited_flow_script_root();
+	return editor->is_edited_flow_script_root() && edit_block_counter == 0;
 }
 
 
@@ -100,9 +230,23 @@ FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin,
 }
 
 
-bool FlowScriptEditorPlugin::EditedScript::is_selected() const
+FlowScriptEditorPlugin::EditedScript::EditedScript(EditedScript *p_parent, FlowScriptEditorPlugin *p_plugin, const Ref<FlowScript> &p_flow_script)
 {
-	return index == plugin->current_edited_script_idx;
+	parent = p_parent;
+	plugin = p_plugin;
+	flow_script = p_flow_script;
+}
+
+
+FlowScriptEditorPlugin::EditedScript::~EditedScript()
+{
+	for (FlowScriptIncludeID i = 0; i < FlowScript::INCLUDE_FLOW_SCRIPT_MAX; i++)
+	{
+		if (flow_script->has_include_flow_script_instance(i))
+		{
+			memdelete(children[i]);
+		}
+	}
 }
 
 
@@ -161,52 +305,85 @@ void FlowScriptEditorPlugin::edit(Object *p_object)
 	{
 		return;
 	}
+	// TODO: Automatically open the script
+	make_bottom_panel_item_visible(window_wrapper);
 }
 
 
-void FlowScriptEditorPlugin::update_graph_theme()
+void FlowScriptEditorPlugin::refresh_connection_hover_break_spots()
 {
-	Ref<Font> main_font = EditorNode::get_singleton()->get_editor_theme()->get_font("main_msdf", EditorStringName(EditorFonts));
-	Ref<Font> bold_font = EditorNode::get_singleton()->get_editor_theme()->get_font("main_bold_msdf", EditorStringName(EditorFonts));
+	if (!is_editing_script())
+	{
+		connection_hover_break_spot_list.clear();
+		return;
+	}
+	const EditedScript &edited_script = get_current_edited_script();
+	int64_t connection_count = 0;
+	for (const KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &kv : edited_script.flow_script->node_map)
+	{
+		const FlowScriptNodeInstance &node_instance = kv.value;
+		for (const Vector<FlowScriptNodeReference> &references : node_instance.connection_lists)
+		{
+			connection_count += references.size();
+		}
+	}
+	connection_hover_break_spot_list.resize(connection_count);
+	int64_t spot_idx = 0;
+	for (const KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &kv : edited_script.flow_script->node_map)
+	{
+		const FlowScriptNodeID origin_node_id = kv.key;
+		ERR_CONTINUE(!edited_script.node_editor_map.has(origin_node_id));
 
-	graph_theme->set_default_font(main_font);
-	graph_theme->set_font("font", "Label", main_font);
-	graph_theme->set_font("font", "GraphNodeTitleLabel", bold_font);
-	graph_theme->set_font("normal_font", "RichTextLabel", main_font);
-	graph_theme->set_font("bold_font", "RichTextLabel", bold_font);
+		EditedNode *origin_node_editor = edited_script.node_editor_map[origin_node_id];
+		const FlowScriptNodeInstance &origin_node_instance = kv.value;
+		for (int list_idx = 0; list_idx < origin_node_instance.connection_lists.size(); list_idx++)
+		{
+			for (int slot_idx = 0; slot_idx < origin_node_instance.connection_lists.get(list_idx).size(); slot_idx++)
+			{
+				GraphHoverConnectionBreakSpot spot_data = {
+					.enabled = false,
+					.node_id = origin_node_id,
+					.connection = FlowScriptNodeOutputConnection(list_idx, slot_idx),
+				};
+				const FlowScriptNodeReference &reference = origin_node_instance.connection_lists.get(list_idx).get(slot_idx);
+				if (reference.is_valid())
+				{
+					EditedNode *target_node_editor = edited_script.get_edited_node_by_reference(reference);
+					ERR_CONTINUE(target_node_editor == nullptr);
+
+					spot_data.enabled = true;
+
+					int origin_graph_port = origin_node_editor->editor->get_slot_port_index_right(origin_node_editor->editor->output_connection_to_graph_slot(spot_data.connection));
+					int target_graph_port = target_node_editor->editor->get_slot_port_index_left(origin_node_editor->editor->get_input_slot());
+
+					Point2 origin_position = origin_node_editor->editor->get_output_port_position(origin_graph_port);
+					Point2 target_position = target_node_editor->editor->get_input_port_position(target_graph_port);
+
+					spot_data.position = origin_position.lerp(target_position, 0.5);
+				}
+				connection_hover_break_spot_list.write[spot_idx] = spot_data;
+				spot_idx++;
+			}
+		}
+	}
 }
 
 
-Point2 FlowScriptEditorPlugin::graph_data_to_screen_position(const Point2i &p_data_position) const
+void FlowScriptEditorPlugin::redraw_graph_connections()
 {
-	Point2 ret = p_data_position;
-	ret *= EDSCALE;
-	return ret;
-}
+	graph->clear_connections();
 
-
-Point2i FlowScriptEditorPlugin::graph_screen_to_data_position(const Point2 &p_screen_position) const
-{
-	Point2 retf;
-	retf /= EDSCALE;
-	retf = retf.round();
-	// autoconvert type
-	return retf;
-}
-
-
-Point2 FlowScriptEditorPlugin::graph_rect_position_to_screen_position(const Point2 &p_rect_position) const
-{
-	Point2 ret = p_rect_position;
-	ret += graph->get_scroll_offset();
-	ret /= graph->get_zoom();
-	return ret;
+	Ref<FlowScript> flow_script = get_edited_flow_script();
+	if (!flow_script.is_valid())
+	{
+		return;
+	}
 }
 
 
 FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 {
-	graph_theme.instantiate();
+	clipboard_handler.init(this);
 
 	window_wrapper = memnew(WindowWrapper);
 	window_wrapper->set_window_title(vformat(TTR("%s - Godot Engine"), TTR("FlowScript Editor")));
@@ -255,15 +432,12 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	}
 	menu_hbox->add_child(make_floating_button);
 
-	script_item_list = memnew(ItemList);
-	script_item_list->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
+	script_item_list = memnew(ScriptItemList(this));
 	script_item_list->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	script_item_list->connect("item_selected", callable_mp(this, &FlowScriptEditorPlugin::on_script_item_list_item_selected));
-	script_item_list->connect("item_clicked", callable_mp(this, &FlowScriptEditorPlugin::on_script_item_list_item_clicked));
 	// SET_DRAG_FORWARDING_GCD(script_list, FlowScriptEditorPlugin);
 	left_vbox->add_child(script_item_list);
 
-	graph = memnew(FlowScriptGraph);
+	graph = memnew(ScriptGraph(this));
 	graph->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	graph->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	main_split->add_child(graph);

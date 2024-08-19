@@ -4,15 +4,25 @@
 
 #include "flow_script.hpp"
 #include "scene/gui/graph_frame.h"
+#include "scene/gui/button.h"
 
 
 class FlowScriptIncludeEditorFrame : public GraphFrame
 {
 	GDCLASS(FlowScriptIncludeEditorFrame, GraphFrame);
 
+private:
+	Button *remove_script_button;
+	
+	void request_removal();
+	void update_title();
+
+protected:
+	void _notification(int p_what);
+
 public:
-	Ref<FlowScript> parent_flow_script;
 	FlowScriptIncludeID include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
+	Ref<FlowScript> flow_script;
 
 	FlowScriptIncludeEditorFrame();
 };
