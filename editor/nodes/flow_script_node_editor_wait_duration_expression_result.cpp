@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_wait_duration_expression_result.hpp"
-#include "nodes/flow_script_node_wait_duration_expression_result.hpp"
+#include "../../nodes/flow_script_node_wait_duration_expression_result.hpp"
 #include "scene/gui/margin_container.h"
 #include "scene/gui/box_container.h"
 

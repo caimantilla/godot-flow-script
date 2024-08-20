@@ -1,5 +1,5 @@
 #include "flow_script_node_type_info.hpp"
-#include "flow_script_node_custom.hpp"
+#include "../flow_script_node_custom.hpp"
 
 
 FlowScriptNodeTypeInfo FlowScriptNodeTypeInfo::create_native_type(const String &p_id, const StringName &p_node_class, const StringName &p_editor_class, const bool p_name_assignable, const String &p_name, const String &p_category, const String &p_description)

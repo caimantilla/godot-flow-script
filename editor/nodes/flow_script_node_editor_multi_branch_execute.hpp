@@ -3,7 +3,7 @@
 
 
 #include "flow_script_node_editor.hpp"
-#include "nodes/flow_script_node_multi_branch_execute.hpp"
+#include "../../nodes/flow_script_node_multi_branch_execute.hpp"
 #include "scene/gui/label.h"
 #include "scene/gui/separator.h"
 

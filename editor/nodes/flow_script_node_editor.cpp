@@ -1,6 +1,6 @@
 #include "flow_script_node_editor.hpp"
-#include "editor/flow_script_node_type_db.hpp"
-#include "editor/flow_script_node_type_info.hpp"
+#include "../flow_script_node_type_db.hpp"
+#include "../flow_script_node_type_info.hpp"
 #include "scene/gui/label.h"
 
 

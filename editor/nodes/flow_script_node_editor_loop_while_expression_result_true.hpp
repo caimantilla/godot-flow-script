@@ -4,7 +4,7 @@
 
 #include "flow_script_node_editor.hpp"
 #include "scene/gui/label.h"
-#include "editor/gui/flow_script_editor_expression_display_box.hpp"
+#include "../gui/flow_script_editor_expression_display_box.hpp"
 
 
 class FlowScriptNodeEditorLoopWhileExpressionResultTrue final : public FlowScriptNodeEditor

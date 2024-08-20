@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_return_expression_result.hpp"
-#include "nodes/flow_script_node_return_expression_result.hpp"
+#include "../../nodes/flow_script_node_return_expression_result.hpp"
 #include "scene/gui/box_container.h"
 
 

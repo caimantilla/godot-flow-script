@@ -13,7 +13,7 @@ void FlowScript::_bind_methods()
 	BIND_CONSTANT(INCLUDE_FLOW_SCRIPT_ID_INVALID);
 	BIND_CONSTANT(INCLUDE_FLOW_SCRIPT_MAX);
 
-	ADD_SIGNAL(MethodInfo("include_flow_script_changed", PropertyInfo(Variant::INT, "include_id")));
+	ADD_SIGNAL(MethodInfo("include_flow_scripts_changed"));
 	ADD_SIGNAL(MethodInfo("include_flow_script_position_changed", PropertyInfo(Variant::INT, "include_id")));
 	ADD_SIGNAL(MethodInfo("node_position_changed", PropertyInfo(Variant::INT, "node_id")));
 	ADD_SIGNAL(MethodInfo("node_connections_changed", PropertyInfo(Variant::INT, "node_id")));
@@ -427,7 +427,7 @@ void FlowScript::set_include_flow_script(const FlowScriptIncludeID p_include_id,
 	}
 	ERR_FAIL_COND(includes_flow_script(p_flow_script));
 	script_includes[p_include_id].flow_script = p_flow_script;
-	emit_signal(SNAME("include_flow_script_changed"), p_include_id);
+	emit_signal(SNAME("include_flow_scripts_changed"));
 }
 
 
@@ -435,6 +435,62 @@ Ref<FlowScript> FlowScript::get_include_flow_script(const FlowScriptIncludeID p_
 {
 	ERR_FAIL_INDEX_V(p_include_id, INCLUDE_FLOW_SCRIPT_MAX, Ref<FlowScript>());
 	return script_includes[p_include_id].flow_script;
+}
+
+
+FlowScriptIncludeID FlowScript::add_include_flow_script(const Ref<FlowScript> &p_other_flow_script)
+{
+	ERR_FAIL_COND_V(!p_other_flow_script.is_valid(), INCLUDE_FLOW_SCRIPT_ID_INVALID);
+	ERR_FAIL_COND_V(includes_flow_script(p_other_flow_script), INCLUDE_FLOW_SCRIPT_ID_INVALID);
+	ERR_FAIL_COND_V(p_other_flow_script->includes_flow_script(this), INCLUDE_FLOW_SCRIPT_ID_INVALID); // block circular reference
+	for (FlowScriptIncludeID i = 0; i < INCLUDE_FLOW_SCRIPT_MAX; i++)
+	{
+		if (!script_includes[i].is_valid())
+		{
+			script_includes[i].flow_script = p_other_flow_script;
+			emit_signal(SNAME("include_flow_scripts_changed"));
+			return i;
+		}
+	}
+	return INCLUDE_FLOW_SCRIPT_ID_INVALID;
+}
+
+
+bool FlowScript::remove_include_flow_script(const FlowScriptIncludeID p_include_id)
+{
+	ERR_FAIL_INDEX_V(p_include_id, INCLUDE_FLOW_SCRIPT_MAX, false);
+	ERR_FAIL_COND_V(!script_includes[p_include_id].is_valid(), false);
+
+	script_includes[p_include_id] = FlowScriptIncludeInstance();
+
+	for (FlowScriptIncludeID i = p_include_id; i < (INCLUDE_FLOW_SCRIPT_MAX - 1); i++)
+	{
+		script_includes[i] = script_includes[i + 1];
+	}
+
+	for (KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &kv : node_map)
+	{
+		FlowScriptNodeInstance &node_instance = kv.value;
+		for (uint8_t list_idx = 0; list_idx < node_instance.connection_lists.size(); list_idx++)
+		{
+			for (int64_t slot_idx = 0; slot_idx < node_instance.connection_lists.get(list_idx).size(); slot_idx++)
+			{
+				if (node_instance.connection_lists[list_idx][slot_idx].flow_script_id > p_include_id)
+				{
+					// adjust the script pointed to by the reference
+					node_instance.connection_lists.get(list_idx).write[slot_idx].node_id -= 1;
+				}
+				else if (node_instance.connection_lists[list_idx][slot_idx].flow_script_id == p_include_id)
+				{
+					// nullify reference
+					node_instance.connection_lists.get(list_idx).write[slot_idx] = FlowScriptNodeReference();
+				}
+			}
+		}
+	}
+
+	emit_signal(SNAME("include_flow_scripts_changed"));
+	return true;
 }
 
 

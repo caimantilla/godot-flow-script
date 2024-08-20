@@ -1,7 +1,8 @@
 #include "flow_script_editor_plugin.hpp"
-#include "flow_script_node_instance.hpp"
-#include "editor/flow_script_node_type_db.hpp"
-#include "editor/flow_script_node_type_info.hpp"
+#include "editor_inspector_plugin_flow_script.hpp"
+#include "../../flow_script_node_instance.hpp"
+#include "../flow_script_node_type_db.hpp"
+#include "../flow_script_node_type_info.hpp"
 #include "editor/editor_string_names.h"
 #include "editor/editor_node.h"
 #include "editor/editor_interface.h"
@@ -10,6 +11,7 @@
 #include "editor/gui/editor_bottom_panel.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_command_palette.h"
+#include "editor/editor_undo_redo_manager.h"
 
 
 FlowScriptEditorPlugin::ScriptItemList::ScriptItemList(FlowScriptEditorPlugin *p_plugin)
@@ -92,6 +94,40 @@ void FlowScriptEditorPlugin::ScriptGraph::on_begin_node_move()
 void FlowScriptEditorPlugin::ScriptGraph::on_end_node_move()
 {
 	plugin->set_drag_state(DRAG_NONE);
+	ERR_FAIL_COND(current_element_drag_operations.is_empty());
+	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
+
+	String action_name;
+	int drag_target_bits = 0;
+	for (const ElementDragOperation &operation : current_element_drag_operations)
+	{
+		drag_target_bits |= operation.drag_target;
+	}
+	switch (drag_target_bits)
+	{
+		case ElementDragOperation::DRAG_TARGET_NODE:
+			action_name = TTR("Moved FlowScript Node(s)");
+			break;
+		case ElementDragOperation::DRAG_TARGET_SCRIPT:
+			action_name = TTR("Moved FlowScript Include(s)");
+			break;
+		case (ElementDragOperation::DRAG_TARGET_NODE | ElementDragOperation::DRAG_TARGET_SCRIPT):
+			action_name = TTR("Moved FlowScript Node(s) and Include(s)");
+			break;
+	}
+
+	udrd->create_action(action_name, UndoRedo::MERGE_DISABLE, this, false);
+
+	for (int i = 0; i < current_element_drag_operations.size(); i++)
+	{
+		const ElementDragOperation &operation = current_element_drag_operations[i];
+		switch (operation.drag_target)
+		{
+			case ElementDragOperation::DRAG_TARGET_NODE:
+				udrd->add_do
+				break;
+		}
+	}
 }
 
 
@@ -230,6 +266,25 @@ FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin,
 }
 
 
+void FlowScriptEditorPlugin::EditedScript::_bind_methods()
+{
+	ClassDB::bind_method(D_METHOD("_undo_element_drag"), &EditedScript::_undo_element_drag);
+	ClassDB::bind_method(D_METHOD("_redo_element_drag"), &EditedScript::_redo_element_drag);
+	ClassDB::bind_method(D_METHOD("_undo_add_node"), &EditedScript::_undo_add_node);
+	ClassDB::bind_method(D_METHOD("_redo_add_node"), &EditedScript::_redo_add_node);
+	ClassDB::bind_method(D_METHOD("_undo_delete_node"), &EditedScript::_undo_delete_node);
+	ClassDB::bind_method(D_METHOD("_redo_delete_node"), &EditedScript::_redo_delete_node);
+	ClassDB::bind_method(D_METHOD("_undo_add_include"), &EditedScript::_undo_add_include);
+	ClassDB::bind_method(D_METHOD("_redo_add_include"), &EditedScript::_redo_add_include);
+	ClassDB::bind_method(D_METHOD("_undo_delete_include"), &EditedScript::_undo_delete_include);
+	ClassDB::bind_method(D_METHOD("_redo_delete_include"), &EditedScript::_redo_delete_include);
+	ClassDB::bind_method(D_METHOD("_undo_connect_nodes"), &EditedScript::_undo_connect_nodes);
+	ClassDB::bind_method(D_METHOD("_redo_connect_nodes"), &EditedScript::_redo_connect_nodes);
+	ClassDB::bind_method(D_METHOD("_undo_disconnect_nodes"), &EditedScript::_undo_disconnect_nodes);
+	ClassDB::bind_method(D_METHOD("_redo_disconnect_nodes"), &EditedScript::_redo_disconnect_nodes);
+}
+
+
 FlowScriptEditorPlugin::EditedScript::EditedScript(EditedScript *p_parent, FlowScriptEditorPlugin *p_plugin, const Ref<FlowScript> &p_flow_script)
 {
 	parent = p_parent;
@@ -288,7 +343,9 @@ void FlowScriptEditorPlugin::on_node_create_dialog_type_chosen(const StringName 
 	}
 
 	ERR_FAIL_COND(!node.is_valid());
-	// pass
+	FlowScriptNodeID id = get_edited_flow_script()->add_node_to_first_available_slot(node);
+	ERR_FAIL_COND(id == FlowScript::NODE_ID_INVALID);
+	get_edited_flow_script()->set_node_position(id, graph->point_convert_graph_to_data(next_node_create_point));
 }
 
 
@@ -306,7 +363,7 @@ void FlowScriptEditorPlugin::edit(Object *p_object)
 		return;
 	}
 	// TODO: Automatically open the script
-	make_bottom_panel_item_visible(window_wrapper);
+	make_visible(true);
 }
 
 
@@ -381,6 +438,33 @@ void FlowScriptEditorPlugin::redraw_graph_connections()
 }
 
 
+String FlowScriptEditorPlugin::get_name() const
+{
+	return "FlowScript";
+}
+
+
+const Ref<Texture2D> FlowScriptEditorPlugin::get_icon() const
+{
+	Ref<Image> img = EditorNode::get_singleton()->get_editor_theme()->get_icon(SNAME("GraphEdit"), EditorStringName(EditorIcons))->get_image();
+	img->adjust_bcs(5, 5, 0);
+	Ref<Texture2D> tex = ImageTexture::create_from_image(img);
+	return tex;
+}
+
+
+String FlowScriptEditorPlugin::get_plugin_version() const
+{
+	return "1.0";
+}
+
+
+void FlowScriptEditorPlugin::make_visible(bool p_visible)
+{
+	make_bottom_panel_item_visible(window_wrapper);
+}
+
+
 FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 {
 	clipboard_handler.init(this);
@@ -445,6 +529,9 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	node_create_dialog = memnew(FlowScriptNodeCreateDialog);
 	node_create_dialog->connect("type_chosen", callable_mp(this, &FlowScriptEditorPlugin::on_node_create_dialog_type_chosen));
 	add_child(node_create_dialog);
+
+	inspector_plugin.instantiate();
+	add_inspector_plugin(inspector_plugin);
 }
 
 

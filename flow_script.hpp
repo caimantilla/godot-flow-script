@@ -56,6 +56,8 @@ public:
 
 	bool includes_flow_script(const Ref<FlowScript> &p_other_flow_script) const; // DO NOT ALLOW CIRCULAR DEPENDENCIES.
 	bool has_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
+	FlowScriptIncludeID add_include_flow_script(const Ref<FlowScript> &p_other_flow_script);
+	bool remove_include_flow_script(const FlowScriptIncludeID p_id);
 	FlowScriptIncludeInstance get_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
 	bool is_node_slot_available(const FlowScriptNodeID p_node_id) const;
 	bool has_node(const FlowScriptNodeID p_node_id) const;

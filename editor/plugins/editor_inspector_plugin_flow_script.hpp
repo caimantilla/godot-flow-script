@@ -5,13 +5,21 @@
 #include "editor/editor_inspector.h"
 
 
+class FlowScriptEditorPlugin;
+
+
 class EditorInspectorPluginFlowScript : public EditorInspectorPlugin
 {
 	GDCLASS(EditorInspectorPluginFlowScript, EditorInspectorPlugin);
 
+private:
+	FlowScriptEditorPlugin *plugin;
+
 public:
 	virtual bool can_handle(Object *p_object) override;
 	virtual bool parse_property(Object *p_object, const Variant::Type p_type, const String &p_path, const PropertyHint p_hint, const String &p_hint_text, const BitField<PropertyUsageFlags> p_usage, const bool p_wide = false) override;
+
+	EditorInspectorPluginFlowScript(FlowScriptEditorPlugin *p_plugin);
 };
 
 

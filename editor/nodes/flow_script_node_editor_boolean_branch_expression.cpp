@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_boolean_branch_expression.hpp"
-#include "nodes/flow_script_node_boolean_branch_expression.hpp"
+#include "../../nodes/flow_script_node_boolean_branch_expression.hpp"
 
 
 void FlowScriptNodeEditorBooleanBranchExpression::sync()

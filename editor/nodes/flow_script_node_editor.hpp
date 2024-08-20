@@ -4,10 +4,9 @@
 
 #include "scene/gui/graph_node.h"
 #include "typedefs.hpp"
-#include "flow_script.hpp"
-#include "flow_script_node.hpp"
-#include "flow_script_node_output_connection.hpp"
-#include "editor/flow_script_node_editor_outgoing_connection_parameters.hpp"
+#include "../../flow_script.hpp"
+#include "../../flow_script_node.hpp"
+#include "../../flow_script_node_output_connection.hpp"
 
 
 class FlowScriptEditorPlugin;

@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_text_comment.hpp"
-#include "nodes/flow_script_node_text_comment.hpp"
+#include "../../nodes/flow_script_node_text_comment.hpp"
 
 
 void FlowScriptNodeEditorTextComment::sync()

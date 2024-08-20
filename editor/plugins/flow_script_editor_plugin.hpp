@@ -2,12 +2,12 @@
 #define FLOW_SCRIPT_EDITOR_PLUGIN_HPP
 
 
-#include "flow_script.hpp"
-#include "flow_script_node.hpp"
+#include "../../flow_script.hpp"
+#include "../../flow_script_node.hpp"
+#include "../nodes/flow_script_node_editor.hpp"
+#include "../gui/flow_script_include_editor_frame.hpp"
+#include "../gui/flow_script_node_create_dialog.hpp"
 #include "core/io/image.h"
-#include "editor/nodes/flow_script_node_editor.hpp"
-#include "editor/gui/flow_script_include_editor_frame.hpp"
-#include "editor/gui/flow_script_node_create_dialog.hpp"
 #include "editor/plugins/editor_plugin.h"
 #include "editor/window_wrapper.h"
 #include "scene/resources/theme.h"
@@ -19,6 +19,9 @@
 #include "scene/gui/box_container.h"
 #include "scene/gui/menu_button.h"
 #include "scene/gui/item_list.h"
+
+
+class EditorInspectorPluginFlowScript;
 
 
 class FlowScriptEditorPlugin final : public EditorPlugin
@@ -70,6 +73,7 @@ private:
 
 		void copy_position_to_node();
 		void match_position_of_node();
+		FlowScriptNodeID get_edited_node_id() const;
 
 		EditedNode(FlowScriptEditorPlugin *p_plugin, FlowScriptNodeEditor *p_editor);
 	};
@@ -95,11 +99,73 @@ private:
 	// An edited script instance.
 	// Contains the parent script (if included) and all the child scripts.
 	// Any level of nesting is supported.
-	class EditedScript final
+	class EditedScript final : public Object
 	{
+		GDCLASS(EditedScript, Object);
+
 	private:
+		class ElementDragOperation final
+		{
+		public:
+			enum Target
+			{
+				TARGET_NODE = 1,
+				TARGET_INCLUDE = 2,
+			};
+
+		public:
+			Target target;
+			Point2i from;
+			Point2i to;
+			union
+			{
+				FlowScriptNodeID node_id;
+				FlowScriptIncludeID include_id;
+			};
+		};
+
+		class ConnectionOperation final
+		{
+		public:
+			FlowScriptNodeID origin;
+			FlowScriptNodeOutputConnection output;
+			FlowScriptNodeReference target;
+		};
+
+		class NodeAddOperation final
+		{
+		public:
+			Ref<FlowScriptNode> node;
+			Point2i position;
+		};
+
+	private:
+		// undo/redo history lists
+		LocalVector<ElementDragOperation> history_element_drag_operations;
+		LocalVector<ConnectionOperation> history_connection_operations;
+
 		void on_changed();
 		void on_frame_dragged();
+
+	// undo/redo methods
+	private:
+		void _undo_element_drag();
+		void _redo_element_drag();
+		void _undo_add_node();
+		void _redo_add_node();
+		void _undo_delete_node();
+		void _redo_delete_node();
+		void _undo_add_include();
+		void _redo_add_include();
+		void _undo_delete_include();
+		void _redo_delete_include();
+		void _undo_connect_nodes();
+		void _redo_connect_nodes();
+		void _undo_disconnect_nodes();
+		void _redo_disconnect_nodes();
+
+	protected:
+		static void _bind_methods();
 
 	public:
 		FlowScriptEditorPlugin *plugin; // plugin reference needed for stuff
@@ -170,7 +236,20 @@ private:
 
 	private:
 		Ref<Theme> msdf_theme;
+		Vector<ElementDragOperation> current_element_drag_operations;
+		LocalVector<ElementDragOperation> undo_redo_element_drag_operation_history;
 		Vector<EditedNode *> selected_nodes;
+
+		void _undo_element_drag_operation();
+		void _redo_element_drag_operation();
+		void _undo_delete_node();
+		void _redo_delete_node();
+		void _undo_add_node();
+		void _redo_add_node();
+		void _undo_delete_include();
+		void _redo_delete_include();
+		void _undo_add_include();
+		void _redo_add_include();
 
 		void on_begin_node_move();
 		void on_connection_drag_ended();
@@ -191,6 +270,7 @@ private:
 		void on_scroll_offset_changed(const Point2 &p_offset);
 
 	protected:
+		static void _bind_methods();
 		void _notification(int p_what);
 	
 	public:
@@ -203,6 +283,7 @@ private:
 		Point2 point_convert_rect_to_graph(const Point2 &p_rect_position) const;
 		Point2 point_convert_graph_to_rect(const Point2 &p_graph_position) const;
 		const Vector<EditedNode *> &get_selected_nodes() const;
+		String get_selected_node_ids_as_natural_string() const;
 
 		ScriptGraph(FlowScriptEditorPlugin *p_plugin);
 	};
@@ -238,7 +319,7 @@ private:
 	};
 
 private:
-	Ref<Texture2D> connection_hover_break_icon_texture;
+	Ref<EditorInspectorPluginFlowScript> inspector_plugin;
 	Vector<EditedScript *> open_script_list;
 	int current_edited_script_idx = -1;
 	// Let those port reach out for life!
@@ -293,8 +374,8 @@ public:
 	virtual void make_visible(bool p_visible) override;
 	virtual void edit(Object *p_object) override;
 	virtual bool handles(Object *p_object) const override;
-	virtual bool can_auto_hide() const override;
 
+	void edit_flow_script_if_not_open(FlowScript *p_script);
 	Ref<FlowScript> get_edited_flow_script();
 
 	FlowScriptEditorPlugin();

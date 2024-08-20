@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_wait_duration_fixed_seconds.hpp"
-#include "nodes/flow_script_node_wait_duration_fixed_seconds.hpp"
+#include "../../nodes/flow_script_node_wait_duration_fixed_seconds.hpp"
 
 
 void FlowScriptNodeEditorWaitDurationFixedSeconds::sync()

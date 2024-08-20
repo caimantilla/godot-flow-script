@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_loop_while_expression_result_true.hpp"
-#include "nodes/flow_script_node_loop_while_expression_result_true.hpp"
+#include "../../nodes/flow_script_node_loop_while_expression_result_true.hpp"
 #include "scene/gui/separator.h"
 #include "scene/gui/box_container.h"
 

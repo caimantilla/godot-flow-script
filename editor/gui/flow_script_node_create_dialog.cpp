@@ -1,6 +1,5 @@
 #include "flow_script_node_create_dialog.hpp"
-#include "editor/flow_script_node_type_info.hpp"
-#include "editor/flow_script_node_type_db.hpp"
+#include "../flow_script_node_type_db.hpp"
 #include "editor/editor_paths.h"
 #include "editor/editor_node.h"
 #include "editor/themes/editor_scale.h"

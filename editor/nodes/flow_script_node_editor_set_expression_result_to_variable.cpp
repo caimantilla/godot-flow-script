@@ -1,5 +1,5 @@
 #include "flow_script_node_editor_set_expression_result_to_variable.hpp"
-#include "nodes/flow_script_node_set_expression_result_to_variable.hpp"
+#include "../../nodes/flow_script_node_set_expression_result_to_variable.hpp"
 #include "scene/gui/label.h"
 #include "scene/gui/box_container.h"
 
