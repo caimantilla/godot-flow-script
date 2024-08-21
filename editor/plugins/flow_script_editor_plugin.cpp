@@ -93,41 +93,6 @@ void FlowScriptEditorPlugin::ScriptGraph::on_begin_node_move()
 
 void FlowScriptEditorPlugin::ScriptGraph::on_end_node_move()
 {
-	plugin->set_drag_state(DRAG_NONE);
-	ERR_FAIL_COND(current_element_drag_operations.is_empty());
-	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
-
-	String action_name;
-	int drag_target_bits = 0;
-	for (const ElementDragOperation &operation : current_element_drag_operations)
-	{
-		drag_target_bits |= operation.drag_target;
-	}
-	switch (drag_target_bits)
-	{
-		case ElementDragOperation::DRAG_TARGET_NODE:
-			action_name = TTR("Moved FlowScript Node(s)");
-			break;
-		case ElementDragOperation::DRAG_TARGET_SCRIPT:
-			action_name = TTR("Moved FlowScript Include(s)");
-			break;
-		case (ElementDragOperation::DRAG_TARGET_NODE | ElementDragOperation::DRAG_TARGET_SCRIPT):
-			action_name = TTR("Moved FlowScript Node(s) and Include(s)");
-			break;
-	}
-
-	udrd->create_action(action_name, UndoRedo::MERGE_DISABLE, this, false);
-
-	for (int i = 0; i < current_element_drag_operations.size(); i++)
-	{
-		const ElementDragOperation &operation = current_element_drag_operations[i];
-		switch (operation.drag_target)
-		{
-			case ElementDragOperation::DRAG_TARGET_NODE:
-				udrd->add_do
-				break;
-		}
-	}
 }
 
 
@@ -150,6 +115,9 @@ FlowScriptEditorPlugin::ScriptGraph::ScriptGraph(FlowScriptEditorPlugin *p_plugi
 {
 	plugin = p_plugin;
 	msdf_theme.instantiate();
+
+	set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	set_v_size_flags(Control::SIZE_EXPAND_FILL);
 }
 
 
@@ -185,6 +153,7 @@ void FlowScriptEditorPlugin::EditedNode::match_position_of_node()
 	editor->set_position_offset(new_scr_pos);
 
 	edit_block_counter--;
+	position_match_request_dirty = false;
 }
 
 
@@ -197,33 +166,44 @@ void FlowScriptEditorPlugin::EditedNode::on_delete_request()
 }
 
 
+void FlowScriptEditorPlugin::EditedNode::on_resized()
+{
+	if (position_match_request_dirty)
+	{
+		return;
+	}
+	position_match_request_dirty = true;
+	callable_mp(this, &EditedNode::match_position_of_node).call_deferred();
+}
+
+
 void FlowScriptEditorPlugin::EditedNode::on_dragged(Point2 p_from, Point2 p_to)
 {
-	copy_position_to_node();
+	Point2i data_to = plugin->graph->point_convert_graph_to_data(p_to + (editor->get_size() * 0.5));
+	edited_script->edited_node_on_dragged(this, edited_script->flow_script->get_node_position(get_edited_node_id()), p_to);
 }
 
 
 void FlowScriptEditorPlugin::EditedNode::on_node_deselected()
 {
-	nullify_current_node_inspection();
+	edited_script->edited_node_on_selected(this);
 }
 
 
 void FlowScriptEditorPlugin::EditedNode::on_node_selected()
 {
-	inspect_edited_node();
+	edited_script->edited_node_on_deselected(this);
 }
 
 
 void FlowScriptEditorPlugin::EditedNode::on_position_offset_changed()
 {
-	copy_position_to_node();
 }
 
 
 void FlowScriptEditorPlugin::EditedNode::on_raise_request()
 {
-	inspect_edited_node();
+	edited_script->edited_node_on_raise_request(this);
 }
 
 
@@ -236,26 +216,17 @@ void FlowScriptEditorPlugin::EditedNode::inspect_edited_node()
 }
 
 
-void FlowScriptEditorPlugin::EditedNode::nullify_current_node_inspection()
-{
-	FlowScriptNode *inspected_node = Object::cast_to<FlowScriptNode>(EditorInterface::get_singleton()->get_inspector()->get_edited_object());
-	if (inspected_node == editor->get_edited_node_ptr())
-	{
-		EditorInterface::get_singleton()->get_inspector()->edit(nullptr);
-	}
-}
-
-
 bool FlowScriptEditorPlugin::EditedNode::is_edit_permitted() const
 {
 	return editor->is_edited_flow_script_root() && edit_block_counter == 0;
 }
 
 
-FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin, FlowScriptNodeEditor *p_editor)
+FlowScriptEditorPlugin::EditedNode::EditedNode(FlowScriptEditorPlugin *p_plugin, FlowScriptNodeEditor *p_editor, EditedScript *p_edited_script)
 {
 	plugin = p_plugin;
 	editor = p_editor;
+	edited_script = p_edited_script;
 
 	editor->connect(SNAME("delete_request"), callable_mp(this, &EditedNode::on_delete_request));
 	editor->connect(SNAME("dragged"), callable_mp(this, &FlowScriptEditorPlugin::EditedNode::on_dragged));
@@ -285,11 +256,237 @@ void FlowScriptEditorPlugin::EditedScript::_bind_methods()
 }
 
 
+bool FlowScriptEditorPlugin::EditedScript::is_root() const
+{
+	return parent == nullptr;
+}
+
+
+bool FlowScriptEditorPlugin::EditedScript::is_first_level_include() const
+{
+	return parent != nullptr && parent->is_root();
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::connect_graph()
+{
+	graph->connect(SNAME("begin_node_move"), callable_mp(this, &EditedScript::on_graph_begin_node_move));
+	graph->connect(SNAME("connection_drag_ended"), callable_mp(this, &EditedScript::on_graph_connection_drag_ended));
+	graph->connect(SNAME("connection_drag_started"), callable_mp(this, &EditedScript::on_graph_connection_drag_started));
+	graph->connect(SNAME("connection_from_empty"), callable_mp(this, &EditedScript::on_graph_connection_from_empty));
+	graph->connect(SNAME("connection_request"), callable_mp(this, &EditedScript::on_graph_connection_request));
+	graph->connect(SNAME("connection_to_empty"), callable_mp(this, &EditedScript::on_graph_connection_to_empty));
+	graph->connect(SNAME("copy_nodes_request"), callable_mp(this, &EditedScript::on_graph_copy_nodes_request));
+	graph->connect(SNAME("delete_nodes_request"), callable_mp(this, &EditedScript::on_graph_delete_nodes_request));
+	graph->connect(SNAME("disconnection_request"), callable_mp(this, &EditedScript::on_graph_disconnection_request));
+	graph->connect(SNAME("duplicate_nodes_request"), callable_mp(this, &EditedScript::on_graph_duplicate_nodes_request));
+	graph->connect(SNAME("end_node_move"), callable_mp(this, &EditedScript::on_graph_end_node_move));
+	graph->connect(SNAME("frame_rect_changed"), callable_mp(this, &EditedScript::on_graph_frame_rect_changed));
+	graph->connect(SNAME("node_deselected"), callable_mp(this, EditedScript::on_graph_node_deselected));
+	graph->connect(SNAME("node_selected"), callable_mp(this, &EditedScript::on_graph_node_selected));
+	graph->connect(SNAME("paste_nodes_request"), callable_mp(this, &EditedScript::on_graph_paste_nodes_request));
+	graph->connect(SNAME("popup_request"), callable_mp(this, &EditedScript::on_graph_popup_request));
+	graph->connect(SNAME("scroll_offset_changed"), callable_mp(this, &EditedScript::on_graph_scroll_offset_changed));
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::disconnect_graph()
+{
+	graph->disconnect(SNAME("begin_node_move"), callable_mp(this, &EditedScript::on_graph_begin_node_move));
+	graph->disconnect(SNAME("connection_drag_ended"), callable_mp(this, &EditedScript::on_graph_connection_drag_ended));
+	graph->disconnect(SNAME("connection_drag_started"), callable_mp(this, &EditedScript::on_graph_connection_drag_started));
+	graph->disconnect(SNAME("connection_from_empty"), callable_mp(this, &EditedScript::on_graph_connection_from_empty));
+	graph->disconnect(SNAME("connection_request"), callable_mp(this, &EditedScript::on_graph_connection_request));
+	graph->disconnect(SNAME("connection_to_empty"), callable_mp(this, &EditedScript::on_graph_connection_to_empty));
+	graph->disconnect(SNAME("copy_nodes_request"), callable_mp(this, &EditedScript::on_graph_copy_nodes_request));
+	graph->disconnect(SNAME("delete_nodes_request"), callable_mp(this, &EditedScript::on_graph_delete_nodes_request));
+	graph->disconnect(SNAME("disconnection_request"), callable_mp(this, &EditedScript::on_graph_disconnection_request));
+	graph->disconnect(SNAME("duplicate_nodes_request"), callable_mp(this, &EditedScript::on_graph_duplicate_nodes_request));
+	graph->disconnect(SNAME("end_node_move"), callable_mp(this, &EditedScript::on_graph_end_node_move));
+	graph->disconnect(SNAME("frame_rect_changed"), callable_mp(this, &EditedScript::on_graph_frame_rect_changed));
+	graph->disconnect(SNAME("node_deselected"), callable_mp(this, EditedScript::on_graph_node_deselected));
+	graph->disconnect(SNAME("node_selected"), callable_mp(this, &EditedScript::on_graph_node_selected));
+	graph->disconnect(SNAME("paste_nodes_request"), callable_mp(this, &EditedScript::on_graph_paste_nodes_request));
+	graph->disconnect(SNAME("popup_request"), callable_mp(this, &EditedScript::on_graph_popup_request));
+	graph->disconnect(SNAME("scroll_offset_changed"), callable_mp(this, &EditedScript::on_graph_scroll_offset_changed));
+}
+
+
+const FlowScriptEditorPlugin::EditedScript::GraphItem FlowScriptEditorPlugin::EditedScript::get_graph_node_as_item_by_ptr(Node *node) const
+{
+	ERR_FAIL_NULL_V(node, GraphItem());
+	FlowScriptNodeEditor *editor = Object::cast_to<FlowScriptNodeEditor>(node);
+	if (editor != nullptr)
+	{
+		return GraphItem {
+			.type = GraphItem::TYPE_NODE,
+			.node_id = editor->get_edited_node_id(),
+		};
+	}
+	FlowScriptIncludeEditorFrame *frame = Object::cast_to<FlowScriptIncludeEditorFrame>(node);
+	if (frame != nullptr)
+	{
+		return GraphItem {
+			.type = GraphItem::TYPE_INCLUDE,
+			.include_id = frame->include_id,
+		};
+	}
+	ERR_FAIL_V(GraphItem());
+}
+
+
+const FlowScriptEditorPlugin::EditedScript::GraphItem FlowScriptEditorPlugin::EditedScript::get_graph_node_as_item_by_name(const StringName &p_name) const
+{
+	int child_count = graph->get_child_count(false);
+	for (int i = 0; i < child_count; i++)
+	{
+		Node *current_node = graph->get_child(i, false);
+		if (current_node->get_name() == p_name)
+		{
+			return get_graph_node_as_item_by_ptr(current_node);
+		}
+	}
+	ERR_FAIL_V(GraphItem());
+}
+
+
+Point2i FlowScriptEditorPlugin::EditedScript::get_graph_item_data_position(const GraphItem &p_item) const
+{
+	switch (p_item.type)
+	{
+		case GraphItem::TYPE_NODE:
+			return flow_script->get_node_position(p_item.node_id);
+		case GraphItem::TYPE_INCLUDE:
+			return flow_script->get_include_flow_script_position(p_item.include_id);
+		default:
+			ERR_FAIL_V(Point2i());
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::edited_node_on_dragged(EditedNode *p_node, const Point2i &p_from, const Point2i &p_to)
+{
+	if (item_drag_buffer.size() == 0)
+	{
+		callable_mp(this, &EditedScript::handle_drag_buffer).call_deferred();
+	}
+	item_drag_buffer.push_back(ItemDragOperation {
+		.item = GraphItem {
+			.type = GraphItem::TYPE_NODE,
+			.node_id = p_node->get_edited_node_id()
+		},
+		.from = p_from,
+		.to = p_to,
+	});
+}
+
+
+// Apply drags, add to undo/redo stack and clear buffer
+void FlowScriptEditorPlugin::EditedScript::handle_drag_buffer()
+{
+	if (item_drag_buffer.size() == 0)
+	{
+		return;
+	}
+	int dragged_type_flags = 0;
+	for (int i = 0; i < item_drag_buffer.size(); i++)
+	{
+		dragged_type_flags |= item_drag_buffer[i].item.type;
+	}
+	String action_name;
+	switch (dragged_type_flags)
+	{
+		case GraphItem::TYPE_NODE | GraphItem::TYPE_INCLUDE:
+			action_name = TTR("Move FlowScript Item(s)");
+			break;
+		case GraphItem::TYPE_NODE:
+			action_name = TTR("Move FlowScript Node(s)");
+			break;
+		case GraphItem::TYPE_INCLUDE:
+			action_name = TTR("Move FlowScript Include(s)");
+			break;
+	}
+	if (action_name.is_empty())
+	{
+		item_drag_buffer.clear();
+		ERR_FAIL_MSG(TTR("No valid items dragged..."));
+	}
+	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
+	udrd->create_action(action_name, UndoRedo::MERGE_DISABLE, this, false);
+	for (int i = 0; i < item_drag_buffer.size(); i++)
+	{
+		const ItemDragOperation &op = item_drag_buffer[i];
+		switch (op.item.type)
+		{
+			case GraphItem::TYPE_NODE:
+				udrd->add_do_method(flow_script.ptr(), SNAME("set_node_position"), op.item.node_id, op.to);
+				udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_position"), op.item.node_id, op.from);
+				break;
+			case GraphItem::TYPE_INCLUDE:
+				udrd->add_do_method(flow_script.ptr(), SNAME("set_include_position"), op.item.include_id, op.to);
+				udrd->add_do_method(flow_script.ptr(), SNAME("set_include_position"), op.item.include_id, op.from);
+				flow_script->set_include_flow_script_position(op.item.include_id, op.to);
+				break;
+		}
+	}
+	udrd->commit_action(true);
+	item_drag_buffer.clear();
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_graph_begin_node_move()
+{
+	active_drag_operations.resize(selected_items.size());
+	for (int i = 0; i < selected_items.size(); i++)
+	{
+		active_drag_operations.write[i] = {
+			.item = selected_items[i],
+			.from = get_graph_item_data_position(selected_items[i]),
+		};
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_graph_end_node_move()
+{
+	ERR_FAIL_COND(active_drag_operations.is_empty());
+
+	for (int i = 0; i < active_drag_operations.size(); i++)
+	{
+		graph_item_copy_position_to_data(active_drag_operations[i].item);
+		active_drag_operations.write[i].to = get_graph_item_data_position(active_drag_operations[i].item);
+	}
+
+	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
+	udrd->create_action(TTR("Move FlowScript Item(s)"), UndoRedo::MERGE_DISABLE, this, false);
+
+	for (int i = 0; i < active_drag_operations.size(); i++)
+	{
+		const ItemDragOperation &op = active_drag_operations[i];
+		switch (active_drag_operations[i].item.type)
+		{
+			case GraphItem::TYPE_NODE:
+				udrd->add_do_method(flow_script.ptr(), SNAME("set_node_position"), op.item.node_id, op.to);
+				udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_position"), op.item.node_id, op.from);
+				break;
+			case GraphItem::TYPE_INCLUDE:
+				udrd->add_do_method(flow_script.ptr(), SNAME("set_include_position"), op.item.include_id, op.to);
+				udrd->add_undo_method(flow_script.ptr(), SNAME("set_include_position"), op.item.include_id, op.from);
+				break;
+		}
+	}
+
+	active_drag_operations.clear();
+}
+
+
 FlowScriptEditorPlugin::EditedScript::EditedScript(EditedScript *p_parent, FlowScriptEditorPlugin *p_plugin, const Ref<FlowScript> &p_flow_script)
 {
 	parent = p_parent;
 	plugin = p_plugin;
 	flow_script = p_flow_script;
+
+	graph = plugin->graph;
 }
 
 
@@ -521,10 +718,13 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	// SET_DRAG_FORWARDING_GCD(script_list, FlowScriptEditorPlugin);
 	left_vbox->add_child(script_item_list);
 
-	graph = memnew(ScriptGraph(this));
-	graph->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	graph->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	main_split->add_child(graph);
+	Ref<StyleBoxEmpty> empty_style;
+	empty_style.instantiate();
+
+	graph_tab_container = memnew(TabContainer);
+	graph_tab_container->set_tabs_visible(false);
+	graph_tab_container->add_theme_style_override(SceneStringName(panel), empty_style);
+	main_split->add_child(graph_tab_container);
 
 	node_create_dialog = memnew(FlowScriptNodeCreateDialog);
 	node_create_dialog->connect("type_chosen", callable_mp(this, &FlowScriptEditorPlugin::on_node_create_dialog_type_chosen));

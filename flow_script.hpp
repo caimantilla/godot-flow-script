@@ -61,6 +61,7 @@ public:
 	FlowScriptIncludeInstance get_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
 	bool is_node_slot_available(const FlowScriptNodeID p_node_id) const;
 	bool has_node(const FlowScriptNodeID p_node_id) const;
+	void set_node(const FlowScriptNodeID p_node_id, const Ref<FlowScript> &p_data);
 	Ref<FlowScriptNode> get_node_ref(const FlowScriptNodeID p_node_id) const;
 	FlowScriptNode *get_node_ptr(const FlowScriptNodeID p_node_id) const;
 	void set_node_position(const FlowScriptNodeID p_node_id, const Point2i &p_position);

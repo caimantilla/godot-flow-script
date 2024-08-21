@@ -2,7 +2,7 @@
 #define FLOW_SCRIPT_INCLUDE_EDITOR_FRAME_HPP
 
 
-#include "flow_script.hpp"
+#include "../../flow_script.hpp"
 #include "scene/gui/graph_frame.h"
 #include "scene/gui/button.h"
 
@@ -13,7 +13,7 @@ class FlowScriptIncludeEditorFrame : public GraphFrame
 
 private:
 	Button *remove_script_button;
-	
+
 	void request_removal();
 	void update_title();
 
@@ -22,7 +22,8 @@ protected:
 
 public:
 	FlowScriptIncludeID include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
-	Ref<FlowScript> flow_script;
+	Ref<FlowScript> parent_flow_script;
+	Ref<FlowScript> edited_flow_script;
 
 	FlowScriptIncludeEditorFrame();
 };

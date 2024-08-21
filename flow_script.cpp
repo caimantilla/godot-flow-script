@@ -13,6 +13,13 @@ void FlowScript::_bind_methods()
 	BIND_CONSTANT(INCLUDE_FLOW_SCRIPT_ID_INVALID);
 	BIND_CONSTANT(INCLUDE_FLOW_SCRIPT_MAX);
 
+	ClassDB::bind_method(D_METHOD("set_node", "node_id", "data"), &FlowScript::set_node);
+	ClassDB::bind_method(D_METHOD("get_node", "node_id"), &FlowScript::get_node_ref);
+	ClassDB::bind_method(D_METHOD("set_node_position", "node_id", "position"), &FlowScript::set_node_position);
+	ClassDB::bind_method(D_METHOD("get_node_position", "node_id"), &FlowScript::get_node_position);
+	ClassDB::bind_method(D_METHOD("set_include_position", "include_id", "position"), &FlowScript::set_include_flow_script_position);
+	ClassDB::bind_method(D_METHOD("get_include_position", "include_id"), &FlowScript::get_include_flow_script_position);
+
 	ADD_SIGNAL(MethodInfo("include_flow_scripts_changed"));
 	ADD_SIGNAL(MethodInfo("include_flow_script_position_changed", PropertyInfo(Variant::INT, "include_id")));
 	ADD_SIGNAL(MethodInfo("node_position_changed", PropertyInfo(Variant::INT, "node_id")));
