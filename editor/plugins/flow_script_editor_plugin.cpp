@@ -50,7 +50,7 @@ void FlowScriptEditorPlugin::IncludeFrame::_notification(int p_what)
 
 void FlowScriptEditorPlugin::IncludeFrame::on_edit_button_pressed()
 {
-	edited_script->plugin->edit(edited_script->flow_script.ptr());
+	EditorInterface::get_singleton()->edit_resource(edited_script->flow_script);
 }
 
 
@@ -246,6 +246,14 @@ void FlowScriptEditorPlugin::EditedScript::connect_graph()
 
 void FlowScriptEditorPlugin::EditedScript::connect_flow_script()
 {
+	flow_script->connect_changed(callable_mp(this, &EditedScript::on_script_changed));
+	flow_script->connect(SNAME("node_added"), callable_mp(this, &EditedScript::on_script_node_added));
+	flow_script->connect(SNAME("node_removed"), callable_mp(this, &EditedScript::on_script_node_removed));
+	flow_script->connect(SNAME("node_position_changed"), callable_mp(this, &EditedScript::on_script_node_position_changed));
+	flow_script->connect(SNAME("node_connection_changed"), callable_mp(this, &EditedScript::on_script_node_connection_changed));
+	flow_script->connect(SNAME("include_added"), callable_mp(this, &EditedScript::on_script_include_added));
+	flow_script->connect(SNAME("include_removed"), callable_mp(this, &EditedScript::on_script_include_removed));
+	flow_script->connect(SNAME("include_position_changed"), callable_mp(this, &EditedScript::on_script_include_position_changed));
 }
 
 
@@ -315,6 +323,15 @@ void FlowScriptEditorPlugin::EditedScript::on_node_changed(const FlowScriptNodeI
 }
 
 
+void FlowScriptEditorPlugin::EditedScript::on_node_resized(const FlowScriptNodeID p_node_id)
+{
+	ReflectOperation op;
+	op.type = ReflectOperation::TYPE_ITEM_SYNC;
+	op.data.item_sync.item = GraphItem::create_node(p_node_id);
+	queue_reflect_operation(op);
+}
+
+
 void FlowScriptEditorPlugin::EditedScript::on_node_dragged(const Point2 &p_from, const Point2 &p_to, const FlowScriptNodeID p_node_id)
 {
 	MutateOperation op;
@@ -350,6 +367,24 @@ void FlowScriptEditorPlugin::EditedScript::on_node_delete_request(const FlowScri
 	op.type = MutateOperation::TYPE_ITEM_DELETE;
 	op.data.item_delete.item = GraphItem::create_node(p_node_id);
 	queue_mutate_operation(op);
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_include_changed(const FlowScriptIncludeID p_include_id)
+{
+	ReflectOperation op;
+	op.type = ReflectOperation::TYPE_ITEM_SYNC;
+	op.data.item_sync.item = GraphItem::create_include(p_include_id);
+	queue_reflect_operation(op);
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_include_resized(const FlowScriptIncludeID p_include_id)
+{
+	ReflectOperation op;
+	op.type = ReflectOperation::TYPE_ITEM_SYNC;
+	op.data.item_sync.item = GraphItem::create_include(p_include_id);
+	queue_reflect_operation(op);
 }
 
 
@@ -438,10 +473,11 @@ void FlowScriptEditorPlugin::EditedScript::queue_handle_buffers()
 	buffers_dirty = true;
 	if (parent == nullptr)
 	{
-		if (graph->is_visible_in_tree())
-		{
-			callable_mp(this, &EditedScript::handle_buffers).call_deferred();
-		}
+		callable_mp(this, &EditedScript::root_init_buffer_handle).call_deferred();
+		// if (graph->is_visible_in_tree())
+		// {
+		// 	callable_mp(this, &EditedScript::root_init_buffer_handle).call_deferred();
+		// }
 	}
 	else
 	{
@@ -628,17 +664,34 @@ void FlowScriptEditorPlugin::EditedScript::handle_reflect_buffer_early()
 			case ReflectOperation::TYPE_ITEM_ADD: {
 				reflect_item_add(op.data.item_add);
 			} break;
-			case ReflectOperation::TYPE_ITEM_DELETE: {
-				reflect_item_delete(op.data.item_delete);
-			} break;
 			case ReflectOperation::TYPE_ITEM_SYNC: {
 				reflect_item_sync(op.data.item_sync);
 			} break;
-			case ReflectOperation::TYPE_NODE_CONNECT: {
-				reflect_node_connect(op.data.node_connect);
-			} break;
 			case ReflectOperation::TYPE_NODE_DISCONNECT: {
 				reflect_node_disconnect(op.data.node_disconnect);
+			} break;
+		}
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::handle_reflect_buffer_late()
+{
+	if (buffer_reflect.size() == 0)
+	{
+		return;
+	}
+
+	for (int i = 0; i < buffer_reflect.size(); i++)
+	{
+		const ReflectOperation &op = buffer_reflect[i];
+		switch (op.type)
+		{
+			case ReflectOperation::TYPE_ITEM_DELETE: {
+				reflect_item_delete(op.data.item_delete);
+			} break;
+			case ReflectOperation::TYPE_NODE_CONNECT: {
+				reflect_node_connect(op.data.node_connect);
 			} break;
 		}
 	}
@@ -650,10 +703,11 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_add(const ReflectOperati
 	switch (op.item.type)
 	{
 		case GraphItem::TYPE_NODE: {
-			ERR_BREAK(node_editor_map.has(op.item.node.node_id));
-			ERR_BREAK(!flow_script->has_node(op.item.node.node_id));
-
 			FlowScriptNodeID node_id = op.item.node.node_id;
+
+			ERR_FAIL_COND(node_editor_map.has(node_id));
+			ERR_FAIL_COND(!flow_script->has_node(node_id));
+
 			FlowScriptNode *node_ptr = flow_script->get_node_ptr(node_id);
 			FlowScriptNodeEditor *node_editor = FlowScriptNodeTypeDB::get_singleton()->create_editor_for_node(node_ptr);
 			node_editor_map[node_id] = node_editor;
@@ -674,6 +728,9 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_add(const ReflectOperati
 
 			if (is_root())
 			{
+				const FlowScriptNodeTypeInfo &type_info = FlowScriptNodeTypeDB::get_singleton()->get_type_of_node(node_ptr);
+				node_editor->rename_button->set_visible(type_info.enabled && type_info.name_assignable);
+				node_editor->delete_button->show();
 				node_editor->set_mouse_filter(Control::MOUSE_FILTER_STOP);
 				node_editor->set_draggable(true);
 				node_editor->set_selectable(true);
@@ -686,6 +743,8 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_add(const ReflectOperati
 			}
 			else
 			{
+				node_editor->rename_button->hide();
+				node_editor->delete_button->hide();
 				node_editor->set_mouse_filter(Control::MOUSE_FILTER_IGNORE);
 				node_editor->set_draggable(false);
 				node_editor->set_selectable(false);
@@ -702,13 +761,112 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_add(const ReflectOperati
 			sync_op.item = op.item;
 			reflect_item_sync(sync_op);
 		} break;
+		case GraphItem::TYPE_INCLUDE: {
+			FlowScriptIncludeID include_id = op.item.include_id;
+
+			ERR_FAIL_INDEX(include_id, FlowScript::INCLUDE_FLOW_SCRIPT_MAX);
+			ERR_FAIL_COND(!flow_script->has_include_flow_script_instance(include_id));
+			ERR_FAIL_COND(children[include_id] != nullptr);
+
+			EditedScript *child_script = EditedScript::create_include_edited_script(plugin, this, include_id);
+			children[include_id] = child_script;
+		} break;
 	}
 }
 
 
 void FlowScriptEditorPlugin::EditedScript::reflect_item_delete(const ReflectOperation::ItemDelete &op)
 {
+	switch (op.item.type)
+	{
+		case GraphItem::TYPE_NODE: {
+			FlowScriptNodeID node_id = op.item.node.node_id;
 
+			ERR_FAIL_COND(!node_editor_map.has(node_id));
+
+			FlowScriptNodeEditor *node_editor = node_editor_map[node_id];
+			node_editor->cleanup();
+			node_editor->queue_free();
+		} break;
+		case GraphItem::TYPE_INCLUDE: {
+			FlowScriptIncludeID include_id = op.item.include_id;
+
+			ERR_FAIL_INDEX(include_id, FlowScript::INCLUDE_FLOW_SCRIPT_MAX);
+			ERR_FAIL_COND(children[include_id] == nullptr);
+
+			EditedScript *child_script = children[include_id];
+			memdelete(child_script);
+			children[include_id] = nullptr;
+		} break;
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::reflect_item_sync(const ReflectOperation::ItemSync &op)
+{
+	switch (op.item.type)
+	{
+		case GraphItem::TYPE_NODE: {
+			FlowScriptNodeID node_id = op.item.node.node_id;
+
+			ERR_FAIL_COND(!flow_script->has_node(node_id));
+			ERR_FAIL_COND(!node_editor_map.has(node_id));
+
+			FlowScriptNodeEditor *node_editor = node_editor_map[node_id];
+			node_editor->set_title(node_editor->get_new_title());
+			node_editor->set_tooltip_text(node_editor->get_new_tooltip_text());
+			node_editor->sync();
+
+			Point2i posi = flow_script->get_node_position(node_id);
+			EditedScript *p = this;
+			while (p->parent != nullptr)
+			{
+				posi += p->parent->flow_script->get_include_flow_script_position(p->include_id);
+				p = p->parent;
+			}
+			Point2 posf = graph->point_convert_data_to_graph(posi);
+			posf -= node_editor->get_size() * 0.5;
+			node_editor->set_position_offset(posf);
+		} break;
+		case GraphItem::TYPE_INCLUDE: {
+			FlowScriptIncludeID include_id = op.item.include_id;
+
+			ERR_FAIL_INDEX(include_id, FlowScript::INCLUDE_FLOW_SCRIPT_MAX);
+			ERR_FAIL_COND(!flow_script->has_include_flow_script_instance(include_id));
+			ERR_FAIL_COND(children[include_id] == nullptr);
+
+			IncludeFrame *child_frame = children[include_id]->frame;
+			child_frame->set_title(vformat("%d. %s", include_id, children[include_id]->flow_script->get_path()));
+
+			Point2i posi = flow_script->get_include_flow_script_position(include_id);
+			EditedScript *p = this;
+			while (p->parent != nullptr)
+			{
+				posi += p->parent->flow_script->get_include_flow_script_position(p->include_id);
+				p = p->parent;
+			}
+			Point2 posf = graph->point_convert_data_to_graph(posi);
+			posf -= child_frame->get_size() * 0.5;
+			child_frame->set_position_offset(posf);
+		} break;
+	}
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::reflect_node_connect(const ReflectOperation::NodeConnect &op)
+{
+	EditorNodeConnectionKey key = EditorNodeConnectionKey(op.node_id, op.output);
+	if (editor_node_connection_map.has(key))
+	{
+		ReflectOperation::NodeDisconnect disconnect_op;
+		disconnect_op.node_id = op.node_id;
+		disconnect_op.output = op.output;
+		reflect_node_disconnect(disconnect_op);
+	}
+	else
+	{
+		editor_node_connection_map.insert(key, EditorNodeConnectionData());
+	}
 }
 
 
@@ -1031,17 +1189,12 @@ void FlowScriptEditorPlugin::EditedScript::handle_reflect_operation_list_item_de
 }
 
 
-void FlowScriptEditorPlugin::EditedScript::node_make_connection_lines(const FlowScriptNodeID p_node_id)
-{
-}
-
-
 void FlowScriptEditorPlugin::EditedScript::on_graph_visibility_changed()
 {
-	if (is_root() && buffers_dirty && graph->is_visible_in_tree())
-	{
-		handle_buffers();
-	}
+	// if (is_root() && buffers_dirty && graph->is_visible_in_tree())
+	// {
+	// 	root_init_buffer_handle();
+	// }
 }
 
 
@@ -1066,6 +1219,11 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_connection_from_empty(const 
 
 
 void FlowScriptEditorPlugin::EditedScript::on_graph_connection_to_empty(const StringName &p_from_node_name, const int p_from_port, const Point2 &p_release_position)
+{
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_script_changed()
 {
 }
 
@@ -1097,12 +1255,26 @@ void FlowScriptEditorPlugin::EditedScript::on_script_node_position_changed(const
 }
 
 
-void FlowScriptEditorPlugin::EditedScript::on_script_node_connections_changed(const FlowScriptNodeID p_node_id)
+void FlowScriptEditorPlugin::EditedScript::on_script_node_connection_changed(const FlowScriptNodeID p_node_id, const uint8_t p_list, const int64_t p_slot)
 {
-	ReflectOperation op;
-	op.type = ReflectOperation::TYPE_NODE_CONNECTION;
-	op.data.node_connect.node_id = p_node_id;
-	queue_reflect_operation(op);
+	FlowScriptNodeOutputConnection output = FlowScriptNodeOutputConnection(p_list, p_slot);
+	FlowScriptNodeReference new_target = flow_script->get_node_connection(p_node_id, output);
+	if (new_target.node_id == FlowScript::NODE_ID_INVALID)
+	{
+		ReflectOperation op;
+		op.type = ReflectOperation::TYPE_NODE_DISCONNECT;
+		op.data.node_disconnect.node_id = p_node_id;
+		op.data.node_disconnect.output = output;
+		queue_reflect_operation(op);
+	}
+	else
+	{
+		ReflectOperation op;
+		op.type = ReflectOperation::TYPE_NODE_CONNECT;
+		op.data.node_connect.node_id = p_node_id;
+		op.data.node_connect.output = output;
+		queue_reflect_operation(op);
+	}
 }
 
 

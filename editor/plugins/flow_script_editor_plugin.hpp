@@ -169,7 +169,7 @@ private:
 		struct EditorNodeConnectionData final
 		{
 			FlowScriptNodeReference to_node_reference;
-			Rect2 connection_break_graph_rect; // scanned during mouse movements
+			Point2 connection_break_point; // scanned during mouse motion input
 		};
 
 		// operation structs
@@ -363,15 +363,12 @@ private:
 		void handle_reflect_operation_list_item_sync(const Vector<ReflectOperation::ItemSync> &p_syncs);
 		void handle_reflect_operation_list_node_connect(const Vector<ReflectOperation::NodeConnect> &p_connections);
 
-		// connection drawing
-		void node_make_connection_lines(const FlowScriptNodeID p_node_id);
-		void node_erase_connection_lines(const FlowScriptNodeID p_node_id);
-
 		// FlowScript Hooks
+		void on_script_changed();
 		void on_script_node_added(const FlowScriptNodeID p_node_id);
 		void on_script_node_removed(const FlowScriptNodeID p_node_id);
 		void on_script_node_position_changed(const FlowScriptNodeID p_node_id);
-		void on_script_node_connections_changed(const FlowScriptNodeID p_node_id);
+		void on_script_node_connection_changed(const FlowScriptNodeID p_node_id, const uint8_t p_list, const int64_t p_slot);
 
 		void on_script_include_added(const FlowScriptIncludeID p_include_id);
 		void on_script_include_removed(const FlowScriptIncludeID p_include_id);
@@ -388,11 +385,11 @@ private:
 
 		// IncludeFrame Hooks
 		void on_include_changed(const FlowScriptIncludeID p_include_id);
+		void on_include_resized(const FlowScriptIncludeID p_include_id);
 		void on_include_dragged(const Point2 &p_from, const Point2 &p_to, const FlowScriptIncludeID p_include_id);
 		void on_include_selected(const FlowScriptIncludeID p_include_id);
 		void on_include_deselected(const FlowScriptIncludeID p_include_id);
 		void on_include_delete_request(const FlowScriptIncludeID p_include_id);
-		void on_include_resized(const FlowScriptIncludeID p_include_id);
 
 		// ScriptGraph Hooks
 		void on_graph_visibility_changed();
