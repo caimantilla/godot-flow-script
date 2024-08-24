@@ -28,7 +28,7 @@ public:
 	enum : FlowScriptIncludeID
 	{
 		INCLUDE_FLOW_SCRIPT_ID_INVALID = -1,
-		INCLUDE_FLOW_SCRIPT_MAX = 100,
+		INCLUDE_FLOW_SCRIPT_MAX = 50,
 	};
 
 private:
@@ -44,6 +44,10 @@ private:
 	void init_node(FlowScriptNodeID p_node_id);
 	void uninit_node(FlowScriptNodeID p_node_id);
 	void on_node_changed(FlowScriptNodeID p_node_id);
+	void bind_set_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot, const FlowScriptNodeID p_to_node_id, const FlowScriptIncludeID p_to_include_id);
+	Dictionary bind_get_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot) const;
+	void bind_remove_node_list(const PackedInt32Array &p_id_list);
+	void bind_remove_include_list(const PackedInt32Array &p_id_list);
 
 protected:
 	static void _bind_methods();
@@ -57,16 +61,17 @@ public:
 	bool includes_flow_script(const Ref<FlowScript> &p_other_flow_script) const; // DO NOT ALLOW CIRCULAR DEPENDENCIES.
 	bool has_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
 	FlowScriptIncludeID add_include_flow_script(const Ref<FlowScript> &p_other_flow_script);
+	bool remove_include_flow_script_list(const List<FlowScriptIncludeID> &p_include_id_list);
 	bool remove_include_flow_script(const FlowScriptIncludeID p_id);
 	FlowScriptIncludeInstance get_include_flow_script_instance(const FlowScriptIncludeID p_id) const;
 	bool is_node_slot_available(const FlowScriptNodeID p_node_id) const;
 	bool has_node(const FlowScriptNodeID p_node_id) const;
-	void set_node(const FlowScriptNodeID p_node_id, const Ref<FlowScript> &p_data);
+	void set_node(const FlowScriptNodeID p_node_id, const Ref<FlowScriptNode> &p_data);
 	Ref<FlowScriptNode> get_node_ref(const FlowScriptNodeID p_node_id) const;
 	FlowScriptNode *get_node_ptr(const FlowScriptNodeID p_node_id) const;
 	void set_node_position(const FlowScriptNodeID p_node_id, const Point2i &p_position);
 	Point2i get_node_position(const FlowScriptNodeID p_node_id) const;
-	void set_node_connection_list_count(const FlowScriptNodeID, const uint8_t p_count);
+	void set_node_connection_list_count(const FlowScriptNodeID p_node_id, const uint8_t p_count);
 	uint8_t get_node_connection_list_count(const FlowScriptNodeID p_node_id) const;
 	void set_node_connection_list_length(const FlowScriptNodeID p_node_id, const uint8_t p_list, const int64_t p_length);
 	int64_t get_node_connection_list_length(const FlowScriptNodeID p_node_id, const uint8_t p_list) const;
@@ -77,6 +82,7 @@ public:
 	bool remove_node_list(const List<FlowScriptNodeID> &p_node_id_list);
 	bool remove_node(const FlowScriptNodeID p_node_id);
 	FlowScriptNodeID get_node_id_by_name(const String &p_node_name) const;
+	FlowScriptNodeID get_first_available_node_slot() const;
 	FlowScriptNodeID add_node_to_first_available_slot(const Ref<FlowScriptNode> &p_node);
 	void set_include_flow_script(const FlowScriptIncludeID p_include_id, const Ref<FlowScript> &p_flow_script);
 	Ref<FlowScript> get_include_flow_script(const FlowScriptIncludeID p_include_id) const;

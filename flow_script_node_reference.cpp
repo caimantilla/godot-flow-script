@@ -8,6 +8,15 @@ bool FlowScriptNodeReference::is_valid() const
 }
 
 
+Dictionary FlowScriptNodeReference::to_dictionary() const
+{
+	Dictionary ret;
+	ret["flow_script_id"] = flow_script_id;
+	ret["node_id"] = node_id;
+	return ret;
+}
+
+
 bool FlowScriptNodeReference::operator==(const FlowScriptNodeReference &p_other) const
 {
 	return flow_script_id == p_other.flow_script_id && node_id == p_other.node_id;

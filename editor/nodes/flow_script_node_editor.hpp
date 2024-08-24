@@ -3,6 +3,7 @@
 
 
 #include "scene/gui/graph_node.h"
+#include "scene/gui/button.h"
 #include "../../typedefs.hpp"
 #include "../../flow_script.hpp"
 #include "../../flow_script_node.hpp"
@@ -21,9 +22,16 @@ class FlowScriptNodeEditor : public GraphNode
 private:
 	FlowScriptEditorPlugin *plugin = nullptr;
 	FlowScript *root_flow_script = nullptr;
+	FlowScript *parent_flow_script = nullptr;
 	FlowScript *edited_flow_script = nullptr;
 	FlowScriptNodeID edited_node_id = FlowScript::NODE_ID_INVALID;
+	FlowScriptIncludeID edited_include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
+	Button *rename_button;
+	Button *delete_button;
 	bool current_editable = false;
+
+	void on_rename_button_pressed();
+	void on_delete_button_pressed();
 
 protected:
 	static void _bind_methods();

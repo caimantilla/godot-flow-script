@@ -1,7 +1,9 @@
 #include "flow_script_node_editor.hpp"
 #include "../flow_script_node_type_db.hpp"
 #include "../flow_script_node_type_info.hpp"
+#include "editor/editor_string_names.h"
 #include "scene/gui/label.h"
+#include "scene/gui/box_container.h"
 
 
 void FlowScriptNodeEditor::_bind_methods()
@@ -19,6 +21,8 @@ void FlowScriptNodeEditor::_bind_methods()
 	GDVIRTUAL_BIND(_get_input_slot);
 	GDVIRTUAL_BIND(_output_graph_slot_to_connection, "graph_slot");
 	GDVIRTUAL_BIND(_output_connection_to_graph_slot, "list", "slot");
+
+	ADD_SIGNAL(MethodInfo("rename_request"));
 }
 
 
@@ -27,6 +31,10 @@ void FlowScriptNodeEditor::_notification(int p_what)
 	switch (p_what)
 	{
 		case NOTIFICATION_THEME_CHANGED:
+			Ref<Texture2D> rename_icon = get_theme_icon(SNAME("Edit"), EditorStringName(EditorIcons));
+			Ref<Texture2D> delete_icon = get_theme_icon(SNAME("Remove"), EditorStringName(EditorIcons));
+			rename_button->set_icon(rename_icon);
+			delete_button->set_icon(delete_icon);
 			if (is_editable())
 			{
 				update_theme();
@@ -158,11 +166,11 @@ String FlowScriptNodeEditor::get_new_title() const
 				String node_res_name = node->get_name();
 				if (node_res_name.is_empty())
 				{
-					ret = vformat("#%d - %s", edited_node_id, type_info.name);
+					ret = vformat("%d. %s", edited_node_id, type_info.name);
 				}
 				else
 				{
-					ret = vformat("(#%d - %s - %s", edited_node_id, type_info.name, node_res_name);
+					ret = vformat("%d. %s - %s", edited_node_id, type_info.name, node_res_name);
 				}
 			}
 		}
@@ -217,10 +225,30 @@ int FlowScriptNodeEditor::output_connection_to_graph_slot(const FlowScriptNodeOu
 }
 
 
+void FlowScriptNodeEditor::on_rename_button_pressed()
+{
+	emit_signal(SNAME("rename_request"));
+}
+
+
+void FlowScriptNodeEditor::on_delete_button_pressed()
+{
+	emit_signal(SNAME("delete_request"));
+}
+
+
 FlowScriptNodeEditor::FlowScriptNodeEditor()
 {
 	set_h_size_flags(SIZE_SHRINK_CENTER);
 	set_v_size_flags(SIZE_SHRINK_CENTER);
 	set_h_grow_direction(GROW_DIRECTION_BOTH);
 	set_v_grow_direction(GROW_DIRECTION_BOTH);
+
+	rename_button = memnew(Button);
+	rename_button->connect(SceneStringName(pressed), callable_mp(this, &FlowScriptNodeEditor::on_rename_button_pressed));
+	get_titlebar_hbox()->add_child(rename_button);
+
+	delete_button = memnew(Button);
+	delete_button->connect(SceneStringName(pressed), callable_mp(this, &FlowScriptNodeEditor::on_delete_button_pressed));
+	get_titlebar_hbox()->add_child(delete_button);
 }

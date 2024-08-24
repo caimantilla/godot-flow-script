@@ -17,13 +17,21 @@ void FlowScript::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_node", "node_id"), &FlowScript::get_node_ref);
 	ClassDB::bind_method(D_METHOD("set_node_position", "node_id", "position"), &FlowScript::set_node_position);
 	ClassDB::bind_method(D_METHOD("get_node_position", "node_id"), &FlowScript::get_node_position);
+	ClassDB::bind_method(D_METHOD("set_node_connection", "from_node_id", "list", "slot", "to_node_id", "to_include_id"), &FlowScript::bind_set_node_connection);
+	ClassDB::bind_method(D_METHOD("get_node_connection", "from_node_id", "list", "slot"), &FlowScript::bind_get_node_connection);
+	ClassDB::bind_method(D_METHOD("set_include_flow_script", "include_id", "flow_script"), &FlowScript::set_include_flow_script);
+	ClassDB::bind_method(D_METHOD("get_include_flow_script", "include_id"), &FlowScript::get_include_flow_script);
 	ClassDB::bind_method(D_METHOD("set_include_position", "include_id", "position"), &FlowScript::set_include_flow_script_position);
 	ClassDB::bind_method(D_METHOD("get_include_position", "include_id"), &FlowScript::get_include_flow_script_position);
+	ClassDB::bind_method(D_METHOD("remove_node_list", "node_id_list"), &FlowScript::bind_remove_node_list);
+	ClassDB::bind_method(D_METHOD("remove_include_list", "include_id_list"), &FlowScript::bind_remove_include_list);
 
-	ADD_SIGNAL(MethodInfo("include_flow_scripts_changed"));
-	ADD_SIGNAL(MethodInfo("include_flow_script_position_changed", PropertyInfo(Variant::INT, "include_id")));
+	ADD_SIGNAL(MethodInfo("include_added", PropertyInfo(Variant::INT, "include_id")));
+	ADD_SIGNAL(MethodInfo("removing_include", PropertyInfo(Variant::INT, "include_id")));
+	ADD_SIGNAL(MethodInfo("include_removed", PropertyInfo(Variant::INT, "include_id")));
+	ADD_SIGNAL(MethodInfo("include_position_changed", PropertyInfo(Variant::INT, "include_id")));
 	ADD_SIGNAL(MethodInfo("node_position_changed", PropertyInfo(Variant::INT, "node_id")));
-	ADD_SIGNAL(MethodInfo("node_connections_changed", PropertyInfo(Variant::INT, "node_id")));
+	ADD_SIGNAL(MethodInfo("node_connection_changed", PropertyInfo(Variant::INT, "node_id"), PropertyInfo(Variant::INT, "list"), PropertyInfo(Variant::INT, "slot")));
 	ADD_SIGNAL(MethodInfo("node_added", PropertyInfo(Variant::INT, "node_id")));
 	ADD_SIGNAL(MethodInfo("removing_node", PropertyInfo(Variant::INT, "node_id")));
 	ADD_SIGNAL(MethodInfo("node_removed", PropertyInfo(Variant::INT, "node_id")));
@@ -103,7 +111,7 @@ bool FlowScript::_set(const StringName &p_name, const Variant &p_value)
 		String node_instance_property = name.get_slicec('/', 2);
 		if (node_instance_property == "node")
 		{
-			node_map.get(node_id).set_node(p_value);
+			node_map[node_id].set_node(p_value);
 			init_node(node_id);
 			return true;
 		}
@@ -251,6 +259,36 @@ bool FlowScript::has_node(const FlowScriptNodeID p_node_id) const
 }
 
 
+void FlowScript::set_node(const FlowScriptNodeID p_node_id, const Ref<FlowScriptNode> &p_data)
+{
+	ERR_FAIL_COND(p_node_id < NODE_ID_MIN);
+	if (p_data.is_valid())
+	{
+		if (node_map.has(p_node_id))
+		{
+			if (node_map[p_node_id].node == p_data)
+			{
+				return;
+			}
+		}
+		else
+		{
+			node_map.insert(p_node_id, FlowScriptNodeInstance());
+		}
+		node_map[p_node_id].set_node(p_data);
+		init_node(p_node_id);
+		emit_signal(SNAME("node_added"), p_node_id);
+	}
+	else
+	{
+		if (node_map.has(p_node_id))
+		{
+			remove_node(p_node_id);
+		}
+	}
+}
+
+
 Ref<FlowScriptNode> FlowScript::get_node_ref(const FlowScriptNodeID p_node_id) const
 {
 	ERR_FAIL_COND_V(!node_map.has(p_node_id), Ref<FlowScriptNode>());
@@ -281,28 +319,10 @@ Point2i FlowScript::get_node_position(const FlowScriptNodeID p_node_id) const
 }
 
 
-void FlowScript::set_node_connection_list_count(const FlowScriptNodeID p_node_id, const uint8_t p_count)
-{
-	ERR_FAIL_COND(!node_map.has(p_node_id));
-	node_map.get(p_node_id).set_connection_list_count(p_count);
-	emit_signal(SNAME("node_connections_changed"), p_node_id);
-}
-
-
 uint8_t FlowScript::get_node_connection_list_count(const FlowScriptNodeID p_node_id) const
 {
 	ERR_FAIL_COND_V(!node_map.has(p_node_id), 0);
 	return node_map.get(p_node_id).get_connection_list_count();
-}
-
-
-void FlowScript::set_node_connection_list_length(const FlowScriptNodeID p_node_id, const uint8_t p_list, const int64_t p_length)
-{
-	ERR_FAIL_COND(!node_map.has(p_node_id));
-	if (node_map.get(p_node_id).get_connection_list_length(p_list) == p_length)
-		return;
-	node_map.get(p_node_id).set_connection_list_length(p_list, p_length);
-	emit_signal(SNAME("node_connections_changed"), p_node_id);
 }
 
 
@@ -319,7 +339,7 @@ void FlowScript::set_node_connection(const FlowScriptNodeID p_node_id, const Flo
 	if (node_map.get(p_node_id).get_connection(p_connection) == p_target_node)
 		return;
 	node_map.get(p_node_id).set_connection(p_connection, p_target_node);
-	emit_signal(SNAME("node_connections_changed"), p_node_id);
+	emit_signal(SNAME("node_connection_changed"), p_node_id, p_connection.list, p_connection.slot);
 }
 
 
@@ -368,7 +388,6 @@ bool FlowScript::remove_node_list(const List<FlowScriptNodeID> &p_node_id_list)
 			{
 				continue;
 			}
-			bool iter_node_conns_changed = false;
 			for (int64_t list_idx = 0; list_idx < curr_instance_kv.value.connection_lists.size(); list_idx++)
 			{
 				for (int64_t slot_idx = 0; slot_idx < curr_instance_kv.value.connection_lists.get(list_idx).size(); slot_idx++)
@@ -376,13 +395,9 @@ bool FlowScript::remove_node_list(const List<FlowScriptNodeID> &p_node_id_list)
 					if (curr_instance_kv.value.connection_lists.get(list_idx).get(slot_idx) == curr_node_id)
 					{
 						curr_instance_kv.value.connection_lists.get(list_idx).set(slot_idx, NODE_ID_INVALID);
-						iter_node_conns_changed = true;
+						emit_signal(SNAME("node_connection_changed"), curr_instance_kv.key, list_idx, slot_idx);
 					}
 				}
-			}
-			if (iter_node_conns_changed)
-			{
-				emit_signal(SNAME("node_connections_changed"), curr_instance_kv.key);
 			}
 			emit_signal(SNAME("node_removed"), curr_node_id);
 		}
@@ -412,6 +427,13 @@ FlowScriptNodeID FlowScript::get_node_id_by_name(const String &p_node_name) cons
 }
 
 
+FlowScriptNodeID FlowScript::get_first_available_node_slot() const
+{
+	update_cache_next_available_node_id();
+	return cache_next_available_node_id;
+}
+
+
 FlowScriptNodeID FlowScript::add_node_to_first_available_slot(const Ref<FlowScriptNode> &p_node)
 {
 	update_cache_next_available_node_id();
@@ -434,7 +456,7 @@ void FlowScript::set_include_flow_script(const FlowScriptIncludeID p_include_id,
 	}
 	ERR_FAIL_COND(includes_flow_script(p_flow_script));
 	script_includes[p_include_id].flow_script = p_flow_script;
-	emit_signal(SNAME("include_flow_scripts_changed"));
+	emit_signal(SNAME("include_added"), p_include_id);
 }
 
 
@@ -455,7 +477,7 @@ FlowScriptIncludeID FlowScript::add_include_flow_script(const Ref<FlowScript> &p
 		if (!script_includes[i].is_valid())
 		{
 			script_includes[i].flow_script = p_other_flow_script;
-			emit_signal(SNAME("include_flow_scripts_changed"));
+			emit_signal(SNAME("include_added"), i);
 			return i;
 		}
 	}
@@ -463,41 +485,46 @@ FlowScriptIncludeID FlowScript::add_include_flow_script(const Ref<FlowScript> &p
 }
 
 
-bool FlowScript::remove_include_flow_script(const FlowScriptIncludeID p_include_id)
+bool FlowScript::remove_include_flow_script_list(const List<FlowScriptIncludeID> &p_include_id_list)
 {
-	ERR_FAIL_INDEX_V(p_include_id, INCLUDE_FLOW_SCRIPT_MAX, false);
-	ERR_FAIL_COND_V(!script_includes[p_include_id].is_valid(), false);
-
-	script_includes[p_include_id] = FlowScriptIncludeInstance();
-
-	for (FlowScriptIncludeID i = p_include_id; i < (INCLUDE_FLOW_SCRIPT_MAX - 1); i++)
+	HashSet<FlowScriptIncludeID> id_removal_set;
+	for (const FlowScriptIncludeID id : p_include_id_list)
 	{
-		script_includes[i] = script_includes[i + 1];
+		ERR_CONTINUE(!has_include_flow_script_instance(id));
+		id_removal_set.insert(id);
 	}
+	ERR_FAIL_COND_V(id_removal_set.is_empty(), false);
 
 	for (KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &kv : node_map)
 	{
-		FlowScriptNodeInstance &node_instance = kv.value;
-		for (uint8_t list_idx = 0; list_idx < node_instance.connection_lists.size(); list_idx++)
+		FlowScriptNodeInstance &instance = kv.value;
+		for (uint8_t list_idx = 0; list_idx < instance.connection_lists.size(); list_idx++)
 		{
-			for (int64_t slot_idx = 0; slot_idx < node_instance.connection_lists.get(list_idx).size(); slot_idx++)
+			for (int64_t slot_idx = 0; slot_idx < instance.connection_lists[list_idx].size(); slot_idx++)
 			{
-				if (node_instance.connection_lists[list_idx][slot_idx].flow_script_id > p_include_id)
+				if (id_removal_set.has(instance.connection_lists[list_idx][slot_idx].flow_script_id))
 				{
-					// adjust the script pointed to by the reference
-					node_instance.connection_lists.get(list_idx).write[slot_idx].node_id -= 1;
-				}
-				else if (node_instance.connection_lists[list_idx][slot_idx].flow_script_id == p_include_id)
-				{
-					// nullify reference
-					node_instance.connection_lists.get(list_idx).write[slot_idx] = FlowScriptNodeReference();
+					instance.connection_lists.write[list_idx].write[slot_idx] = FlowScriptNodeReference();
+					emit_signal(SNAME("node_connection_changed"), kv.key, list_idx, slot_idx);
 				}
 			}
 		}
 	}
-
-	emit_signal(SNAME("include_flow_scripts_changed"));
+	for (const FlowScriptIncludeID &id : id_removal_set)
+	{
+		emit_signal(SNAME("removing_include"), id);
+		script_includes[id].flow_script = Ref<FlowScript>();
+		emit_signal(SNAME("include_removed"), id);
+	}
 	return true;
+}
+
+
+bool FlowScript::remove_include_flow_script(const FlowScriptIncludeID p_include_id)
+{
+	List<FlowScriptIncludeID> list;
+	list.push_back(p_include_id);
+	return remove_include_flow_script_list(list);
 }
 
 
@@ -509,7 +536,7 @@ void FlowScript::set_include_flow_script_position(const FlowScriptIncludeID p_in
 		return;
 	}
 	script_includes[p_include_id].position = p_position;
-	emit_signal(SNAME("include_flow_script_position_changed"), p_include_id);
+	emit_signal(SNAME("include_position_changed"), p_include_id);
 }
 
 
@@ -546,20 +573,14 @@ void FlowScript::update_connection_outputs_for_node(FlowScriptNodeID p_node_id)
 	List<int64_t> length_list;
 	node_map.get(p_node_id).node->get_output_connection_list_lengths(length_list);
 	node_map.get(p_node_id).set_connection_list_count(length_list.size());
-	bool conns_changed = false;
 	int curr_list_idx = 0;
 	for (const int64_t &curr_desired_length : length_list)
 	{
 		if (node_map.get(p_node_id).get_connection_list_length(curr_list_idx) != curr_desired_length)
 		{
 			node_map.get(p_node_id).set_connection_list_length(curr_list_idx, curr_desired_length);
-			conns_changed = true;
 		}
 		curr_list_idx++;
-	}
-	if (conns_changed)
-	{
-		emit_signal(SNAME("node_connections_changed"), p_node_id);
 	}
 }
 
@@ -584,6 +605,41 @@ void FlowScript::uninit_node(FlowScriptNodeID p_node_id)
 void FlowScript::on_node_changed(FlowScriptNodeID p_node_id)
 {
 	update_connection_outputs_for_node(p_node_id);
+}
+
+
+void FlowScript::bind_set_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot, const FlowScriptNodeID p_to_node_id, const FlowScriptIncludeID p_to_include_id)
+{
+	set_node_connection(p_from_node_id, FlowScriptNodeOutputConnection(p_list, p_slot), FlowScriptNodeReference(p_to_node_id, p_to_include_id));
+}
+
+
+Dictionary FlowScript::bind_get_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot) const
+{
+	FlowScriptNodeReference ret_struct = get_node_connection(p_from_node_id, FlowScriptNodeOutputConnection(p_list, p_slot));
+	return ret_struct.to_dictionary();
+}
+
+
+void FlowScript::bind_remove_node_list(const PackedInt32Array &p_id_list)
+{
+	List<FlowScriptNodeID> list;
+	for (const int32_t &id : p_id_list)
+	{
+		list.push_back(FlowScriptNodeID(id));
+	}
+	remove_node_list(list);
+}
+
+
+void FlowScript::bind_remove_include_list(const PackedInt32Array &p_id_list)
+{
+	List<FlowScriptIncludeID> list;
+	for (const int32_t &id : p_id_list)
+	{
+		list.push_back(FlowScriptIncludeID(id));
+	}
+	remove_include_list(list);
 }
 
 
