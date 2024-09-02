@@ -46,6 +46,9 @@ public:
 	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const {}
 
 	void request_output_connection_data_update();
+
+	FlowScriptNode() {}
+	~FlowScriptNode() {}
 };
 
 

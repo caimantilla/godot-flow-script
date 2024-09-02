@@ -5,13 +5,13 @@
 #include "core/templates/local_vector.h"
 #include "core/io/resource.h"
 #include "typedefs.hpp"
+#include "flow_script_node_instance.hpp"
 #include "flow_script_include_instance.hpp"
+#include "flow_script_node_output_connection.hpp"
 #include "flow_script_node_output_connection.hpp"
 
 
 class FlowScriptNode;
-class FlowScriptNodeInstance;
-class FlowScriptNodeReference;
 
 
 class FlowScript final : public Resource
@@ -36,18 +36,16 @@ private:
 	mutable Vector<FlowScriptNodeID> cache_node_id_array;
 	Vector<FlowScriptNodeID> *cache_node_id_array_ptr;
 	mutable bool cache_node_id_array_dirty = true;
-	mutable bool cache_next_available_node_id_dirty = true;
-	mutable FlowScriptNodeID cache_next_available_node_id = NODE_ID_MIN;
 
-	void update_cache_next_available_node_id() const;
 	void update_connection_outputs_for_node(FlowScriptNodeID p_node_id);
-	void init_node(FlowScriptNodeID p_node_id);
-	void uninit_node(FlowScriptNodeID p_node_id);
 	void on_node_changed(FlowScriptNodeID p_node_id);
+	void on_include_changed(FlowScriptIncludeID p_include_id);
 	void bind_set_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot, const FlowScriptNodeID p_to_node_id, const FlowScriptIncludeID p_to_include_id);
 	Dictionary bind_get_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot) const;
 	void bind_remove_node_list(const PackedInt32Array &p_id_list);
 	void bind_remove_include_list(const PackedInt32Array &p_id_list);
+	PackedInt32Array bind_get_node_id_list() const;
+	PackedInt32Array bind_get_include_id_list() const;
 
 protected:
 	static void _bind_methods();

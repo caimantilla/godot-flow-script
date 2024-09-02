@@ -3,6 +3,7 @@
 
 
 #include "typedefs.hpp"
+#include "core/variant/dictionary.h"
 
 
 class FlowScriptNodeReference

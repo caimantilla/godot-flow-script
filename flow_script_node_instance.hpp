@@ -8,9 +8,10 @@
 #include "core/math/vector2i.h"
 #include "core/templates/hash_map.h"
 #include "core/variant/callable.h"
+#include "core/variant/dictionary.h"
 
 
-class FlowScriptNodeInstance
+class FlowScriptNodeInstance final
 {
 public:
 	// Reference to the node.

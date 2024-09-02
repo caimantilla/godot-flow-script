@@ -33,7 +33,7 @@ private:
 	FlowScriptExecutionFiberID self_id;
 	FlowScriptBridge *bridge_ptr = nullptr;
 
-	Ref<FlowScript> current_flow_script;
+	FlowScript *current_flow_script;
 	FlowScriptNodeID current_node_id;
 	bool exec_blocked = false;
 	VariableSlot variables[VARIABLES_MAX];

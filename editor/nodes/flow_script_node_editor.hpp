@@ -15,15 +15,16 @@ class FlowScriptEditorPlugin;
 
 class FlowScriptNodeEditor : public GraphNode
 {
-	friend class FlowScriptEditorPlugin;
-
 	GDCLASS(FlowScriptNodeEditor, GraphNode);
+
+	friend class FlowScriptEditorPlugin;
 
 private:
 	FlowScriptEditorPlugin *plugin = nullptr;
-	FlowScript *root_flow_script = nullptr;
-	FlowScript *parent_flow_script = nullptr;
-	FlowScript *edited_flow_script = nullptr;
+	Ref<FlowScript> root_flow_script;
+	Ref<FlowScript> parent_flow_script;
+	Ref<FlowScript> edited_flow_script;
+	Ref<FlowScriptNode> edited_node;
 	FlowScriptNodeID edited_node_id = FlowScript::NODE_ID_INVALID;
 	FlowScriptIncludeID edited_include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
 	Button *rename_button;
@@ -52,14 +53,11 @@ public:
 	void permit_editing();
 	bool is_editable() const;
 
-	void set_root_flow_script(FlowScript *p_flow_script);
 	Ref<FlowScript> get_root_flow_script_ref() const;
 	FlowScript *get_root_flow_script_ptr() const;
-	void set_edited_flow_script(FlowScript *p_flow_script);
 	Ref<FlowScript> get_edited_flow_script_ref() const;
 	FlowScript *get_edited_flow_script_ptr() const;
 	bool is_edited_flow_script_root() const;
-	void set_edited_node_id(const FlowScriptNodeID p_node_id);
 	FlowScriptNodeID get_edited_node_id() const;
 	Ref<FlowScriptNode> get_edited_node_ref() const;
 	FlowScriptNode *get_edited_node_ptr() const;

@@ -1,5 +1,7 @@
 #include "flow_script_node_instance.hpp"
 #include "flow_script.hpp"
+#include "core/object/script_language.h"
+#include "core/io/resource_loader.h"
 
 
 void FlowScriptNodeInstance::set_node(const Ref<FlowScriptNode> &p_node)
@@ -20,10 +22,17 @@ void FlowScriptNodeInstance::set_node(const Ref<FlowScriptNode> &p_node)
 
 void FlowScriptNodeInstance::set_state_json(const Dictionary &p_state)
 {
+	if (p_state.has("class"))
+	{
+		node = ClassDB::instantiate(p_state["class"]);
+	}
 	if (node.is_valid())
 	{
-		// Need to come up with some type database for this
-		// if (p_state.has("type"))
+		if (p_state.has("script"))
+		{
+			Ref<Script> scr = ResourceLoader::load(p_state["script"], "Script");
+			node->set_script(scr);
+		}
 		if (p_state.has("data"))
 		{
 			node->set_json_data(p_state["data"]);
@@ -36,7 +45,12 @@ void FlowScriptNodeInstance::get_state_json(Dictionary &r_state)
 {
 	if (node.is_valid())
 	{
-		r_state["type"] = node->get_type_id();
+		r_state["class"] = node->get_class();
+		Ref<Script> scr = node->get_script();
+		if (scr.is_valid())
+		{
+			r_state["script"] = scr->get_path();
+		}
 		Dictionary node_dict;
 		node->get_json_data(node_dict);
 		r_state["data"] = node_dict;

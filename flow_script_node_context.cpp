@@ -11,7 +11,7 @@ void FlowScriptNodeContext::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_variable", "idx", "value"), &FlowScriptNodeContext::set_variable);
 	ClassDB::bind_method(D_METHOD("get_variable", "idx"), &FlowScriptNodeContext::get_variable);
 	ClassDB::bind_method(D_METHOD("has_variable", "idx"), &FlowScriptNodeContext::has_variable);
-	ClassDB::bind_method(D_METHOD("get_current_flow_script"), &FlowScriptNodeContext::get_current_flow_script_ptr);
+	ClassDB::bind_method(D_METHOD("get_current_flow_script"), &FlowScriptNodeContext::get_current_flow_script_ref);
 	ClassDB::bind_method(D_METHOD("get_current_node_id"), &FlowScriptNodeContext::get_current_node_id);
 	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ref);
 
@@ -90,7 +90,7 @@ bool FlowScriptNodeContext::prepare_for_execution(const Ref<FlowScript> &p_flow_
 {
 	ERR_FAIL_COND_V(!p_flow_script.is_valid(), false);
 	ERR_FAIL_COND_V(!p_flow_script->has_node(p_node_id), false);
-	current_flow_script = p_flow_script;
+	current_flow_script = p_flow_script.ptr();
 	current_node_id = p_node_id;
 	return true;
 }
@@ -116,7 +116,7 @@ void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_conn
 	if (next_node_ref.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
 	{
 		ERR_FAIL_COND(!current_flow_script->has_include_flow_script_instance(next_node_ref.flow_script_id));
-		current_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id);
+		current_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id).ptr();
 	}
 	if (current_flow_script->has_node(next_node_ref.node_id))
 	{
@@ -191,7 +191,7 @@ void FlowScriptNodeContext::bind_execute_await_branches()
 
 bool FlowScriptNodeContext::is_node_reference_valid(const FlowScriptNodeReference &p_node_reference) const
 {
-	ERR_FAIL_COND_V(!current_flow_script.is_valid(), false);
+	ERR_FAIL_NULL_V(current_flow_script, false);
 	if (p_node_reference.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
 	{
 		if (!current_flow_script->has_include_flow_script_instance(p_node_reference.flow_script_id))

@@ -8,9 +8,13 @@
 
 void FlowScriptNodeEditor::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("get_edited_flow_script"), &FlowScriptNodeEditor::get_edited_flow_script_ref);
 	ClassDB::bind_method(D_METHOD("get_edited_node_id"), &FlowScriptNodeEditor::get_edited_node_id);
 	ClassDB::bind_method(D_METHOD("get_edited_node"), &FlowScriptNodeEditor::get_edited_node_ref);
+	ClassDB::bind_method(D_METHOD("get_edited_flow_script"), &FlowScriptNodeEditor::get_edited_flow_script_ref);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "edited_node_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NONE), "", "get_edited_node_id");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "edited_node", PROPERTY_HINT_RESOURCE_TYPE, "FlowScriptNode", PROPERTY_USAGE_NONE, "FlowScriptNode"), "", "get_edited_node");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "edited_flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_NONE, "FlowScript"), "", "get_edited_flow_script");
 	
 	GDVIRTUAL_BIND(_startup);
 	GDVIRTUAL_BIND(_cleanup);
@@ -62,39 +66,27 @@ bool FlowScriptNodeEditor::is_editable() const
 }
 
 
-void FlowScriptNodeEditor::set_root_flow_script(FlowScript *p_flow_script)
-{
-	root_flow_script = p_flow_script;
-}
-
-
 Ref<FlowScript> FlowScriptNodeEditor::get_root_flow_script_ref() const
-{
-	return Ref<FlowScript>(root_flow_script);
-}
-
-
-FlowScript *FlowScriptNodeEditor::get_root_flow_script_ptr() const
 {
 	return root_flow_script;
 }
 
 
-void FlowScriptNodeEditor::set_edited_flow_script(FlowScript *p_flow_script)
+FlowScript *FlowScriptNodeEditor::get_root_flow_script_ptr() const
 {
-	edited_flow_script = p_flow_script;
+	return root_flow_script.ptr();
 }
 
 
 Ref<FlowScript> FlowScriptNodeEditor::get_edited_flow_script_ref() const
 {
-	return Ref<FlowScript>(edited_flow_script);
+	return edited_flow_script;
 }
 
 
 FlowScript *FlowScriptNodeEditor::get_edited_flow_script_ptr() const
 {
-	return edited_flow_script;
+	return edited_flow_script.ptr();
 }
 
 
@@ -113,12 +105,6 @@ Ref<FlowScriptNode> FlowScriptNodeEditor::get_edited_node_ref() const
 bool FlowScriptNodeEditor::is_edited_flow_script_root() const
 {
 	return edited_flow_script != nullptr && edited_flow_script == root_flow_script;
-}
-
-
-void FlowScriptNodeEditor::set_edited_node_id(const FlowScriptNodeID p_node_id)
-{
-	edited_node_id = p_node_id;
 }
 
 

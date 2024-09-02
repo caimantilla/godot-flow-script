@@ -79,7 +79,7 @@ Ref<FlowScriptNode> FlowScriptNodeTypeDB::instantiate_node_for_type(const FlowSc
 
 const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptNode *p_node) const
 {
-	ERR_FAIL_NULL_V(p_node, FlowScriptNodeTypeInfo());
+	ERR_FAIL_NULL_V(p_node, dummy_type_info);
 
 	Ref<Script> script = p_node->get_script();
 	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
@@ -87,13 +87,13 @@ const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptN
 	if (custom_node == nullptr || !script.is_valid())
 	{
 		StringName native_class = p_node->get_class_name();
-		ERR_FAIL_COND_V(!map_native_class_to_type_idx.has(native_class), FlowScriptNodeTypeInfo());
+		ERR_FAIL_COND_V(!map_native_class_to_type_idx.has(native_class), dummy_type_info);
 		int idx = map_native_class_to_type_idx[native_class];
 		return native_types[idx];
 	}
 	else
 	{
-		ERR_FAIL_COND_V(!map_custom_node_script_to_type_idx.has(script), FlowScriptNodeTypeInfo());
+		ERR_FAIL_COND_V(!map_custom_node_script_to_type_idx.has(script), dummy_type_info);
 		int idx = map_custom_node_script_to_type_idx[script];
 		return custom_script_types[idx];
 	}

@@ -8,7 +8,7 @@
 class FlowScript;
 
 
-class FlowScriptIncludeInstance
+class FlowScriptIncludeInstance final
 {
 public:
 	Ref<FlowScript> flow_script;

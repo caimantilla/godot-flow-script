@@ -24,25 +24,10 @@ bool EditorInspectorPluginFlowScript::parse_property(Object *p_object, const Var
 		}
 		if (
 			(p_path == "script" && (node->has_editor_dependencies() || Object::cast_to<FlowScriptNodeCustom>(node) == nullptr))
-			|| (p_path == "resource_path" && !node_type.name_assignable)
+			|| (p_path == "resource_name" && !node_type.name_assignable)
 		)
 		{
 			return true;
-		}
-	}
-	else
-	{
-		if (p_type == Variant::OBJECT)
-		{
-			Variant property_value = p_object->get(p_path);
-			if (property_value.get_type() == Variant::OBJECT)
-			{
-				FlowScript *script = Object::cast_to<FlowScript>(property_value);
-				if (script != nullptr)
-				{
-					plugin->edit_flow_script_if_not_open(script);
-				}
-			}
 		}
 	}
 	return false;

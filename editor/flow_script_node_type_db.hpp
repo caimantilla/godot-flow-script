@@ -2,6 +2,7 @@
 #define FLOW_SCRIPT_NODE_TYPE_DB_HPP
 
 
+#include "flow_script_node_type_info.hpp"
 #include "core/string/ustring.h"
 #include "core/object/object.h"
 #include "core/io/resource.h"
@@ -10,7 +11,6 @@
 
 class FlowScriptNode;
 class FlowScriptNodeEditor;
-class FlowScriptNodeTypeInfo;
 class FlowScriptEditorPlugin;
 
 
@@ -18,6 +18,8 @@ class FlowScriptNodeTypeDB final : public Object
 {
 private:
 	static FlowScriptNodeTypeDB *singleton;
+
+	const FlowScriptNodeTypeInfo dummy_type_info; // returned const reference when needed
 
 	Vector<FlowScriptNodeTypeInfo> native_types;
 	Vector<FlowScriptNodeTypeInfo> custom_script_types;

@@ -14,6 +14,7 @@
 #include "scene/resources/theme.h"
 #include "scene/resources/texture.h"
 #include "scene/resources/image_texture.h"
+#include "scene/main/timer.h"
 #include "scene/gui/graph_edit.h"
 #include "scene/gui/graph_element.h"
 #include "scene/gui/graph_frame.h"
@@ -35,15 +36,25 @@ class FlowScriptEditorPlugin final : public EditorPlugin
 	class EditedScript;
 
 public:
+	// Selectable file options in the dropdown menu
 	enum FileOption
 	{
-		FILE_NEW,
+		FILE_NEW = 0,
 		FILE_OPEN,
 		FILE_SAVE,
-		FILE_SAVE_AS,
+		FILE_SAVE_ALL,
 		FILE_CLOSE,
 		FILE_CLOSE_ALL,
 		FILE_MAX,
+	};
+
+	// Possible file actions
+	enum FileAction
+	{
+		FILE_ACTION_NONE,
+		FILE_ACTION_CREATE_SCRIPT,
+		FILE_ACTION_EDIT_SCRIPT,
+		FILE_ACTION_SAVE_SCRIPT,
 	};
 
 	enum DragState
@@ -56,6 +67,25 @@ public:
 	};
 
 private:
+	class ScriptCloseConfirmationDialog final : public ConfirmationDialog
+	{
+		GDCLASS(ScriptCloseConfirmationDialog, ConfirmationDialog);
+
+	private:
+		void on_confirmed();
+		void on_custom_action(const StringName &p_action_name);
+
+	protected:
+		static void _bind_methods();
+		void _notification(int p_what);
+
+	public:
+		void set_script_name(const String &p_text);
+		void prompt_action(const String &p_script_name);
+
+		ScriptCloseConfirmationDialog();
+	};
+
 	class NodeConnectionBreakElement final : public GraphElement
 	{
 		GDCLASS(NodeConnectionBreakElement, GraphElement);
@@ -67,6 +97,8 @@ private:
 		void _notification(int p_what);
 
 	public:
+		Size2 get_texture_size() const;
+
 		NodeConnectionBreakElement();
 	};
 
@@ -95,8 +127,12 @@ private:
 
 	private:
 		Ref<Theme> msdf_theme;
+		Button *add_node_button;
+
+		void on_add_node_button_pressed();
 
 	protected:
+		static void _bind_methods();
 		void _notification(int p_what);
 
 	public:
@@ -110,17 +146,10 @@ private:
 		// Returns the position of a GUI point to a general point (eg. the position of a mouse click)
 		Point2 point_convert_rect_to_graph(const Point2 &p_rect_position) const;
 		Point2 point_convert_graph_to_rect(const Point2 &p_graph_position) const;
+		Point2 get_visible_center_as_graph_point() const;
+		Point2i get_visible_center_as_data_point() const;
 
 		ScriptGraph(FlowScriptEditorPlugin *p_plugin);
-	};
-
-	class OpenScriptMetadata final
-	{
-	public:
-		int index;
-		String visible_name;
-		Ref<FlowScript> flow_script;
-		EditedScript *edited_script;
 	};
 
 	// An edited script instance.
@@ -128,6 +157,8 @@ private:
 	// Any level of nesting is supported.
 	class EditedScript final
 	{
+		friend class FlowScriptEditorPlugin;
+
 	private:
 		struct GraphItem final
 		{
@@ -154,22 +185,11 @@ private:
 			~GraphItem() {}
 		};
 
-		// used to track editor connections in a hashmap
-		struct EditorNodeConnectionKey final
+		struct ConnectionBreakPoint final
 		{
-			FlowScriptNodeID from_node_id;
-			FlowScriptNodeOutputConnection from_node_output;
-
-			EditorNodeConnectionKey(const FlowScriptNodeID p_node_id, const FlowScriptNodeOutputConnection p_output)
-			{
-				from_node_id = p_node_id;
-				from_node_output = p_output;
-			}
-		};
-		struct EditorNodeConnectionData final
-		{
-			FlowScriptNodeReference to_node_reference;
-			Point2 connection_break_point; // scanned during mouse motion input
+			FlowScriptNodeID node_id;
+			FlowScriptNodeOutputConnection output;
+			Point2 position;
 		};
 
 		// operation structs
@@ -242,7 +262,7 @@ private:
 			};
 
 			// root struct data
-			Type type;
+			Type type = TYPE_NULL;
 			union Data
 			{
 				ItemDelete item_delete;
@@ -268,8 +288,6 @@ private:
 				TYPE_ITEM_ADD,
 				TYPE_ITEM_DELETE,
 				TYPE_ITEM_SYNC,
-				TYPE_NODE_CONNECT,
-				TYPE_NODE_DISCONNECT,
 			};
 
 			// structs with parameters for each operation type
@@ -285,40 +303,30 @@ private:
 			{
 				GraphItem item;
 			};
-			struct NodeConnect final
-			{
-				FlowScriptNodeID node_id;
-				FlowScriptNodeOutputConnection output;
-			};
-			struct NodeDisconnect final
-			{
-				FlowScriptNodeID node_id;
-				FlowScriptNodeOutputConnection output;
-			};
 
 			// actual struct data
-			Type type;
+			Type type = TYPE_NULL;
 			union Data
 			{
 				ItemAdd item_add;
 				ItemDelete item_delete;
 				ItemSync item_sync;
-				NodeConnect node_connect;
-				NodeDisconnect node_disconnect;
 
 				Data() {}
 				~Data() {}
 			} data;
 		};
 
-	private:
+	private:	
 		HashSet<GraphItem> selected_item_set;
-		HashMap<EditorNodeConnectionKey, EditorNodeConnectionData> editor_node_connection_map;
+		Vector<ConnectionBreakPoint> connection_break_point_list;
+		NodeConnectionBreakElement *connection_break_graph_element;
 
 		bool buffers_dirty = false; // only relevant to the root script
 		PagedArray<MutateOperation> buffer_mutate;
 		PagedArray<ReflectOperation> buffer_reflect;
 
+		const List<const FlowScriptNodeEditor *> get_selected_node_editors() const;
 		void copy_selected_nodes();
 		void connect_graph(); // invoke during construction of root
 		void connect_flow_script(); // invoke during construction of both root and includes
@@ -331,12 +339,15 @@ private:
 		void queue_mutate_operation(const MutateOperation &p_operation);
 		void queue_reflect_operation(const ReflectOperation &p_operation);
 		void queue_handle_buffers(); // queues buffer execution (bubble up to root)
+		static void root_load_everything_recursive(EditedScript *p_current_level);
 		static void root_make_buffer_clean_recursive(EditedScript *p_current_level);
 		static void root_handle_mutate_buffer_recursive(EditedScript *p_current_level);
 		static void root_handle_reflect_buffer_early_recursive(EditedScript *p_current_level);
 		static void root_handle_reflect_buffer_late_recursive(EditedScript *p_current_level);
+		static void root_draw_connections_recursive(EditedScript *p_current_level);
 		void root_init_buffer_handle();
-		void handle_buffers();
+		void root_init_draw_connections();
+
 		void handle_mutate_buffer();
 		void handle_reflect_buffer_early();
 		void handle_reflect_buffer_late();
@@ -355,13 +366,6 @@ private:
 		void reflect_item_add(const ReflectOperation::ItemAdd &op);
 		void reflect_item_delete(const ReflectOperation::ItemDelete &op);
 		void reflect_item_sync(const ReflectOperation::ItemSync &op);
-		void reflect_node_connect(const ReflectOperation::NodeConnect &op);
-		void reflect_node_disconnect(const ReflectOperation::NodeDisconnect &op);
-
-		void handle_reflect_operation_list_item_add(const Vector<ReflectOperation::ItemAdd> &p_adds);
-		void handle_reflect_operation_list_item_delete(const Vector<ReflectOperation::ItemDelete> &p_deletes);
-		void handle_reflect_operation_list_item_sync(const Vector<ReflectOperation::ItemSync> &p_syncs);
-		void handle_reflect_operation_list_node_connect(const Vector<ReflectOperation::NodeConnect> &p_connections);
 
 		// FlowScript Hooks
 		void on_script_changed();
@@ -393,6 +397,7 @@ private:
 
 		// ScriptGraph Hooks
 		void on_graph_visibility_changed();
+		void on_graph_gui_input(const Ref<InputEvent> &p_event);
 		void on_graph_connection_drag_ended();
 		void on_graph_connection_drag_started(const StringName &p_from_node_name, const int p_from_port, const bool p_is_output);
 		void on_graph_connection_from_empty(const StringName &p_to_node_name, const int p_to_port, const Point2 &p_release_position);
@@ -409,8 +414,13 @@ private:
 		void on_graph_scroll_offset_changed(const Point2 &p_offset);
 
 	public:
+		bool save_state_dirty = false; // used to tell the user that the script needs to be saved!!
+
+		bool root_reload_queue_dirty = false;
+		bool root_reload_on_visible_queued = false;
 		FlowScriptEditorPlugin *plugin; // plugin reference needed for stuff
 		ScriptGraph *graph; // THE GRAPH!!
+		ScriptCloseConfirmationDialog *close_confirm_dialog;
 		Ref<FlowScript> flow_script; // the flowscript being edited
 		FlowScriptIncludeID include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID; // include id of this script if it's not the root
 		EditedScript *parent = nullptr; // superscript. this is null for the root, and used to denote include scripts
@@ -427,6 +437,11 @@ private:
 		bool is_first_level_include() const;
 		EditedScript *get_root();
 
+		void unload_everything();
+		void root_unload_everything(); // clears gui state
+		void root_load_everything(); // loads in gui state
+		void root_reload_everything(); // clears then loads in gui state
+
 		static EditedScript *create_root_edited_script(FlowScriptEditorPlugin *p_plugin, const Ref<FlowScript> &p_flow_script, ScriptGraph *p_graph);
 		static EditedScript *create_include_edited_script(FlowScriptEditorPlugin *p_plugin, EditedScript *p_parent, const FlowScriptIncludeID p_include_id);
 
@@ -437,18 +452,30 @@ private:
 	class ClipboardHandler final
 	{
 	private:
+		enum InsertCopyMessage
+		{
+			MSG_PASTE = 0,
+			MSG_DUPLICATE = 1,
+		};
+
+	private:
 		Vector<FlowScriptNodeInstance> current_copied_nodes;
+
+		void insert_node_copies(const Vector<FlowScriptNodeInstance> &p_copies, const InsertCopyMessage copy_msg_type);
 
 	public:
 		FlowScriptEditorPlugin *plugin;
 
-		void copy_nodes(const EditedScript *p_edited_script, const List<const FlowScriptNodeEditor *> p_node_editors);
+		Vector<FlowScriptNodeInstance> get_node_copy_list(const EditedScript *p_edited_script, const List<const FlowScriptNodeEditor *> p_node_editors) const;
+		Vector<FlowScriptNodeInstance> get_selected_node_copy_list() const;
 
 		void copy_selected_nodes();
-		void cut_selected_nodes();
 		void duplicate_selected_nodes();
-		void paste_nodes();
+		void paste_copied_nodes();
 	};
+
+protected:
+	static void _bind_methods();
 
 private:
 	Ref<EditorInspectorPluginFlowScript> inspector_plugin;
@@ -466,38 +493,37 @@ private:
 	ItemList *script_item_list;
 	TabContainer *graph_tab_container;
 	FlowScriptNodeCreateDialog *node_create_dialog;
-	Button *create_node_prompt_button;
-	Button *script_include_manager_popup_button;
+	// Button *script_include_manager_popup_button;
 	ClipboardHandler clipboard_handler;
 	EditorFileDialog *file_dialog;
+	Timer *script_item_list_refresh_timer;
 
-	void close_edited_script();
-	void close_all_scripts();
-	void file_menu_update_clickable();
-	void update_script_item_list();
-	void copy_selected_nodes_to_clipboard();
-	void cut_selected_nodes_to_clipboard();
-	void paste_nodes_from_clipboard();
-
-	void clear_graph();
-	void refresh_connection_hover_break_spots();
-	void redraw_graph_connections();
-	void recreate_graph();
-	void reset_graph_input_state();
-	bool is_editing_script() const;
+	bool is_editing_any_script() const;
+	bool is_editing_specific_script_at(const int p_idx) const;
+	int get_edited_script_index(const EditedScript *p_script) const;
 	EditedScript *get_edited_script_at(const int p_idx) const;
 	EditedScript *get_current_edited_script() const;
+	int get_current_edited_script_index() const;
 
-	void on_node_create_dialog_type_chosen();
-	void on_file_menu_item_pressed(int p_idx);
+	void close_edited_script_by_ptr(EditedScript *p_script, bool p_warn_if_unsaved);
+
+	void file_menu_update_clickable();
+
 	void on_make_floating_button_open_to_screen_request(int p_screen_id);
-	void on_window_visibility_changed(bool p_visible);
-	void on_script_item_list_item_selected(int p_idx);
+	void on_window_wrapper_visibility_changed(bool p_visible);
+	void on_file_menu_item_pressed(int p_idx);
+	void on_script_item_list_item_selected(int p_item);
 	void on_script_item_list_item_clicked(int p_item, Point2 p_local_mouse_pos, MouseButton p_btn_idx);
 	void on_node_create_dialog_type_chosen(const StringName &p_native_class, const StringName &p_script_class);
+	void on_file_dialog_file_selected(const String &p_path);
+	void on_script_close_dialog_discard(EditedScript *p_script);
+	void on_script_close_dialog_save(EditedScript *p_script);
+	void on_script_graph_popup_request(const Point2 &p_at_position, EditedScript *p_script);
+	void on_script_graph_node_create_prompt_request(EditedScript *p_script);
+	void on_script_changed(EditedScript *script_ptr);
 
 public:
-	FileOption current_file_option = FILE_OPEN;
+	FileAction current_file_action = FILE_ACTION_NONE;
 
 	virtual String get_name() const override;
 	virtual const Ref<Texture2D> get_icon() const override;
@@ -508,11 +534,24 @@ public:
 
 	void prompt_script_file_create_new();
 	void prompt_script_file_load_existing();
-	void prompt_script_file_save_as();
-	void immediate_script_file_save();
 
+	int get_open_script_count() const;
+
+	void update_open_script();
+	void refresh_script_item_list();
 	void edit_flow_script_if_not_open(FlowScript *p_script);
-	Ref<FlowScript> get_edited_flow_script();
+	void edit_flow_script_even_if_open(FlowScript *p_script);
+	void edit_unopened_script(FlowScript *p_script);
+
+	bool save_script_file_at(int p_idx);
+	bool save_current_edited_script_file();
+	bool save_all_open_script_files();
+
+	void close_edited_script_at(int p_idx, bool p_warn_if_unsaved);
+	void close_current_edited_script(bool p_warn_if_unsaved);
+	void close_all_scripts(bool p_warn_if_unsaved);
+
+	void set_open_script_to_idx(int p_idx);
 
 	FlowScriptEditorPlugin();
 	~FlowScriptEditorPlugin();
