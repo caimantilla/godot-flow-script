@@ -32,9 +32,3 @@ bool EditorInspectorPluginFlowScript::parse_property(Object *p_object, const Var
 	}
 	return false;
 }
-
-
-EditorInspectorPluginFlowScript::EditorInspectorPluginFlowScript(FlowScriptEditorPlugin *p_plugin)
-{
-	plugin = p_plugin;
-}

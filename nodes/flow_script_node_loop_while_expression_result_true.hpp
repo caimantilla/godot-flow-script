@@ -46,6 +46,7 @@ public:
 
 
 VARIANT_ENUM_CAST(FlowScriptNodeLoopWhileExpressionResultTrue::ConnectionList);
+VARIANT_ENUM_CAST(FlowScriptNodeLoopWhileExpressionResultTrue::TemporaryVariable);
 
 
 #endif // FLOW_SCRIPT_NODE_LOOP_WHILE_EXPRESSION_RESULT_TRUE_HPP

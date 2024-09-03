@@ -2,6 +2,7 @@
 #include "../flow_script_node_type_db.hpp"
 #include "editor/editor_paths.h"
 #include "editor/editor_node.h"
+#include "editor/editor_string_names.h"
 #include "editor/themes/editor_scale.h"
 #include "scene/gui/split_container.h"
 
@@ -14,17 +15,28 @@ void FlowScriptNodeCreateDialog::_bind_methods()
 
 void FlowScriptNodeCreateDialog::_notification(int p_what)
 {
-	if (p_what == NOTIFICATION_VISIBILITY_CHANGED)
+	switch (p_what)
 	{
-		if (is_visible())
-		{
-			if (reload_types_on_open_queued)
+		case NOTIFICATION_POSTINITIALIZE: {
+			connect("confirmed", callable_mp(this, &FlowScriptNodeCreateDialog::on_this_confirmed));
+		} break;
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (is_visible())
 			{
-				reload_types_on_open_queued = false;
-				reload_local_type_list();
+				if (reload_types_on_open_queued)
+				{
+					reload_types_on_open_queued = false;
+					reload_local_type_list();
+				}
+				node_filter_line->call_deferred(SNAME("grab_focus"));
 			}
-			node_filter_line->call_deferred(SNAME("grab_focus"));
-		}
+		} break;
+		case NOTIFICATION_THEME_CHANGED: {
+			Ref<Texture2D> icon_fav = get_theme_icon(SNAME("Favorites"), EditorStringName(EditorIcons));
+			Ref<Texture2D> icon_tool = get_theme_icon(SNAME("Tools"), EditorStringName(EditorIcons));
+			mark_favorite_button->set_icon(icon_fav);
+			fold_action_menu->set_icon(icon_tool);
+		} break;
 	}
 }
 
@@ -38,7 +50,7 @@ Tree *FlowScriptNodeCreateDialog::get_type_tree() const
 bool FlowScriptNodeCreateDialog::is_node_type_selected() const
 {
 	TreeItem *selected_item = type_tree->get_selected();
-	return tree_item_type_map.has(selected_item);
+	return selected_item != nullptr && tree_item_type_map.has(selected_item);
 }
 
 
@@ -85,11 +97,10 @@ void FlowScriptNodeCreateDialog::update_type_description_display()
 			description = TTR("No description available.");
 		}
 		help_bit->set_custom_text(TTR("Type:"), type.name, description);
-		description_visibility_parent->show();
 	}
 	else
 	{
-		description_visibility_parent->hide();
+		help_bit->set_custom_text(TTR("Type:"), TTR("No type selected."), "");
 	}
 }
 
@@ -197,6 +208,7 @@ void FlowScriptNodeCreateDialog::clear_type_tree()
 void FlowScriptNodeCreateDialog::refresh_type_tree()
 {
 	clear_type_tree();
+	type_tree->create_item(); // init the root
 
 	String filter = get_current_search_filter_str();
 	List<int> displayed_type_idx_list;
@@ -247,8 +259,8 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 		PackedStringArray split = category.split("/", false, 0);
 		for (int i = 1; i < split.size(); i++)
 		{
-			String super_category = String("/").join(split.slice(0, i - 1));
-			if (!category_item_map.has(super_category))
+			const String super_category = String("/").join(split.slice(0, i - 1));
+			if (!super_category.is_empty() && !category_item_map.has(super_category))
 			{
 				super_item = super_item->create_child();
 				super_item->set_selectable(MAIN_COLUMN, false);
@@ -269,6 +281,7 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 	for (const int type_idx : displayed_type_idx_list)
 	{
 		const FlowScriptNodeTypeInfo &type = local_node_type_list[type_idx];
+
 		TreeItem *parent_item = type_tree->get_root();
 		if (!type.category.is_empty() && category_item_map.has(type.category))
 		{
@@ -530,8 +543,6 @@ void FlowScriptNodeCreateDialog::on_node_type_db_changed()
 
 FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 {
-	connect("confirmed", callable_mp(this, &FlowScriptNodeCreateDialog::on_this_confirmed));
-
 	FlowScriptNodeTypeDB::get_singleton()->connect(CoreStringName(changed), callable_mp(this, &FlowScriptNodeCreateDialog::on_node_type_db_changed));
 
 	set_flag(FLAG_RESIZE_DISABLED, false);
@@ -578,7 +589,7 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 
 	node_filter_line = memnew(LineEdit);
 	node_filter_line->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	node_filter_line->set_editable(false);
+	node_filter_line->set_editable(true);
 	node_filter_line->set_placeholder(TTR("Search"));
 	node_filter_line->set_tooltip_text(TTR("The search filter will be enabled in a future release."));
 	node_filter_line->connect("text_changed", callable_mp(this, &FlowScriptNodeCreateDialog::on_node_filter_search_line_text_changed));
@@ -612,5 +623,5 @@ FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 
 	help_bit = memnew(EditorHelpBit);
 	description_visibility_parent = right_vbox->add_margin_child(TTR("Description:"), help_bit, false);
-	description_visibility_parent->hide();
+	update_type_description_display();
 }

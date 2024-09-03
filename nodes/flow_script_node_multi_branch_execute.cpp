@@ -43,7 +43,6 @@ void FlowScriptNodeMultiBranchExecute::set_connection_count(const int64_t p_coun
 	if (connection_count == new_count)
 		return;
 	connection_count = new_count;
-	request_output_connection_data_update();
 	emit_changed();
 }
 

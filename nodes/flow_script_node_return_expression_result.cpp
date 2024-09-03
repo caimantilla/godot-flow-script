@@ -1,6 +1,15 @@
 #include "flow_script_node_return_expression_result.hpp"
 
 
+void FlowScriptNodeReturnExpressionResult::_bind_methods()
+{
+	ClassDB::bind_method(D_METHOD("set_expression", "text"), &FlowScriptNodeReturnExpressionResult::set_expression);
+	ClassDB::bind_method(D_METHOD("get_expression"), &FlowScriptNodeReturnExpressionResult::get_expression);
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "expression", PROPERTY_HINT_EXPRESSION), "set_expression", "get_expression");
+}
+
+
 void FlowScriptNodeReturnExpressionResult::exec_step(FlowScriptNodeContext *p_context)
 {
 	Variant result = p_context->get_bridge_ptr()->evaluate_expression(expression);

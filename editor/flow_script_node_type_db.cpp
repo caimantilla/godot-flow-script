@@ -21,6 +21,17 @@ void FlowScriptNodeTypeDB::_bind_methods()
 }
 
 
+void FlowScriptNodeTypeDB::_notification(int p_what)
+{
+	if (p_what == NOTIFICATION_READY)
+	{
+		EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
+		FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));
+		FileSystemDock::get_singleton()->get_script_create_dialog()->connect("script_created", callable_mp(this, &FlowScriptNodeTypeDB::on_script_created));
+	}
+}
+
+
 FlowScriptNodeTypeDB *FlowScriptNodeTypeDB::get_singleton()
 {
 	return singleton;
@@ -53,6 +64,7 @@ void FlowScriptNodeTypeDB::add_type(const FlowScriptNodeTypeInfo &p_type)
 {
 	ERR_FAIL_COND(!p_type.native);
 	native_types.push_back(p_type);
+	native_node_info_map_dirty = true;
 	emit_changed();
 }
 
@@ -81,6 +93,9 @@ const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptN
 {
 	ERR_FAIL_NULL_V(p_node, dummy_type_info);
 
+	update_native_node_info_map();
+	update_script_node_info_map();
+
 	Ref<Script> script = p_node->get_script();
 	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
 
@@ -103,6 +118,9 @@ const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptN
 FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(FlowScriptNode *p_node)
 {
 	ERR_FAIL_NULL_V(p_node, nullptr);
+
+	update_native_node_info_map();
+	update_script_node_info_map();
 
 	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
 	if (custom_node == nullptr)
@@ -342,10 +360,6 @@ FlowScriptNodeTypeDB::FlowScriptNodeTypeDB()
 
 	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_fixed_seconds", "FlowScriptNodeWaitDurationFixedSeconds", "FlowScriptNodeEditorWaitDurationFixedSeconds", false, "Wait Fixed Seconds", "Timing", "Waits a defined amount of time."));
 	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_expression_result", "FlowScriptNodeWaitDurationExpressionResult", "FlowScriptNodeEditorWaitDurationExpressionResult", false, "Wait Expression", "Timing", "Waits the number of seconds evaluated from an expression."));
-
-	EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
-	FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));
-	FileSystemDock::get_singleton()->get_script_create_dialog()->connect("script_created", callable_mp(this, &FlowScriptNodeTypeDB::on_script_created));
 }
 
 

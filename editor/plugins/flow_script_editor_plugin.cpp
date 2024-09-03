@@ -68,39 +68,6 @@ FlowScriptEditorPlugin::ScriptCloseConfirmationDialog::ScriptCloseConfirmationDi
 }
 
 
-void FlowScriptEditorPlugin::NodeConnectionBreakElement::_notification(int p_what)
-{
-	if (p_what == NOTIFICATION_THEME_CHANGED)
-	{
-		// REPLACE WITH CUSTOM ICON LATER
-		Ref<Texture2D> break_icon = get_theme_icon(SNAME("DebugSkipBreakpointsOn"), EditorStringName(EditorIcons));
-		break_rect->set_texture(break_icon);
-	}
-}
-
-
-Size2 FlowScriptEditorPlugin::NodeConnectionBreakElement::get_texture_size() const
-{
-	const Ref<Texture2D> tex = break_rect->get_texture();
-	ERR_FAIL_COND_V(!tex.is_valid(), Size2(0, 0));
-	return tex->get_size();
-}
-
-
-FlowScriptEditorPlugin::NodeConnectionBreakElement::NodeConnectionBreakElement()
-{
-	set_draggable(false);
-	set_selectable(false);
-	set_resizable(false);
-	set_auto_translate(false);
-
-	break_rect = memnew(TextureRect);
-	break_rect->set_mouse_filter(MOUSE_FILTER_IGNORE);
-	break_rect->set_focus_mode(FOCUS_NONE);
-	add_child(break_rect);
-}
-
-
 void FlowScriptEditorPlugin::IncludeFrame::_notification(int p_what)
 {
 	if (p_what == NOTIFICATION_THEME_CHANGED)
@@ -166,6 +133,10 @@ void FlowScriptEditorPlugin::ScriptGraph::_notification(int p_what)
 void FlowScriptEditorPlugin::ScriptGraph::add_node_editor(FlowScriptNodeEditor *p_editor)
 {
 	p_editor->set_theme(msdf_theme);
+	p_editor->set_h_grow_direction(Control::GROW_DIRECTION_BOTH);
+	p_editor->set_v_grow_direction(Control::GROW_DIRECTION_BOTH);
+	p_editor->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	p_editor->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
 	add_child(p_editor);
 }
 
@@ -173,7 +144,17 @@ void FlowScriptEditorPlugin::ScriptGraph::add_node_editor(FlowScriptNodeEditor *
 void FlowScriptEditorPlugin::ScriptGraph::add_include_frame(IncludeFrame *p_frame)
 {
 	p_frame->set_theme(msdf_theme);
+	p_frame->set_h_grow_direction(Control::GROW_DIRECTION_BOTH);
+	p_frame->set_v_grow_direction(Control::GROW_DIRECTION_BOTH);
+	p_frame->set_h_size_flags(Control::SIZE_SHRINK_CENTER);
+	p_frame->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
 	add_child(p_frame);
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::attach_node_editor_to_include_frame(FlowScriptNodeEditor *p_editor, IncludeFrame *p_frame)
+{
+	attach_graph_element_to_frame(p_editor->get_name(), p_frame->get_name());
 }
 
 
@@ -187,7 +168,7 @@ Point2 FlowScriptEditorPlugin::ScriptGraph::point_convert_data_to_graph(const Po
 
 Point2i FlowScriptEditorPlugin::ScriptGraph::point_convert_graph_to_data(const Point2 &p_screen_position) const
 {
-	Point2 retf;
+	Point2 retf = p_screen_position;
 	retf /= EDSCALE;
 	retf = retf.round();
 	// autoconvert type
@@ -246,14 +227,15 @@ FlowScriptEditorPlugin::ScriptGraph::ScriptGraph(FlowScriptEditorPlugin *p_plugi
 	add_node_button = memnew(Button);
 	add_node_button->set_text(TTR("Add Node..."));
 	add_node_button->set_flat(true);
+	add_node_button->connect(SceneStringName(pressed), callable_mp(this, &ScriptGraph::on_add_node_button_pressed));
 	get_menu_hbox()->add_child(add_node_button);
-	move_child(add_node_button, 0);
+	get_menu_hbox()->move_child(add_node_button, 0);
 }
 
 
 FlowScriptEditorPlugin::EditedScript::GraphItem FlowScriptEditorPlugin::EditedScript::GraphItem::create_node(const FlowScriptNodeID p_node_id)
 {
-	return create_node(FlowScriptNodeReference(p_node_id, FlowScript::NODE_ID_INVALID));
+	return create_node(FlowScriptNodeReference(FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID, p_node_id));
 }
 
 
@@ -298,9 +280,9 @@ FlowScriptEditorPlugin::EditedScript *FlowScriptEditorPlugin::EditedScript::get_
 }
 
 
-const List<const FlowScriptNodeEditor *> FlowScriptEditorPlugin::EditedScript::get_selected_node_editors() const
+const List<FlowScriptNodeEditor *> FlowScriptEditorPlugin::EditedScript::get_selected_node_editors() const
 {
-	List<const FlowScriptNodeEditor *> selected_editor_list;
+	List<FlowScriptNodeEditor *> selected_editor_list;
 	if (!is_root())
 	{
 		return selected_editor_list;
@@ -336,7 +318,7 @@ void FlowScriptEditorPlugin::EditedScript::connect_graph()
 	graph->connect(SNAME("frame_rect_changed"), callable_mp(this, &EditedScript::on_graph_frame_rect_changed));
 	graph->connect(SNAME("delete_nodes_request"), callable_mp(this, &EditedScript::on_graph_delete_nodes_request));
 	graph->connect(SNAME("copy_nodes_request"), callable_mp(this, &EditedScript::copy_selected_nodes));
-	graph->connect(SNAME("pase_nodes_request"), callable_mp(this, &EditedScript::on_graph_paste_nodes_request));
+	graph->connect(SNAME("paste_nodes_request"), callable_mp(this, &EditedScript::on_graph_paste_nodes_request));
 	graph->connect(SNAME("duplicate_nodes_request"), callable_mp(this, &EditedScript::on_graph_duplicate_nodes_request));
 	graph->connect(SNAME("node_selected"), callable_mp(this, &EditedScript::on_graph_node_selected));
 	graph->connect(SNAME("node_deselected"), callable_mp(this, &EditedScript::on_graph_node_deselected));
@@ -377,7 +359,7 @@ const FlowScriptEditorPlugin::EditedScript::GraphItem FlowScriptEditorPlugin::Ed
 		}
 		else if (editor->parent_flow_script == flow_script.ptr())
 		{
-			return GraphItem::create_node(FlowScriptNodeReference(editor->edited_node_id, editor->edited_include_id));
+			return GraphItem::create_node(FlowScriptNodeReference(editor->edited_include_id, editor->edited_node_id));
 		}
 		else
 		{
@@ -433,10 +415,10 @@ void FlowScriptEditorPlugin::EditedScript::on_node_changed(const FlowScriptNodeI
 
 void FlowScriptEditorPlugin::EditedScript::on_node_resized(const FlowScriptNodeID p_node_id)
 {
-	ReflectOperation op;
-	op.type = ReflectOperation::TYPE_ITEM_SYNC;
-	op.data.item_sync.item = GraphItem::create_node(p_node_id);
-	queue_reflect_operation(op);
+	// ReflectOperation op;
+	// op.type = ReflectOperation::TYPE_ITEM_SYNC;
+	// op.data.item_sync.item = GraphItem::create_node(p_node_id);
+	// queue_reflect_operation(op);
 }
 
 
@@ -453,13 +435,13 @@ void FlowScriptEditorPlugin::EditedScript::on_node_dragged(const Point2 &p_from,
 
 void FlowScriptEditorPlugin::EditedScript::on_node_selected(const FlowScriptNodeID p_node_id)
 {
-	selected_item_set.insert(GraphItem::create_node(p_node_id));
+	// selected_item_set.insert(GraphItem::create_node(p_node_id));
 }
 
 
 void FlowScriptEditorPlugin::EditedScript::on_node_deselected(const FlowScriptNodeID p_node_id)
 {
-	selected_item_set.erase(GraphItem::create_node(p_node_id));
+	// selected_item_set.erase(GraphItem::create_node(p_node_id));
 }
 
 
@@ -509,13 +491,13 @@ void FlowScriptEditorPlugin::EditedScript::on_include_dragged(const Point2 &p_fr
 
 void FlowScriptEditorPlugin::EditedScript::on_include_selected(const FlowScriptIncludeID p_include_id)
 {
-	selected_item_set.insert(GraphItem::create_include(p_include_id));
+	// selected_item_set.insert(GraphItem::create_include(p_include_id));
 }
 
 
 void FlowScriptEditorPlugin::EditedScript::on_include_deselected(const FlowScriptIncludeID p_include_id)
 {
-	selected_item_set.erase(GraphItem::create_include(p_include_id));
+	// selected_item_set.erase(GraphItem::create_include(p_include_id));
 }
 
 
@@ -554,20 +536,20 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_connection_request(const Str
 		return;
 	}
 	// only allow connections FROM the root script
-	if (from_editor->edited_flow_script != flow_script.ptr())
+	if (from_editor->edited_flow_script != flow_script)
 	{
 		return;
 	}
 	// and only allow connections TO nodes of the root script or immediate includes
-	if (to_editor->edited_flow_script != flow_script.ptr() && to_editor->parent_flow_script != flow_script.ptr())
+	if (to_editor->edited_flow_script != flow_script && to_editor->parent_flow_script != flow_script)
 	{
 		return;
 	}
 	MutateOperation op;
 	op.type = MutateOperation::TYPE_NODE_CONNECT;
 	op.data.node_connect.from_node_id = from_editor->edited_node_id;
-	op.data.node_connect.from_node_output = from_editor->output_graph_slot_to_connection(from_editor->get_slot_port_index_right(p_from_port));
-	op.data.node_connect.to_node = FlowScriptNodeReference(to_editor->edited_node_id, to_editor->edited_include_id);
+	op.data.node_connect.from_node_output = from_editor->output_graph_slot_to_connection(from_editor->get_output_port_slot(p_from_port));
+	op.data.node_connect.to_node = FlowScriptNodeReference(to_editor->edited_include_id, to_editor->edited_node_id);
 	queue_mutate_operation(op);
 }
 
@@ -589,6 +571,7 @@ void FlowScriptEditorPlugin::EditedScript::unload_everything()
 	{
 		frame->queue_free();
 	}
+	node_editor_map.clear();
 }
 
 
@@ -603,6 +586,7 @@ void FlowScriptEditorPlugin::EditedScript::root_load_everything()
 {
 	DEV_ASSERT(is_root());
 	root_load_everything_recursive(this);
+	root_init_draw_connections();
 }
 
 
@@ -801,44 +785,6 @@ void FlowScriptEditorPlugin::EditedScript::root_init_draw_connections()
 	DEV_ASSERT(is_root());
 
 	root_draw_connections_recursive(this);
-
-	// handle breakpoints here, they only need to exist for nodes of the root script anyways
-	int new_break_point_count = 0;
-	const List<Ref<GraphEdit::Connection>> &connections = graph->get_connection_list();
-	for (const Ref<GraphEdit::Connection> &connection : connections)
-	{
-		FlowScriptNodeEditor *from_editor = Object::cast_to<FlowScriptNodeEditor>(graph->get_node(String(connection->from_node)));
-		if (from_editor != nullptr && from_editor->edited_flow_script == flow_script.ptr())
-		{
-			new_break_point_count++;
-		}
-	}
-	connection_break_point_list.resize(new_break_point_count);
-	int curr_break_point_idx = 0;
-	for (const Ref<GraphEdit::Connection> &connection : connections)
-	{
-		FlowScriptNodeEditor *from_editor = Object::cast_to<FlowScriptNodeEditor>(graph->get_node(String(connection->from_node)));
-		if (from_editor == nullptr || from_editor->edited_flow_script != flow_script.ptr())
-		{
-			continue;
-		}
-		FlowScriptNodeEditor *to_editor = Object::cast_to<FlowScriptNodeEditor>(graph->get_node(String(connection->to_node)));
-		ERR_CONTINUE(to_editor == nullptr);
-
-		int output_slot = from_editor->get_output_port_slot(connection->from_port);
-		FlowScriptNodeOutputConnection output = from_editor->output_graph_slot_to_connection(output_slot);
-
-		Point2 out_pos = from_editor->get_output_port_position(connection->from_port) + from_editor->get_position_offset();
-		Point2 in_pos = to_editor->get_input_port_position(connection->to_port) + to_editor->get_position_offset();
-		Point2 middle_pos = out_pos.lerp(in_pos, 0.5);
-
-		connection_break_point_list.write[curr_break_point_idx] = ConnectionBreakPoint {
-			.node_id = from_editor->edited_node_id,
-			.output = output,
-			.position = middle_pos,
-		};
-		curr_break_point_idx++;
-	}
 }
 
 
@@ -852,15 +798,15 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_buffer()
 	struct GroupedOperationList
 	{
 		MutateOperation::Type type;
-		List<const int> operation_indices;
+		List<int> operation_indices;
 	};
 
-	List<const GroupedOperationList> operation_lists;
+	List<GroupedOperationList> operation_lists;
 
 	for (int i = 0; i < buffer_mutate.size(); i++)
 	{
 		GroupedOperationList op_list = { .type = buffer_mutate[i].type };
-		while (buffer_mutate[i].type == op_list.type && i < buffer_mutate.size())
+		while (i < buffer_mutate.size() && buffer_mutate[i].type == op_list.type)
 		{
 			op_list.operation_indices.push_back(i);
 			i++;
@@ -914,6 +860,7 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_buffer()
 					connect_list.write[i] = buffer_mutate[op_idx].data.node_connect;
 					i++;
 				}
+				handle_mutate_operation_list_node_connect(connect_list);
 			} break;
 			case MutateOperation::TYPE_NODE_DISCONNECT: {
 				Vector<MutateOperation::NodeDisconnect> disconnect_list;
@@ -928,9 +875,6 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_buffer()
 			} break;
 			// TODO:
 			// TYPE_NODE_RENAME
-			// TYPE_NODE_PASTE
-			// TYPE_NODE_DUPLICATE
-			// TYPE_INCLUDE_ADD
 		}
 	}
 
@@ -1075,6 +1019,7 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_delete(const ReflectOper
 			FlowScriptNodeEditor *node_editor = node_editor_map[node_id];
 			node_editor->cleanup();
 			node_editor->queue_free();
+			node_editor_map.erase(node_id);
 		} break;
 		case GraphItem::TYPE_INCLUDE: {
 			FlowScriptIncludeID include_id = op.item.include_id;
@@ -1101,9 +1046,11 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_sync(const ReflectOperat
 			ERR_FAIL_COND(!node_editor_map.has(node_id));
 
 			FlowScriptNodeEditor *node_editor = node_editor_map[node_id];
+
 			node_editor->set_title(node_editor->get_new_title());
 			node_editor->set_tooltip_text(node_editor->get_new_tooltip_text());
 			node_editor->sync();
+			node_editor->set_size(Size2(0, 0));
 
 			Point2i posi = flow_script->get_node_position(node_id);
 			EditedScript *p = this;
@@ -1232,6 +1179,21 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_item_del
 			{
 				udrd->add_do_method(flow_script.ptr(), SNAME("remove_node"), node_id);
 				deleted_node_instance_map[node_id] = node_instance_copy;
+				// save outgoing connections to nodes that aren't being deleted, too
+				for (uint8_t list_idx = 0; list_idx < node_instance_copy.connection_lists.size(); list_idx++)
+				{
+					for (int64_t slot_idx = 0; slot_idx < node_instance_copy.connection_lists[list_idx].size(); slot_idx++)
+					{
+						if (node_instance_copy.connection_lists[list_idx][slot_idx].node_id != FlowScript::NODE_ID_INVALID)
+						{
+							undo_restore_connection_list.push_back(UndoRestorableConnection {
+								.node_id = node_id,
+								.output = FlowScriptNodeOutputConnection(list_idx, slot_idx),
+								.target = node_instance_copy.connection_lists[list_idx][slot_idx],
+							});
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1277,7 +1239,7 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_item_del
 		{
 			continue;
 		}
-		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), restorable_connection.node_id, restorable_connection.output.list, restorable_connection.output.slot, restorable_connection.target.node_id, restorable_connection.target.flow_script_id);
+		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), restorable_connection.node_id, restorable_connection.output.list, restorable_connection.output.slot, restorable_connection.target.flow_script_id, restorable_connection.target.node_id);
 	}
 
 	udrd->commit_action(false);
@@ -1322,8 +1284,10 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_item_dra
 
 				const FlowScriptNodeEditor *node_editor = node_editor_map[drag.item.node.node_id];
 
-				Point2i from = graph->point_convert_graph_to_data(drag.from - (node_editor->get_size() * 0.5));
-				Point2i to = graph->point_convert_graph_to_data(drag.to - (node_editor->get_size() * 0.5));
+				Point2i from = graph->point_convert_graph_to_data(drag.from + (node_editor->get_size() * 0.5));
+				Point2i to = graph->point_convert_graph_to_data(drag.to + (node_editor->get_size() * 0.5));
+
+				print_line("from ", from, " to ", to);
 
 				udrd->add_do_method(flow_script.ptr(), SNAME("set_node_position"), drag.item.node.node_id, to);
 				udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_position"), drag.item.node.node_id, from);
@@ -1333,8 +1297,8 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_item_dra
 				IncludeFrame *child_frame = children[drag.item.include_id]->frame;
 				DEV_ASSERT(child_frame != nullptr);
 				
-				Point2i from = graph->point_convert_graph_to_data(child_frame->get_size() * 0.5);
-				Point2i to = graph->point_convert_graph_to_data(child_frame->get_size() * 0.5);
+				Point2i from = graph->point_convert_graph_to_data(drag.from + (child_frame->get_size() * 0.5));
+				Point2i to = graph->point_convert_graph_to_data(drag.from + (child_frame->get_size() * 0.5));
 
 				udrd->add_do_method(flow_script.ptr(), SNAME("set_include_position"), drag.item.include_id, to);
 				udrd->add_undo_method(flow_script.ptr(), SNAME("set_include_position"), drag.item.include_id, from);
@@ -1355,15 +1319,16 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_add
 	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
 	udrd->create_action(TTRN("Add FlowScript Node", "Add FlowScript Nodes", p_adds.size()), UndoRedo::MERGE_DISABLE);
 
-	FlowScriptNodeID curr_node_id = FlowScript::NODE_ID_MIN;
 	for (const MutateOperation::NodeAdd &add : p_adds)
 	{
+		Ref<FlowScriptNode> node = add.get_node();
+		node->unreference();
 		FlowScriptNodeID node_id = flow_script->get_first_available_node_slot();
-		ERR_BREAK_EDMSG(node_id, TTR("No more node slots available."));
+		ERR_BREAK_EDMSG(node_id == FlowScript::NODE_ID_INVALID, TTR("No more node slots available."));
 
 		Point2i pos = graph->point_convert_graph_to_data(add.position);
 
-		udrd->add_do_method(flow_script.ptr(), SNAME("set_node"), node_id, add.node);
+		udrd->add_do_method(flow_script.ptr(), SNAME("set_node"), node_id, node);
 		udrd->add_do_method(flow_script.ptr(), SNAME("set_node_position"), node_id, pos);
 		udrd->add_undo_method(flow_script.ptr(), SNAME("remove_node"), node_id);
 	}
@@ -1372,25 +1337,25 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_add
 }
 
 
-void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_rename(const Vector<MutateOperation::NodeRename> &p_renames)
-{
-	if (p_renames.is_empty())
-	{
-		return;
-	}
-	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
-	udrd->create_action(TTRN("Rename FlowScript Node", "Rename FlowScript Nodes", p_renames.size()), UndoRedo::MERGE_DISABLE);
+// void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_rename(const Vector<MutateOperation::NodeRename> &p_renames)
+// {
+// 	if (p_renames.is_empty())
+// 	{
+// 		return;
+// 	}
+// 	EditorUndoRedoManager *udrd = EditorUndoRedoManager::get_singleton();
+// 	udrd->create_action(TTRN("Rename FlowScript Node", "Rename FlowScript Nodes", p_renames.size()), UndoRedo::MERGE_DISABLE);
 
-	for (const MutateOperation::NodeRename &rename : p_renames)
-	{
-		FlowScriptNode *node = flow_script->get_node_ptr(rename.node_id);
-		ERR_CONTINUE(node == nullptr);
-		udrd->add_do_method(node, SNAME("set_name"), rename.new_name);
-		udrd->add_undo_method(node, SNAME("set_name"), node->get_name());
-	}
+// 	for (const MutateOperation::NodeRename &rename : p_renames)
+// 	{
+// 		FlowScriptNode *node = flow_script->get_node_ptr(rename.node_id);
+// 		ERR_CONTINUE(node == nullptr);
+// 		udrd->add_do_method(node, SNAME("set_name"), rename.new_name);
+// 		udrd->add_undo_method(node, SNAME("set_name"), node->get_name());
+// 	}
 
-	udrd->commit_action(true);
-}
+// 	udrd->commit_action(true);
+// }
 
 
 void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_connect(const Vector<MutateOperation::NodeConnect> &p_connections)
@@ -1405,8 +1370,8 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_con
 	for (const MutateOperation::NodeConnect &connection : p_connections)
 	{
 		FlowScriptNodeReference curr_target = flow_script->get_node_connection(connection.from_node_id, connection.from_node_output);
-		udrd->add_do_method(flow_script.ptr(), SNAME("set_node_connection"), connection.from_node_id, connection.from_node_output.list, connection.from_node_output.slot, connection.to_node.node_id, connection.to_node.flow_script_id);
-		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), connection.from_node_id, connection.from_node_output.list, connection.from_node_output.slot, curr_target.node_id, curr_target.flow_script_id);
+		udrd->add_do_method(flow_script.ptr(), SNAME("set_node_connection"), connection.from_node_id, connection.from_node_output.list, connection.from_node_output.slot, connection.to_node.flow_script_id, connection.to_node.node_id);
+		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), connection.from_node_id, connection.from_node_output.list, connection.from_node_output.slot, curr_target.flow_script_id, curr_target.node_id);
 	}
 
 	udrd->commit_action(true);
@@ -1425,8 +1390,8 @@ void FlowScriptEditorPlugin::EditedScript::handle_mutate_operation_list_node_dis
 	for (const MutateOperation::NodeDisconnect &disconnection : p_disconnections)
 	{
 		FlowScriptNodeReference curr_target = flow_script->get_node_connection(disconnection.from_node_id, disconnection.from_node_output);
-		udrd->add_do_method(flow_script.ptr(), SNAME("set_node_connection"), disconnection.from_node_id, disconnection.from_node_output.list, disconnection.from_node_output.slot, FlowScript::NODE_ID_INVALID, FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID);
-		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), disconnection.from_node_id, disconnection.from_node_output.list, disconnection.from_node_output.slot, curr_target.node_id, curr_target.flow_script_id);
+		udrd->add_do_method(flow_script.ptr(), SNAME("set_node_connection"), disconnection.from_node_id, disconnection.from_node_output.list, disconnection.from_node_output.slot, FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID, FlowScript::NODE_ID_INVALID);
+		udrd->add_undo_method(flow_script.ptr(), SNAME("set_node_connection"), disconnection.from_node_id, disconnection.from_node_output.list, disconnection.from_node_output.slot, curr_target.flow_script_id, curr_target.node_id);
 	}
 
 	udrd->commit_action(true);
@@ -1454,70 +1419,28 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_gui_input(const Ref<InputEve
 {
 	DEV_ASSERT(is_root());
 
-	InputEventMouse *event = Object::cast_to<InputEventMouse>(p_event.ptr());
+	InputEventMouseButton *event = Object::cast_to<InputEventMouseButton>(p_event.ptr());
 	if (event == nullptr)
 	{
 		return;
 	}
 
-	Size2 break_point_size = connection_break_graph_element->get_texture_size();
-	Point2 mouse_graph_pos = graph->point_convert_rect_to_graph(event->get_position());
-
-	List<const int> hovered_break_point_list;
-
-	for (int break_point_idx = 0; break_point_idx < connection_break_point_list.size(); break_point_idx++)
+	Ref<GraphEdit::Connection> closest_connection = graph->get_closest_connection_at_point(graph->get_local_mouse_position());
+	if (!closest_connection.is_valid())
 	{
-		const ConnectionBreakPoint &break_point = connection_break_point_list[break_point_idx];
-		Rect2 detect_rect;
-		detect_rect.position = break_point.position - (break_point_size * 0.5);
-		detect_rect.size = break_point_size;
-		if (detect_rect.has_point(mouse_graph_pos))
-		{
-			hovered_break_point_list.push_back(break_point_idx);
-		}
+		return;
+	}
+	FlowScriptNodeEditor *from_editor = Object::cast_to<FlowScriptNodeEditor>(graph->get_node(String(closest_connection->from_node)));
+	if (from_editor == nullptr || from_editor->edited_flow_script != flow_script)
+	{
+		return;
 	}
 
-	int closest_break_point_idx = -1;
-	real_t closest_break_point_distance = INFINITY;
-	for (const int break_point_idx : hovered_break_point_list)
-	{
-		const ConnectionBreakPoint &break_point = connection_break_point_list[break_point_idx];
-		real_t distance = mouse_graph_pos.distance_to(break_point.position);
-		if (distance < closest_break_point_distance)
-		{
-			closest_break_point_distance = distance;
-			closest_break_point_idx = break_point_idx;
-		}
-	}
-
-	InputEventMouseMotion *event_motion = Object::cast_to<InputEventMouseMotion>(event);
-	InputEventMouseButton *event_button = Object::cast_to<InputEventMouseButton>(event);
-
-	if (event_motion != nullptr)
-	{
-		if (closest_break_point_idx == -1)
-		{
-			connection_break_graph_element->hide();
-		}
-		else
-		{
-			const ConnectionBreakPoint &break_point = connection_break_point_list[closest_break_point_idx];
-			connection_break_graph_element->set_position_offset(break_point.position - (break_point_size * 0.5));
-			connection_break_graph_element->show();
-		}
-	}
-	else if (event_button != nullptr)
-	{
-		if (closest_break_point_idx != -1)
-		{
-			const ConnectionBreakPoint &break_point = connection_break_point_list[closest_break_point_idx];
-			MutateOperation op;
-			op.type = MutateOperation::TYPE_NODE_DISCONNECT;
-			op.data.node_disconnect.from_node_id = break_point.node_id;
-			op.data.node_disconnect.from_node_output = break_point.output;
-			queue_mutate_operation(op);
-		}
-	}
+	MutateOperation op;
+	op.type = MutateOperation::TYPE_NODE_DISCONNECT;
+	op.data.node_disconnect.from_node_id = from_editor->edited_node_id;
+	op.data.node_disconnect.from_node_output = from_editor->output_graph_slot_to_connection(from_editor->get_output_port_slot(closest_connection->from_port));
+	queue_mutate_operation(op);
 }
 
 
@@ -1550,7 +1473,7 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_connection_to_empty(const St
 }
 
 
-void FlowScriptEditorPlugin::EditedScript::on_graph_delete_nodes_request(TypedArray<StringName> &p_item_names)
+void FlowScriptEditorPlugin::EditedScript::on_graph_delete_nodes_request(const TypedArray<StringName> &p_item_names)
 {
 	for (int i = 0; i < p_item_names.size(); i++)
 	{
@@ -1594,6 +1517,40 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_duplicate_nodes_request()
 }
 
 
+void FlowScriptEditorPlugin::EditedScript::on_graph_disconnection_request(const StringName &p_from_node_name, const int p_from_port, const StringName &p_to_node_name, const int p_to_port)
+{
+	ERR_FAIL_COND(!is_root());
+
+	FlowScriptNodeEditor *from_editor = Object::cast_to<FlowScriptNodeEditor>(graph->get_node(String(p_from_node_name)));
+
+	if ( from_editor == nullptr || from_editor->edited_flow_script != flow_script)
+	{
+		return;
+	}
+
+	MutateOperation op;
+	op.type = MutateOperation::TYPE_NODE_DISCONNECT;
+	op.data.node_disconnect.from_node_id = from_editor->edited_node_id;
+	op.data.node_disconnect.from_node_output = from_editor->output_graph_slot_to_connection(from_editor->get_output_port_slot(p_from_port));
+	queue_mutate_operation(op);
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_graph_frame_rect_changed(GraphFrame *p_frame, const Size2 &p_new_rect)
+{
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_graph_node_deselected(Node *p_node)
+{
+}
+
+
+void FlowScriptEditorPlugin::EditedScript::on_graph_node_selected(Node *p_node)
+{
+}
+
+
 void FlowScriptEditorPlugin::EditedScript::on_graph_popup_request(const Point2 &p_at_position)
 {
 }
@@ -1606,6 +1563,17 @@ void FlowScriptEditorPlugin::EditedScript::on_graph_scroll_offset_changed(const 
 
 void FlowScriptEditorPlugin::EditedScript::on_script_changed()
 {
+	if (is_root())
+	{
+		if (!graph->is_visible_in_tree())
+		{
+			if (!root_reload_on_visible_queued)
+			{
+				root_reload_on_visible_queued = true;
+				root_unload_everything();
+			}
+		}
+	}
 	if (!is_root())
 	{
 		EditedScript *root = get_root();
@@ -1622,7 +1590,7 @@ void FlowScriptEditorPlugin::EditedScript::on_script_changed()
 			if (!root->root_reload_on_visible_queued)
 			{
 				root->root_reload_on_visible_queued = true;
-				callable_mp(root, &EditedScript::root_unload_everything).call_deferred();
+				root->root_unload_everything();
 			}
 		}
 	}
@@ -1744,7 +1712,7 @@ FlowScriptEditorPlugin::EditedScript::~EditedScript()
 }
 
 
-Vector<FlowScriptNodeInstance> FlowScriptEditorPlugin::ClipboardHandler::get_node_copy_list(const EditedScript *p_edited_script, const List<const FlowScriptNodeEditor *> p_node_editors) const
+Vector<FlowScriptNodeInstance> FlowScriptEditorPlugin::ClipboardHandler::get_node_copy_list(const EditedScript *p_edited_script, const List<FlowScriptNodeEditor *> p_node_editors) const
 {
 	Vector<FlowScriptNodeInstance> ret;
 
@@ -1768,7 +1736,7 @@ Vector<FlowScriptNodeInstance> FlowScriptEditorPlugin::ClipboardHandler::get_nod
 	{
 		for (uint8_t list_idx = 0; list_idx < node_instance.connection_lists.size(); list_idx++)
 		{
-			for (int64_t slot_idx = 0; slot_idx < node_instance.connection_lists.size(); slot_idx++)
+			for (int64_t slot_idx = 0; slot_idx < node_instance.connection_lists[list_idx].size(); slot_idx++)
 			{
 				if (
 						node_instance.connection_lists[list_idx][slot_idx].flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID
@@ -1900,7 +1868,7 @@ void FlowScriptEditorPlugin::ClipboardHandler::insert_node_copies(const Vector<F
 				if (target.flow_script_id == FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID && inserted_node_script_id_map.has(target.node_id))
 				{
 					FlowScriptNodeID target_id = inserted_node_script_id_map[target.node_id];
-					udrd->add_do_method(script->flow_script.ptr(), SNAME("set_node_connection"), copy_id, list_idx, slot_idx, target_id, FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID);
+					udrd->add_do_method(script->flow_script.ptr(), SNAME("set_node_connection"), copy_id, list_idx, slot_idx, FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID, target_id);
 				}
 			}
 		}
@@ -1926,6 +1894,19 @@ void FlowScriptEditorPlugin::prompt_script_file_load_existing()
 }
 
 
+void FlowScriptEditorPlugin::on_flow_script_saved(const Ref<FlowScript> &p_flow_script)
+{
+	for (EditedScript *edited_script : open_script_list)
+	{
+		if (edited_script->save_state_dirty && edited_script->flow_script == p_flow_script)
+		{
+			edited_script->save_state_dirty = false;
+			refresh_script_item_list();
+		}
+	}
+}
+
+
 bool FlowScriptEditorPlugin::save_script_file_at(int p_idx)
 {
 	ERR_FAIL_INDEX_V(p_idx, open_script_list.size(), false);
@@ -1934,8 +1915,7 @@ bool FlowScriptEditorPlugin::save_script_file_at(int p_idx)
 	{
 		if (ResourceSaver::save(script->flow_script, script->flow_script->get_path()) == OK)
 		{
-			script->save_state_dirty = false;
-			refresh_script_item_list();
+			on_flow_script_saved(script->flow_script);
 			return true;
 		}
 	}
@@ -1948,8 +1928,9 @@ bool FlowScriptEditorPlugin::save_current_edited_script_file()
 	int idx = get_current_edited_script_index();
 	if (idx != -1)
 	{
-		save_script_file_at(idx);
+		return save_script_file_at(idx);
 	}
+	return false;
 }
 
 
@@ -2207,6 +2188,8 @@ void FlowScriptEditorPlugin::edit_unopened_script(FlowScript *p_script)
 	current_edited_script_idx = open_script_list.size();
 	open_script_list.push_back(edited_script);
 
+	edited_script->root_load_everything();
+
 	refresh_script_item_list();
 }
 
@@ -2288,19 +2271,23 @@ void FlowScriptEditorPlugin::on_node_create_dialog_type_chosen(const StringName 
 
 	for (const FlowScriptNodeTypeInfo &type : type_list)
 	{
-		if (type.enabled && (type.node_script_class_name == p_script_class || type.node_class == p_native_class))
+		if (type.enabled && (type.node_script_class_name == p_script_class && type.node_class == p_native_class))
 		{
 			node = FlowScriptNodeTypeDB::get_singleton()->instantiate_node_for_type(type);
 			break;
 		}
 	}
 
+	ERR_FAIL_COND(!node.is_valid());
+
 	EditedScript *script = get_current_edited_script();
 	DEV_ASSERT(script != nullptr);
 
+	node->reference();
+
 	EditedScript::MutateOperation op;
 	op.type = EditedScript::MutateOperation::TYPE_NODE_ADD;
-	op.data.node_add.node = node;
+	op.data.node_add.set_node(node.ptr());
 	op.data.node_add.position = next_node_create_point;
 	script->queue_mutate_operation(op);
 }
@@ -2349,7 +2336,7 @@ void FlowScriptEditorPlugin::on_file_dialog_file_selected(const String &p_path)
 			{
 				Ref<FlowScript> new_script;
 				new_script.instantiate();
-				if (ResourceSaver::save(new_script, p_path))
+				if (ResourceSaver::save(new_script, p_path) == OK)
 				{
 					edit_flow_script_even_if_open(new_script.ptr());
 				}
@@ -2371,6 +2358,16 @@ void FlowScriptEditorPlugin::on_script_changed(EditedScript *script_ptr)
 		script_item_list_refresh_timer->stop();
 	}
 	script_item_list_refresh_timer->start();
+}
+
+
+void FlowScriptEditorPlugin::on_resource_saved(const Ref<Resource> &p_resource)
+{
+	Ref<FlowScript> script_res = p_resource;
+	if (script_res.is_valid())
+	{
+		on_flow_script_saved(script_res);
+	}
 }
 
 
@@ -2420,6 +2417,11 @@ void FlowScriptEditorPlugin::make_visible(bool p_visible)
 
 FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 {
+	node_type_db_singleton = memnew(FlowScriptNodeTypeDB);
+	add_child(node_type_db_singleton);
+
+	clipboard_handler.plugin = this;
+
 	window_wrapper = memnew(WindowWrapper);
 	window_wrapper->set_window_title(vformat(TTR("%s - Godot Engine"), TTR("FlowScript Editor")));
 	window_wrapper->set_margins_enabled(true);
@@ -2448,14 +2450,14 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	file_menu->get_popup()->add_separator();
 	file_menu->get_popup()->add_item(TTR("Close"), FILE_CLOSE);
 	file_menu->get_popup()->add_item(TTR("Close All"), FILE_CLOSE_ALL);
-	file_menu->connect(SceneStringName(id_pressed), callable_mp(this, &FlowScriptEditorPlugin::on_file_menu_item_pressed));
+	file_menu->get_popup()->connect(SceneStringName(id_pressed), callable_mp(this, &FlowScriptEditorPlugin::on_file_menu_item_pressed));
 	menu_hbox->add_child(file_menu);
 
 	file_menu_update_clickable();
 
 	Control *menu_middle_pad = memnew(Control);
 	menu_middle_pad->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	menu_middle_pad->add_child(menu_middle_pad);
+	menu_hbox->add_child(menu_middle_pad);
 
 	make_floating_button = memnew(ScreenSelect);
 	make_floating_button->set_flat(true);
@@ -2479,6 +2481,7 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 
 	graph_tab_container = memnew(TabContainer);
 	graph_tab_container->set_tabs_visible(false);
+	graph_tab_container->set_deselect_enabled(true);
 	graph_tab_container->add_theme_style_override(SceneStringName(panel), empty_style);
 	main_split->add_child(graph_tab_container);
 
@@ -2500,6 +2503,7 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	add_child(script_item_list_refresh_timer);
 
 	inspector_plugin.instantiate();
+	inspector_plugin->plugin = this;
 	add_inspector_plugin(inspector_plugin);
 }
 
@@ -2513,4 +2517,15 @@ void FlowScriptEditorPlugin::_bind_methods()
 {
 	EDITOR_DEF("editors/flow_script_editor/copy_item_offset", Point2i(40, 40));
 	EDITOR_DEF("editors/flow_script_editor/duplicate_item_offset", Point2i(40, 40));
+}
+
+
+void FlowScriptEditorPlugin::_notification(int p_what)
+{
+	switch (p_what)
+	{
+		case NOTIFICATION_READY: {
+			connect("resource_saved", callable_mp(this, &FlowScriptEditorPlugin::on_resource_saved));
+		} break;
+	}
 }

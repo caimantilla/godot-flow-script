@@ -36,6 +36,9 @@ public:
 	String get_variable() const;
 	void set_expression(const String &p_text);
 	String get_expression() const;
+
+	FlowScriptNodeSetExpressionResultToVariable() {}
+	~FlowScriptNodeSetExpressionResultToVariable() {}
 };
 
 

@@ -3,10 +3,10 @@
 
 void FlowScriptNodeWaitDurationExpressionResult::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("set_expression", "expression"), &FlowScriptNodeWaitDurationExpressionResult::set_expression);
+	ClassDB::bind_method(D_METHOD("set_expression", "text"), &FlowScriptNodeWaitDurationExpressionResult::set_expression);
 	ClassDB::bind_method(D_METHOD("get_expression"), &FlowScriptNodeWaitDurationExpressionResult::get_expression);
 
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "expression", PROPERTY_HINT_MULTILINE_TEXT), "set_expression", "get_expression");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "expression", PROPERTY_HINT_EXPRESSION), "set_expression", "get_expression");
 }
 
 

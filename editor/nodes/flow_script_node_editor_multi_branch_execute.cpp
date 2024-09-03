@@ -82,6 +82,7 @@ FlowScriptNodeEditorMultiBranchExecute::FlowScriptNodeEditorMultiBranchExecute()
 {
 	Label *main_output_label = memnew(Label);
 	main_output_label->set_text(TTR("When finished:"));
+	main_output_label->set_h_size_flags(Control::SIZE_SHRINK_END);
 	add_child(main_output_label);
 
 	set_slot_enabled_left(0, true);
@@ -96,6 +97,7 @@ FlowScriptNodeEditorMultiBranchExecute::FlowScriptNodeEditorMultiBranchExecute()
 		Label *label = memnew(Label);
 		label->hide();
 		label->set_text(vformat(TTR("Branch %d:"), i));
+		label->set_h_size_flags(Control::SIZE_SHRINK_END);
 		add_child(label);
 
 		output_control_list[i].separator = separator;

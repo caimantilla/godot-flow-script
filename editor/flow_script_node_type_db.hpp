@@ -4,9 +4,9 @@
 
 #include "flow_script_node_type_info.hpp"
 #include "core/string/ustring.h"
-#include "core/object/object.h"
-#include "core/io/resource.h"
 #include "core/object/script_language.h"
+#include "core/io/resource.h"
+#include "scene/main/node.h"
 
 
 class FlowScriptNode;
@@ -14,8 +14,10 @@ class FlowScriptNodeEditor;
 class FlowScriptEditorPlugin;
 
 
-class FlowScriptNodeTypeDB final : public Object
+class FlowScriptNodeTypeDB final : public Node
 {
+	GDCLASS(FlowScriptNodeTypeDB, Node);
+
 private:
 	static FlowScriptNodeTypeDB *singleton;
 
@@ -49,6 +51,7 @@ private:
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
 	static FlowScriptNodeTypeDB *get_singleton();

@@ -40,7 +40,7 @@ private:
 	void update_connection_outputs_for_node(FlowScriptNodeID p_node_id);
 	void on_node_changed(FlowScriptNodeID p_node_id);
 	void on_include_changed(FlowScriptIncludeID p_include_id);
-	void bind_set_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot, const FlowScriptNodeID p_to_node_id, const FlowScriptIncludeID p_to_include_id);
+	void bind_set_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot, const FlowScriptIncludeID p_to_include_id, const FlowScriptNodeID p_to_node_id);
 	Dictionary bind_get_node_connection(const FlowScriptNodeID p_from_node_id, const uint8_t p_list, const int64_t p_slot) const;
 	void bind_remove_node_list(const PackedInt32Array &p_id_list);
 	void bind_remove_include_list(const PackedInt32Array &p_id_list);

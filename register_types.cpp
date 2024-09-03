@@ -34,9 +34,6 @@
 #include "editor/nodes/flow_script_node_editor_wait_duration_fixed_seconds.hpp"
 #include "editor/nodes/flow_script_node_editor_wait_duration_expression_result.hpp"
 
-
-static FlowScriptNodeTypeDB *node_type_db = nullptr;
-
 #endif // TOOLS_ENABLED
 
 
@@ -86,7 +83,6 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 	}
 	else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
 	{
-		node_type_db = memnew(FlowScriptNodeTypeDB);
 		EditorPlugins::add_by_type<FlowScriptEditorPlugin>();
 	}
 #endif // TOOLS_ENABLED
@@ -95,10 +91,4 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 
 void uninitialize_flow_script_module(ModuleInitializationLevel p_level)
 {
-#ifdef TOOLS_ENABLED
-	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
-	{
-		memdelete(node_type_db);
-	}
-#endif // TOOLS_ENABLED
 }

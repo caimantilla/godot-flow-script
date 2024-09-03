@@ -25,20 +25,20 @@ void FlowScriptEditorExpressionDisplayBox::set_expression(const String &p_conten
 	}
 	expression = p_content;
 	String used_content = expression.strip_edges();
-	VisibilityMode new_visible_mode;
 	if (expression.is_empty())
 	{
-		new_visible_mode = VISIBILITY_MODE_UNDEFINED;
+		current_visible_mode = VISIBILITY_MODE_UNDEFINED;
 		content_label->hide();
 		content_label->set_text("");
 		undefined_label->show();
 	}
 	else
 	{
-		new_visible_mode = VISIBILITY_MODE_CONTENT;
+		current_visible_mode = VISIBILITY_MODE_CONTENT;
 		undefined_label->hide();
 		if (used_content.contains("\n"))
 		{
+			content_label->set_text("");
 			content_label->push_list(0, RichTextLabel::LIST_DOTS, false);
 			content_label->add_text(used_content);
 			content_label->pop();
@@ -49,11 +49,7 @@ void FlowScriptEditorExpressionDisplayBox::set_expression(const String &p_conten
 		}
 		content_label->show();
 	}
-	if (current_visible_mode != new_visible_mode)
-	{
-		current_visible_mode = new_visible_mode;
-		update_minimum_size();
-	}
+	update_minimum_size();
 }
 
 
@@ -94,6 +90,9 @@ FlowScriptEditorExpressionDisplayBox::FlowScriptEditorExpressionDisplayBox()
 	content_label->set_anchors_and_offsets_preset(PRESET_FULL_RECT);
 	content_label->set_mouse_filter(MOUSE_FILTER_IGNORE);
 	content_label->set_fit_content(true);
+	content_label->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
+	content_label->set_h_size_flags(SIZE_EXPAND_FILL);
+	content_label->set_v_size_flags(SIZE_EXPAND_FILL);
 	content_label->set_scroll_active(false);
 	add_child(content_label);
 }

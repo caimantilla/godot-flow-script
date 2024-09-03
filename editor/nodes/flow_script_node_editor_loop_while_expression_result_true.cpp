@@ -17,7 +17,7 @@ FlowScriptNodeOutputConnection FlowScriptNodeEditorLoopWhileExpressionResultTrue
 	{
 		case 0:
 			return FlowScriptNodeOutputConnection(FlowScriptNodeLoopWhileExpressionResultTrue::CONNECTION_LIST_BREAK, 0);
-		case 1:
+		case 2:
 			return FlowScriptNodeOutputConnection(FlowScriptNodeLoopWhileExpressionResultTrue::CONNECTION_LIST_LOOP, 0);
 		default:
 			ERR_FAIL_V(FlowScriptNodeOutputConnection());
@@ -32,7 +32,7 @@ int FlowScriptNodeEditorLoopWhileExpressionResultTrue::output_connection_to_grap
 		case FlowScriptNodeLoopWhileExpressionResultTrue::CONNECTION_LIST_BREAK:
 			return 0;
 		case FlowScriptNodeLoopWhileExpressionResultTrue::CONNECTION_LIST_LOOP:
-			return 1;
+			return 2;
 		default:
 			ERR_FAIL_V(-1);
 	}
@@ -64,5 +64,6 @@ FlowScriptNodeEditorLoopWhileExpressionResultTrue::FlowScriptNodeEditorLoopWhile
 	expression_space->add_child(expression_box);
 
 	set_slot_enabled_left(0, true);
-	set_slot_enabled_right(1, true);
+	set_slot_enabled_right(0, true);
+	set_slot_enabled_right(2, true);
 }

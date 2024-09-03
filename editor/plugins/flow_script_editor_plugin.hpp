@@ -16,6 +16,8 @@
 #include "scene/resources/image_texture.h"
 #include "scene/main/timer.h"
 #include "scene/gui/graph_edit.h"
+#include "scene/gui/graph_edit_arranger.h"
+#include "scene/gui/view_panner.h"
 #include "scene/gui/graph_element.h"
 #include "scene/gui/graph_frame.h"
 #include "scene/gui/split_container.h"
@@ -26,6 +28,7 @@
 #include "scene/gui/texture_rect.h"
 
 
+class FlowScriptNodeTypeDB;
 class EditorInspectorPluginFlowScript;
 
 
@@ -86,22 +89,6 @@ private:
 		ScriptCloseConfirmationDialog();
 	};
 
-	class NodeConnectionBreakElement final : public GraphElement
-	{
-		GDCLASS(NodeConnectionBreakElement, GraphElement);
-
-	private:
-		TextureRect *break_rect;
-
-	protected:
-		void _notification(int p_what);
-
-	public:
-		Size2 get_texture_size() const;
-
-		NodeConnectionBreakElement();
-	};
-
 	class IncludeFrame final : public GraphFrame
 	{
 		GDCLASS(IncludeFrame, GraphFrame);
@@ -126,9 +113,6 @@ private:
 		GDCLASS(ScriptGraph, GraphEdit);
 
 	private:
-		Ref<Theme> msdf_theme;
-		Button *add_node_button;
-
 		void on_add_node_button_pressed();
 
 	protected:
@@ -137,6 +121,8 @@ private:
 
 	public:
 		FlowScriptEditorPlugin *plugin;
+		Ref<Theme> msdf_theme;
+		Button *add_node_button;
 
 		void add_node_editor(FlowScriptNodeEditor *p_editor);
 		void add_include_frame(IncludeFrame *p_frame);
@@ -155,8 +141,10 @@ private:
 	// An edited script instance.
 	// Contains the parent script (if included) and all the child scripts.
 	// Any level of nesting is supported.
-	class EditedScript final
+	class EditedScript final : public Object
 	{
+		GDCLASS(EditedScript, Object);
+
 		friend class FlowScriptEditorPlugin;
 
 	private:
@@ -185,13 +173,6 @@ private:
 			~GraphItem() {}
 		};
 
-		struct ConnectionBreakPoint final
-		{
-			FlowScriptNodeID node_id;
-			FlowScriptNodeOutputConnection output;
-			Point2 position;
-		};
-
 		// operation structs
 		struct MutateOperation final
 		{
@@ -202,11 +183,8 @@ private:
 				TYPE_ITEM_DELETE,
 				TYPE_ITEM_DRAG,
 				TYPE_NODE_ADD,
-				TYPE_NODE_RENAME,
 				TYPE_NODE_CONNECT,
 				TYPE_NODE_DISCONNECT,
-				TYPE_NODE_PASTE,
-				TYPE_NODE_DUPLICATE,
 				TYPE_INCLUDE_ADD,
 			};
 
@@ -223,17 +201,26 @@ private:
 			};
 			struct NodeAdd final
 			{
-				Ref<FlowScriptNode> node;
+				friend struct MutateOperation;
+			private:
+				// DANGER, DANGEROUS, WARNING: I THINK THAT USING A Ref<FlowScriptNode> was preventing compilation cus of union constructor shit. ref() and unref() will need to be called manually.
+				FlowScriptNode *node;
+
+			public:
 				Point2 position;
+
+				void set_node(FlowScriptNode *p_node)
+				{
+					node = p_node;
+				}
+				Ref<FlowScriptNode> get_node() const
+				{
+					return Ref<FlowScriptNode>(node);
+				}
 			};
 			struct NodeDelete final
 			{
 				FlowScriptNodeID node_id;
-			};
-			struct NodeRename final
-			{
-				FlowScriptNodeID node_id;
-				String new_name;
 			};
 			struct NodeConnect final
 			{
@@ -246,20 +233,6 @@ private:
 				FlowScriptNodeID from_node_id;
 				FlowScriptNodeOutputConnection from_node_output;
 			};
-			struct NodePaste final
-			{
-				Ref<FlowScriptNode> node;
-				Point2 offset;
-			};
-			struct NodeDuplicate final
-			{
-				FlowScriptNodeID node_id;
-			};
-			struct IncludeAdd final
-			{
-				Ref<FlowScript> flow_script;
-				Point2 position;
-			};
 
 			// root struct data
 			Type type = TYPE_NULL;
@@ -269,14 +242,15 @@ private:
 				ItemDrag item_drag;
 				NodeAdd node_add;
 				NodeDelete node_delete;
-				NodeRename node_rename;
 				NodeConnect node_connect;
 				NodeDisconnect node_disconnect;
-				IncludeAdd include_add;
 
 				Data() {}
 				~Data() {}
 			} data;
+
+			MutateOperation() {}
+			~MutateOperation() {}
 		};
 
 		struct ReflectOperation final
@@ -315,18 +289,17 @@ private:
 				Data() {}
 				~Data() {}
 			} data;
+
+			ReflectOperation() {}
+			~ReflectOperation() {}
 		};
 
 	private:	
-		HashSet<GraphItem> selected_item_set;
-		Vector<ConnectionBreakPoint> connection_break_point_list;
-		NodeConnectionBreakElement *connection_break_graph_element;
-
 		bool buffers_dirty = false; // only relevant to the root script
-		PagedArray<MutateOperation> buffer_mutate;
-		PagedArray<ReflectOperation> buffer_reflect;
+		Vector<MutateOperation> buffer_mutate;
+		Vector<ReflectOperation> buffer_reflect;
 
-		const List<const FlowScriptNodeEditor *> get_selected_node_editors() const;
+		const List<FlowScriptNodeEditor *> get_selected_node_editors() const;
 		void copy_selected_nodes();
 		void connect_graph(); // invoke during construction of root
 		void connect_flow_script(); // invoke during construction of both root and includes
@@ -356,12 +329,9 @@ private:
 		void handle_mutate_operation_list_item_delete(const Vector<MutateOperation::ItemDelete> &p_deletes);
 		void handle_mutate_operation_list_item_drag(const Vector<MutateOperation::ItemDrag> &p_drags);
 		void handle_mutate_operation_list_node_add(const Vector<MutateOperation::NodeAdd> &p_adds);
-		void handle_mutate_operation_list_node_rename(const Vector<MutateOperation::NodeRename> &p_renames);
+		// void handle_mutate_operation_list_node_rename(const Vector<MutateOperation::NodeRename> &p_renames);
 		void handle_mutate_operation_list_node_connect(const Vector<MutateOperation::NodeConnect> &p_connections);
 		void handle_mutate_operation_list_node_disconnect(const Vector<MutateOperation::NodeDisconnect> &p_disconnections);
-		void handle_mutate_operation_list_node_paste(const Vector<MutateOperation::NodePaste> &p_pastes);
-		void handle_mutate_operation_list_node_duplicate(const Vector<MutateOperation::NodeDuplicate> &p_duplicates);
-		void handle_mutate_operation_list_include_add(const Vector<MutateOperation::IncludeAdd> &p_adds);
 
 		void reflect_item_add(const ReflectOperation::ItemAdd &op);
 		void reflect_item_delete(const ReflectOperation::ItemDelete &op);
@@ -403,7 +373,7 @@ private:
 		void on_graph_connection_from_empty(const StringName &p_to_node_name, const int p_to_port, const Point2 &p_release_position);
 		void on_graph_connection_request(const StringName &p_from_node_name, const int p_from_port, const StringName &p_to_node_name, const int p_to_port);
 		void on_graph_connection_to_empty(const StringName &p_from_node, const int p_from_port, const Point2 &p_release_position);
-		void on_graph_delete_nodes_request(TypedArray<StringName> &p_item_names);
+		void on_graph_delete_nodes_request(const TypedArray<StringName> &p_item_names);
 		void on_graph_paste_nodes_request();
 		void on_graph_duplicate_nodes_request();
 		void on_graph_disconnection_request(const StringName &p_from_node_name, const int p_from_port, const StringName &p_to_node_name, const int p_to_port);
@@ -466,7 +436,7 @@ private:
 	public:
 		FlowScriptEditorPlugin *plugin;
 
-		Vector<FlowScriptNodeInstance> get_node_copy_list(const EditedScript *p_edited_script, const List<const FlowScriptNodeEditor *> p_node_editors) const;
+		Vector<FlowScriptNodeInstance> get_node_copy_list(const EditedScript *p_edited_script, const List<FlowScriptNodeEditor *> p_node_editors) const;
 		Vector<FlowScriptNodeInstance> get_selected_node_copy_list() const;
 
 		void copy_selected_nodes();
@@ -476,8 +446,11 @@ private:
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 private:
+	FlowScriptNodeTypeDB *node_type_db_singleton;
+
 	Ref<EditorInspectorPluginFlowScript> inspector_plugin;
 	Vector<EditedScript *> open_script_list;
 	int current_edited_script_idx = -1;
@@ -521,6 +494,8 @@ private:
 	void on_script_graph_popup_request(const Point2 &p_at_position, EditedScript *p_script);
 	void on_script_graph_node_create_prompt_request(EditedScript *p_script);
 	void on_script_changed(EditedScript *script_ptr);
+	void on_resource_saved(const Ref<Resource> &p_resource);
+	void on_flow_script_saved(const Ref<FlowScript> &p_flow_script);
 
 public:
 	FileAction current_file_action = FILE_ACTION_NONE;

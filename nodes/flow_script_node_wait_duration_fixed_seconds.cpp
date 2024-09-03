@@ -3,7 +3,7 @@
 
 void FlowScriptNodeWaitDurationFixedSeconds::_bind_methods()
 {
-	ClassDB::bind_method(D_METHOD("set_duration", "duration"), &FlowScriptNodeWaitDurationFixedSeconds::set_duration);
+	ClassDB::bind_method(D_METHOD("set_duration", "seconds"), &FlowScriptNodeWaitDurationFixedSeconds::set_duration);
 	ClassDB::bind_method(D_METHOD("get_duration"), &FlowScriptNodeWaitDurationFixedSeconds::get_duration);
 
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "duration", PROPERTY_HINT_NONE, "suffix:s"), "set_duration", "get_duration");

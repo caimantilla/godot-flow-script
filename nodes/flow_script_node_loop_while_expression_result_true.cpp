@@ -8,6 +8,11 @@ void FlowScriptNodeLoopWhileExpressionResultTrue::_bind_methods()
 
 	BIND_ENUM_CONSTANT(VARIABLE_STEP_COUNT);
 	BIND_ENUM_CONSTANT(VARIABLE_RESTORE_SAVE);
+
+	ClassDB::bind_method(D_METHOD("set_expression", "text"), &FlowScriptNodeLoopWhileExpressionResultTrue::set_expression);
+	ClassDB::bind_method(D_METHOD("get_expression"), &FlowScriptNodeLoopWhileExpressionResultTrue::get_expression);
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "expression", PROPERTY_HINT_EXPRESSION), "set_expression", "get_expression");
 }
 
 
@@ -27,6 +32,7 @@ void FlowScriptNodeLoopWhileExpressionResultTrue::exec_step(FlowScriptNodeContex
 	}
 	int64_t curr_step_count = p_context->get_variable(VARIABLE_STEP_COUNT);
 	curr_step_count++;
+	p_context->set_variable(VARIABLE_STEP_COUNT, curr_step_count);
 }
 
 

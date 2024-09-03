@@ -22,6 +22,31 @@ void FlowScriptNodeEditorSetExpressionResultToVariable::sync()
 }
 
 
+FlowScriptNodeOutputConnection FlowScriptNodeEditorSetExpressionResultToVariable::output_graph_slot_to_connection(const int p_graph_slot) const
+{
+	return FlowScriptNodeOutputConnection(FlowScriptNodeSetExpressionResultToVariable::CONNECTION_LIST_ADVANCE, 0);
+}
+
+
+int FlowScriptNodeEditorSetExpressionResultToVariable::output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const
+{
+	if (p_connection == FlowScriptNodeOutputConnection(FlowScriptNodeSetExpressionResultToVariable::CONNECTION_LIST_ADVANCE, 0))
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+
+int FlowScriptNodeEditorSetExpressionResultToVariable::get_input_slot() const
+{
+	return 0;
+}
+
+
 FlowScriptNodeEditorSetExpressionResultToVariable::FlowScriptNodeEditorSetExpressionResultToVariable()
 {
 	HBoxContainer *hbox = memnew(HBoxContainer);

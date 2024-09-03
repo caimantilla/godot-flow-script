@@ -225,11 +225,6 @@ void FlowScriptNodeEditor::on_delete_button_pressed()
 
 FlowScriptNodeEditor::FlowScriptNodeEditor()
 {
-	set_h_size_flags(SIZE_SHRINK_CENTER);
-	set_v_size_flags(SIZE_SHRINK_CENTER);
-	set_h_grow_direction(GROW_DIRECTION_BOTH);
-	set_v_grow_direction(GROW_DIRECTION_BOTH);
-
 	rename_button = memnew(Button);
 	rename_button->connect(SceneStringName(pressed), callable_mp(this, &FlowScriptNodeEditor::on_rename_button_pressed));
 	get_titlebar_hbox()->add_child(rename_button);

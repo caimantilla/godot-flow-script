@@ -91,6 +91,7 @@ bool FlowScriptNodeContext::prepare_for_execution(const Ref<FlowScript> &p_flow_
 	ERR_FAIL_COND_V(!p_flow_script.is_valid(), false);
 	ERR_FAIL_COND_V(!p_flow_script->has_node(p_node_id), false);
 	current_flow_script = p_flow_script.ptr();
+	current_flow_script->reference();
 	current_node_id = p_node_id;
 	return true;
 }
@@ -116,7 +117,9 @@ void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_conn
 	if (next_node_ref.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
 	{
 		ERR_FAIL_COND(!current_flow_script->has_include_flow_script_instance(next_node_ref.flow_script_id));
-		current_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id).ptr();
+		FlowScript *next_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id).ptr();
+		next_flow_script->reference();
+		current_flow_script->unreference();
 	}
 	if (current_flow_script->has_node(next_node_ref.node_id))
 	{
@@ -264,6 +267,18 @@ Ref<FlowScriptNode> FlowScriptNodeContext::get_current_node_ref() const
 FlowScriptNode *FlowScriptNodeContext::get_current_node_ptr() const
 {
 	return bridge_ptr->get_flow_script_ptr()->get_node_ptr(current_node_id);
+}
+
+
+Ref<FlowScript> FlowScriptNodeContext::get_current_flow_script_ref() const
+{
+	return Ref<FlowScript>(current_flow_script);
+}
+
+
+FlowScript *FlowScriptNodeContext::get_current_flow_script_ptr() const
+{
+	return current_flow_script;
 }
 
 
