@@ -28,6 +28,7 @@ void FlowScript::_bind_methods()
 	ClassDB::bind_method(D_METHOD("remove_node_list", "node_id_list"), &FlowScript::bind_remove_node_list);
 	ClassDB::bind_method(D_METHOD("remove_include", "include_id"), &FlowScript::remove_include_flow_script);
 	ClassDB::bind_method(D_METHOD("remove_include_list", "include_id_list"), &FlowScript::bind_remove_include_list);
+	ClassDB::bind_method(D_METHOD("get_node_id_by_name", "node_name"), &FlowScript::get_node_id_by_name);
 
 	ADD_SIGNAL(MethodInfo("include_added", PropertyInfo(Variant::INT, "include_id")));
 	ADD_SIGNAL(MethodInfo("removing_include", PropertyInfo(Variant::INT, "include_id")));
@@ -438,9 +439,7 @@ FlowScriptNodeID FlowScript::get_node_id_by_name(const String &p_node_name) cons
 {
 	for (const KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &E : node_map)
 	{
-		if (!E.value.node.is_valid())
-			continue;
-		if (E.value.node->get_name() == p_node_name)
+		if (E.value.node.is_valid() && E.value.node->get_name() == p_node_name)
 			return E.key;
 	}
 	return NODE_ID_INVALID;

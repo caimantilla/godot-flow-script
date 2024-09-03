@@ -28,6 +28,8 @@ void FlowScriptNodeTypeDB::_notification(int p_what)
 		EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
 		FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));
 		FileSystemDock::get_singleton()->get_script_create_dialog()->connect("script_created", callable_mp(this, &FlowScriptNodeTypeDB::on_script_created));
+
+		refresh_custom_script_types();
 	}
 }
 

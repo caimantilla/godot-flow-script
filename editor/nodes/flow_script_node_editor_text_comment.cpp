@@ -14,9 +14,10 @@ void FlowScriptNodeEditorTextComment::sync()
 FlowScriptNodeEditorTextComment::FlowScriptNodeEditorTextComment()
 {
 	comment_box = memnew(RichTextLabel);
-	comment_box->set_fit_content(true);
-	comment_box->set_scroll_active(false);
 	comment_box->set_auto_translate(false);
+	comment_box->set_fit_content(true);
+	comment_box->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
+	comment_box->set_scroll_active(false);
 	comment_box->set_use_bbcode(true);
 	add_child(comment_box);
 }

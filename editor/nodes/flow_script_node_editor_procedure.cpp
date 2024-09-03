@@ -41,6 +41,7 @@ FlowScriptNodeEditorProcedure::FlowScriptNodeEditorProcedure()
 {
 	Label *label = memnew(Label);
 	label->set_text("Start!");
+	label->set_h_size_flags(SIZE_SHRINK_END);
 	add_child(label);
 	set_slot_enabled_right(0, true);
 }

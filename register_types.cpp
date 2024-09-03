@@ -5,6 +5,9 @@
 #include "flow_script_node_custom.hpp"
 #include "flow_script_bridge.hpp"
 
+// Extra classes
+#include "flow_script_timer_proxy.hpp"
+
 // Include nodes
 #include "nodes/flow_script_node_procedure.hpp"
 #include "nodes/flow_script_node_text_comment.hpp"
@@ -41,13 +44,18 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
+		// Non-instantiable core classes
 		GDREGISTER_ABSTRACT_CLASS(FlowScriptNode);
 		GDREGISTER_ABSTRACT_CLASS(FlowScriptNodeContext);
-		
+
+		// Instantiable core classes
 		GDREGISTER_CLASS(FlowScript);
 		GDREGISTER_CLASS(FlowScriptNodeTranslation);
 		GDREGISTER_CLASS(FlowScriptBridge);
 		GDREGISTER_CLASS(FlowScriptNodeCustom);
+
+		// Extra classes
+		GDREGISTER_CLASS(FlowScriptTimerProxy);
 
 		// Register nodes
 		GDREGISTER_CLASS(FlowScriptNodeProcedure);

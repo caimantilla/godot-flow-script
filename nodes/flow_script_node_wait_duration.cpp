@@ -18,7 +18,8 @@ void FlowScriptNodeWaitDuration::exec_startup(FlowScriptNodeContext *p_context)
 	FlowScriptTimerProxy *timer = p_context->get_bridge_ptr()->create_timer_proxy();
 	if (timer != nullptr)
 	{
-		timer->connect(SNAME("finished"), callable_mp(p_context, &FlowScriptNodeContext::invoke_step));
+		// i don't totally understand why this has to be deferred but whatever
+		timer->connect(SNAME("finished"), callable_mp(p_context, &FlowScriptNodeContext::invoke_step), CONNECT_DEFERRED);
 	}
 
 	p_context->set_variable(VARIABLE_TIMER, timer);
@@ -34,7 +35,7 @@ void FlowScriptNodeWaitDuration::exec_step(FlowScriptNodeContext *p_context)
 
 	if (timer == nullptr)
 	{
-		ERR_PRINT("No valid timer could be found, so execution is impossible. Advancing.");
+		ERR_PRINT(RTR("No valid timer could be found, so execution is impossible. Advancing."));
 		p_context->advance(FlowScriptNodeOutputConnection(CONNECTION_LIST_ADVANCE, 0));
 		return;
 	}

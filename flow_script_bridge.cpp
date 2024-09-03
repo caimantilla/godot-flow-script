@@ -12,6 +12,7 @@ void FlowScriptBridge::_bind_methods()
 
 	ClassDB::bind_method(D_METHOD("set_flow_script", "flow_script"), &FlowScriptBridge::set_flow_script);
 	ClassDB::bind_method(D_METHOD("get_flow_script"), &FlowScriptBridge::get_flow_script);
+	ClassDB::bind_method(D_METHOD("execute_branch_with_finish_callback", "initial_node_id", "finish_callback"), &FlowScriptBridge::execute_branch_with_finish_callback);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "set_flow_script", "get_flow_script");
 

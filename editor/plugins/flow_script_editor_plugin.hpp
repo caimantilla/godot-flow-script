@@ -114,6 +114,7 @@ private:
 
 	private:
 		void on_add_node_button_pressed();
+		void sync_editor_settings();
 
 	protected:
 		static void _bind_methods();

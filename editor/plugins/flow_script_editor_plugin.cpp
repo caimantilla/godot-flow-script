@@ -126,6 +126,18 @@ void FlowScriptEditorPlugin::ScriptGraph::_notification(int p_what)
 		msdf_theme->set_font("font", "GraphNodeTitleLabel", bold_font);
 		msdf_theme->set_font("normal_font", "RichTextLabel", main_font);
 		msdf_theme->set_font("bold_font", "RichTextLabel", bold_font);
+
+		sync_editor_settings();
+	}
+	else if (p_what == EditorSettings::NOTIFICATION_EDITOR_SETTINGS_CHANGED)
+	{
+		if (
+			EditorSettings::get_singleton()->check_changed_settings_in_group("editors/visual_editors")
+			|| EditorSettings::get_singleton()->check_changed_settings_in_group("editors/panning")
+		)
+		{
+			sync_editor_settings();
+		}
 	}
 }
 
@@ -208,6 +220,17 @@ Point2i FlowScriptEditorPlugin::ScriptGraph::get_visible_center_as_data_point() 
 void FlowScriptEditorPlugin::ScriptGraph::on_add_node_button_pressed()
 {
 	emit_signal(SNAME("flow_script_node_create_prompt_request"));
+}
+
+
+void FlowScriptEditorPlugin::ScriptGraph::sync_editor_settings()
+{
+	set_minimap_opacity(EDITOR_GET("editors/visual_editors/minimap_opacity"));
+	set_grid_pattern((GraphEdit::GridPattern) int(EDITOR_GET("editors/visual_editors/grid_pattern")));
+	set_connection_lines_curvature(EDITOR_GET("editors/visual_editors/lines_curvature"));
+
+	get_panner()->setup((ViewPanner::ControlScheme)EDITOR_GET("editors/panning/sub_editors_panning_scheme").operator int(), ED_GET_SHORTCUT("canvas_item_editor/pan_view"), bool(EDITOR_GET("editors/panning/simple_panning")));
+	set_warped_panning(bool(EDITOR_GET("editors/panning/warped_mouse_panning")));
 }
 
 
@@ -937,6 +960,7 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_add(const ReflectOperati
 
 			FlowScriptNode *node_ptr = flow_script->get_node_ptr(node_id);
 			FlowScriptNodeEditor *node_editor = FlowScriptNodeTypeDB::get_singleton()->create_editor_for_node(node_ptr);
+			ERR_FAIL_NULL_MSG(node_editor, vformat(TTR("Failed to instantiate editor for node %d."), node_id));
 			node_editor_map[node_id] = node_editor;
 
 			node_editor->edited_flow_script = flow_script;
@@ -1051,6 +1075,13 @@ void FlowScriptEditorPlugin::EditedScript::reflect_item_sync(const ReflectOperat
 			node_editor->set_tooltip_text(node_editor->get_new_tooltip_text());
 			node_editor->sync();
 			node_editor->set_size(Size2(0, 0));
+
+			Array mf_args;
+			mf_args.append(Control::MOUSE_FILTER_IGNORE);
+			for (int i = 0; i < node_editor->get_child_count(false); i++)
+			{
+				node_editor->get_child(i, false)->propagate_call(SNAME("set_mouse_filter"), mf_args, true);
+			}
 
 			Point2i posi = flow_script->get_node_position(node_id);
 			EditedScript *p = this;
@@ -2015,6 +2046,7 @@ void FlowScriptEditorPlugin::close_edited_script_at(int p_idx, bool p_warn_if_un
 
 		open_script_list.remove_at(p_idx);
 
+		script->flow_script->disconnect_changed(callable_mp(this, &FlowScriptEditorPlugin::on_script_changed));
 		script->graph->queue_free();
 		memdelete(script);
 
@@ -2106,7 +2138,15 @@ void FlowScriptEditorPlugin::file_menu_update_clickable()
 {
 	bool none_open = !is_editing_any_script();
 
-	file_menu->get_popup()->set_item_disabled(FILE_SAVE, none_open);
+	// block saving for subresource scripts
+	if (!none_open && get_current_edited_script()->flow_script->is_built_in())
+	{
+		file_menu->get_popup()->set_item_disabled(FILE_SAVE, true);
+	}
+	else
+	{
+		file_menu->get_popup()->set_item_disabled(FILE_SAVE, none_open);
+	}
 	file_menu->get_popup()->set_item_disabled(FILE_CLOSE, none_open);
 	file_menu->get_popup()->set_item_disabled(FILE_CLOSE_ALL, open_script_list.is_empty());
 }
@@ -2197,6 +2237,7 @@ void FlowScriptEditorPlugin::edit_unopened_script(FlowScript *p_script)
 void FlowScriptEditorPlugin::update_open_script()
 {
 	set_open_script_to_idx(current_edited_script_idx);
+	file_menu_update_clickable();
 }
 
 
@@ -2233,6 +2274,10 @@ void FlowScriptEditorPlugin::refresh_script_item_list()
 	{
 		String path = open_script->flow_script->get_path();
 		String name = path.get_file();
+		if (name.is_empty())
+		{
+			name = TTR("[unsaved]");
+		}
 		if (open_script->save_state_dirty)
 		{
 			name = vformat(TTR("%s(*)"), name);
@@ -2240,6 +2285,7 @@ void FlowScriptEditorPlugin::refresh_script_item_list()
 		int id = script_item_list->add_item(name);
 		script_item_list->set_item_tooltip(id, path);
 		script_item_list->set_item_tooltip_enabled(id, true);
+		script_item_list->set_item_metadata(id, open_script->flow_script);
 	}
 	update_open_script();
 }
@@ -2247,7 +2293,11 @@ void FlowScriptEditorPlugin::refresh_script_item_list()
 
 void FlowScriptEditorPlugin::on_script_item_list_item_selected(int p_item)
 {
-	set_open_script_to_idx(p_item);
+	Ref<FlowScript> flow_script = script_item_list->get_item_metadata(p_item);
+	if (flow_script.is_valid())
+	{
+		EditorInterface::get_singleton()->edit_resource(flow_script);
+	}
 }
 
 
@@ -2351,7 +2401,10 @@ void FlowScriptEditorPlugin::on_file_dialog_file_selected(const String &p_path)
 
 void FlowScriptEditorPlugin::on_script_changed(EditedScript *script_ptr)
 {
-	script_ptr->save_state_dirty = true;
+	if (!script_ptr->flow_script->is_built_in())
+	{
+		script_ptr->save_state_dirty = true;
+	}
 	// reset cooldown, the user should stop editing for a given period of time for it to actually do its thing
 	if (!script_item_list_refresh_timer->is_stopped())
 	{
@@ -2384,7 +2437,7 @@ void FlowScriptEditorPlugin::edit(Object *p_object)
 	{
 		return;
 	}
-	edit_flow_script_if_not_open(flow_script_ptr);
+	edit_flow_script_even_if_open(flow_script_ptr);
 }
 
 
@@ -2526,6 +2579,9 @@ void FlowScriptEditorPlugin::_notification(int p_what)
 	{
 		case NOTIFICATION_READY: {
 			connect("resource_saved", callable_mp(this, &FlowScriptEditorPlugin::on_resource_saved));
+		} break;
+		case NOTIFICATION_EXIT_TREE: {
+			close_all_scripts(false);
 		} break;
 	}
 }
