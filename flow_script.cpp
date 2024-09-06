@@ -29,6 +29,8 @@ void FlowScript::_bind_methods()
 	ClassDB::bind_method(D_METHOD("remove_include", "include_id"), &FlowScript::remove_include_flow_script);
 	ClassDB::bind_method(D_METHOD("remove_include_list", "include_id_list"), &FlowScript::bind_remove_include_list);
 	ClassDB::bind_method(D_METHOD("get_node_id_by_name", "node_name"), &FlowScript::get_node_id_by_name);
+	ClassDB::bind_method(D_METHOD("get_every_node_resource_recursive"), &FlowScript::bind_get_every_node_resource_recursive);
+	ClassDB::bind_method(D_METHOD("get_every_node_resource_connected_to_node", "origin_node_id", "include_origin"), &FlowScript::bind_get_every_node_resource_connected_to_node);
 
 	ADD_SIGNAL(MethodInfo("include_added", PropertyInfo(Variant::INT, "include_id")));
 	ADD_SIGNAL(MethodInfo("removing_include", PropertyInfo(Variant::INT, "include_id")));
@@ -714,6 +716,120 @@ PackedInt32Array FlowScript::bind_get_include_id_list() const
 		}
 	}
 	return ret;
+}
+
+
+List<Ref<FlowScriptNode>> FlowScript::get_every_node_resource_recursive() const
+{
+	List<Ref<FlowScriptNode>> node_list;
+	const FlowScript *this_const = this;
+	internal_get_every_node_resource_recursive(this_const, &node_list);
+	return node_list;
+}
+
+
+TypedArray<FlowScriptNode> FlowScript::bind_get_every_node_resource_recursive() const
+{
+	List<Ref<FlowScriptNode>> node_list;
+
+	const FlowScript *this_const = this;
+	internal_get_every_node_resource_recursive(this_const, &node_list);
+
+	TypedArray<FlowScriptNode> ret;
+	ret.resize(node_list.size());
+	int i = 0;
+	for (const Ref<FlowScriptNode> node_ref : node_list)
+	{
+		ret[i] = node_ref;
+		i++;
+	}
+	return ret;
+}
+
+
+TypedArray<FlowScriptNode> FlowScript::bind_get_every_node_resource_connected_to_node(const FlowScriptNodeID p_origin_node_id, const bool p_include_origin) const
+{
+	List<Ref<FlowScriptNode>> node_list = get_every_node_resource_connected_to_node(p_origin_node_id, p_include_origin);
+	
+	TypedArray<FlowScriptNode> ret;
+	ret.resize(node_list.size());
+	int i = 0;
+	for (const Ref<FlowScriptNode> node_ref : node_list)
+	{
+		ret[i] = node_ref;
+		i++;
+	}
+	return ret;
+}
+
+
+List<Ref<FlowScriptNode>> FlowScript::get_every_node_resource_connected_to_node(const FlowScriptNodeID p_origin_node_id, const bool p_include_origin) const
+{
+	List<Ref<FlowScriptNode>> ret;
+	ERR_FAIL_COND_V(!node_map.has(p_origin_node_id), ret);
+
+	if (p_include_origin)
+	{
+		ret.push_back(node_map[p_origin_node_id].node);
+	}
+
+	const FlowScript *self_const_ptr = this;
+	internal_get_every_node_resource_connected_to_recursive(self_const_ptr, p_origin_node_id, &ret);
+
+	return ret;
+}
+
+
+void FlowScript::internal_get_every_node_resource_connected_to_recursive(const FlowScript *p_current_script, const FlowScriptNodeID p_current_origin_node_id, List<Ref<FlowScriptNode>> *p_node_list)
+{
+	ERR_FAIL_NULL(p_current_script);
+	ERR_FAIL_COND(!p_current_script->node_map.has(p_current_origin_node_id));
+
+	const FlowScriptNodeInstance &origin_node_instance = p_current_script->node_map[p_current_origin_node_id];
+	for (uint8_t list_idx = 0; list_idx < origin_node_instance.connection_lists.size(); list_idx++)
+	{
+		for (int64_t slot_idx = 0; slot_idx < origin_node_instance.connection_lists[list_idx].size(); slot_idx++)
+		{
+			const FlowScriptNodeReference &target = origin_node_instance.connection_lists[list_idx][slot_idx];
+			if (target.flow_script_id != FlowScript::NODE_ID_INVALID)
+			{
+				ERR_CONTINUE(!p_current_script->has_include_flow_script_instance(target.flow_script_id));
+				const FlowScript *target_script_res = p_current_script->script_includes[target.flow_script_id].flow_script.ptr();
+				ERR_CONTINUE(!target_script_res->node_map.has(target.node_id));
+				p_node_list->push_back(target_script_res->node_map[target.node_id].node);
+				internal_get_every_node_resource_connected_to_recursive(target_script_res, target.node_id, p_node_list);
+			}
+			else
+			{
+				if (target.node_id == FlowScript::NODE_ID_INVALID)
+				{
+					continue;
+				}
+				ERR_CONTINUE(!p_current_script->node_map.has(target.node_id));
+				p_node_list->push_back(p_current_script->node_map[target.node_id].node);
+				internal_get_every_node_resource_connected_to_recursive(p_current_script, target.node_id, p_node_list);
+			}
+		}
+	}
+}
+
+
+void FlowScript::internal_get_every_node_resource_recursive(const FlowScript *p_current_level, List<Ref<FlowScriptNode>> *p_node_list)
+{
+	for (const KeyValue<FlowScriptNodeID, FlowScriptNodeInstance> &kv : p_current_level->node_map)
+	{
+		if (kv.value.node.is_valid())
+		{
+			p_node_list->push_back(kv.value.node);
+		}
+	}
+	for (FlowScriptIncludeID i = 0; i < INCLUDE_FLOW_SCRIPT_MAX; i++)
+	{
+		if (p_current_level->script_includes[i].flow_script.is_valid())
+		{
+			internal_get_every_node_resource_recursive(p_current_level->script_includes[i].flow_script.ptr(), p_node_list);
+		}
+	}
 }
 
 

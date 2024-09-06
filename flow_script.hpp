@@ -3,6 +3,7 @@
 
 
 #include "core/templates/local_vector.h"
+#include "core/variant/typed_array.h"
 #include "core/io/resource.h"
 #include "typedefs.hpp"
 #include "flow_script_node_instance.hpp"
@@ -37,6 +38,9 @@ private:
 	Vector<FlowScriptNodeID> *cache_node_id_array_ptr;
 	mutable bool cache_node_id_array_dirty = true;
 
+	static void internal_get_every_node_resource_recursive(const FlowScript *p_current_level, List<Ref<FlowScriptNode>> *p_node_list);
+	static void internal_get_every_node_resource_connected_to_recursive(const FlowScript *p_current_script, const FlowScriptNodeID p_current_origin_node_id, List<Ref<FlowScriptNode>> *p_node_list);
+
 	void update_connection_outputs_for_node(FlowScriptNodeID p_node_id);
 	void on_node_changed(FlowScriptNodeID p_node_id);
 	void on_include_changed(FlowScriptIncludeID p_include_id);
@@ -46,6 +50,8 @@ private:
 	void bind_remove_include_list(const PackedInt32Array &p_id_list);
 	PackedInt32Array bind_get_node_id_list() const;
 	PackedInt32Array bind_get_include_id_list() const;
+	TypedArray<FlowScriptNode> bind_get_every_node_resource_recursive() const;
+	TypedArray<FlowScriptNode> bind_get_every_node_resource_connected_to_node(const FlowScriptNodeID p_origin_node_id, const bool p_include_origin = true) const;
 
 protected:
 	static void _bind_methods();
@@ -86,6 +92,8 @@ public:
 	Ref<FlowScript> get_include_flow_script(const FlowScriptIncludeID p_include_id) const;
 	void set_include_flow_script_position(const FlowScriptIncludeID p_include_id, const Point2i &p_position);
 	Point2i get_include_flow_script_position(const FlowScriptIncludeID p_include_id) const;
+	List<Ref<FlowScriptNode>> get_every_node_resource_recursive() const;
+	List<Ref<FlowScriptNode>> get_every_node_resource_connected_to_node(const FlowScriptNodeID p_origin_node_id, const bool p_include_origin = true) const;
 
 	FlowScript();
 };
