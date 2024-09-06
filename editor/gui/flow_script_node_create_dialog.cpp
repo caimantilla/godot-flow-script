@@ -194,7 +194,15 @@ void FlowScriptNodeCreateDialog::type_tree_expand_all()
 
 void FlowScriptNodeCreateDialog::type_tree_collapse_all()
 {
-	type_tree->get_root()->set_collapsed(true);
+	TreeItem *root = type_tree->get_root();
+	for (int i = 0; i < root->get_child_count(); i++)
+	{
+		TreeItem *child = root->get_child(i);
+		if (!child->is_folding_disabled())
+		{
+			child->set_collapsed_recursive(true);
+		}
+	}
 }
 
 
@@ -262,16 +270,20 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 			const String super_category = String("/").join(split.slice(0, i - 1));
 			if (!super_category.is_empty() && !category_item_map.has(super_category))
 			{
+				const String super_item_name = split[i - 1];
+
 				super_item = super_item->create_child();
 				super_item->set_selectable(MAIN_COLUMN, false);
-				super_item->set_text(MAIN_COLUMN, split[i - 1]);
+				super_item->set_text(MAIN_COLUMN, super_item_name);
 				category_item_map.insert(super_category, super_item);
 			}
 		}
+		String last_item_name = split[split.size() - 1];
+
 		TreeItem *last_item = super_item->create_child();
 		last_item->set_selectable(MAIN_COLUMN, false);
-		last_item->set_text(MAIN_COLUMN, split[split.size() - 1]);
-		category_item_map.insert(category, super_item->create_child());
+		last_item->set_text(MAIN_COLUMN, last_item_name);
+		category_item_map.insert(category, last_item);
 	}
 
 	// variables for search filter
@@ -300,6 +312,18 @@ void FlowScriptNodeCreateDialog::refresh_type_tree()
 				last_item_similarity = curr_similarity;
 				item_to_auto_select = type_item;
 			}
+		}
+	}
+
+	// Move categories to be displayed after types
+	for (KeyValue<String, TreeItem *> &E : category_item_map)
+	{
+		TreeItem *item = E.value;
+		TreeItem *parent = item->get_parent();
+		int child_count = parent->get_child_count();
+		if (child_count > 1)
+		{
+			item->move_after(parent->get_child(child_count - 1));
 		}
 	}
 
