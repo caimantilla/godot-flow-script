@@ -26,6 +26,11 @@ private:
 		FOLD_OPTION_EXPAND_ALL = 0,
 		FOLD_OPTION_COLLAPSE_ALL = 1,
 	};
+	enum ConfigTypeListMode
+	{
+		CFG_BLACKLIST = 0,
+		CFG_WHITELIST = 1,
+	};
 	enum
 	{
 		RECENT_HISTORY_MAX_SIZE = 15,
@@ -42,7 +47,7 @@ private:
 
 private:
 	bool reload_types_on_open_queued = true;
-	Vector<FlowScriptNodeTypeInfo> local_node_type_list;
+	LocalVector<FlowScriptNodeTypeInfo> local_node_type_list;
 	HashMap<TreeItem *, int> tree_item_type_map;
 	PackedStringArray favorite_type_str_list;
 	PackedStringArray recent_type_str_list;
@@ -84,7 +89,7 @@ private:
 	void on_node_filter_search_line_text_changed(const String &p_text);
 	void handle_node_filter_search_line_gui_input_event(const Ref<InputEvent> &p_event);
 	void on_this_confirmed();
-	void on_node_type_db_changed();
+	void reload_types_if_visible();
 	void add_node_type_to_recent(const FlowScriptNodeTypeInfo &p_type);
 
 protected:

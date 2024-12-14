@@ -6,6 +6,7 @@
 void FlowScriptNodeCustom::_bind_methods()
 {
 	GDVIRTUAL_BIND(_can_instantiate_type);
+	GDVIRTUAL_BIND(_can_edit_name);
 	GDVIRTUAL_BIND(_get_type_id);
 	GDVIRTUAL_BIND(_get_type_name);
 	GDVIRTUAL_BIND(_get_type_category);
@@ -99,6 +100,14 @@ bool FlowScriptNodeCustom::can_instantiate_type() const
 {
 	bool ret = false;
 	GDVIRTUAL_CALL(_can_instantiate_type, ret);
+	return ret;
+}
+
+
+bool FlowScriptNodeCustom::can_edit_name() const
+{
+	bool ret = false;
+	GDVIRTUAL_CALL(_can_edit_name, ret);
 	return ret;
 }
 

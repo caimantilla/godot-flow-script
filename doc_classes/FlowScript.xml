@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="FlowScript" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_every_node_resource_connected_to_node" qualifiers="const">
+			<return type="FlowScriptNode[]" />
+			<param index="0" name="origin_node_id" type="int" />
+			<param index="1" name="include_origin" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_every_node_resource_recursive" qualifiers="const">
+			<return type="FlowScriptNode[]" />
+			<description>
+			</description>
+		</method>
+		<method name="get_include_flow_script" qualifiers="const">
+			<return type="FlowScript" />
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_include_position" qualifiers="const">
+			<return type="Vector2i" />
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_node" qualifiers="const">
+			<return type="FlowScriptNode" />
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_node_connection" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="from_node_id" type="int" />
+			<param index="1" name="list" type="int" />
+			<param index="2" name="slot" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_node_id_by_name" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="node_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="get_node_position" qualifiers="const">
+			<return type="Vector2i" />
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_include">
+			<return type="bool" />
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_include_list">
+			<return type="void" />
+			<param index="0" name="include_id_list" type="PackedInt32Array" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_node">
+			<return type="bool" />
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_node_list">
+			<return type="void" />
+			<param index="0" name="node_id_list" type="PackedInt32Array" />
+			<description>
+			</description>
+		</method>
+		<method name="set_include_flow_script">
+			<return type="void" />
+			<param index="0" name="include_id" type="int" />
+			<param index="1" name="flow_script" type="FlowScript" />
+			<description>
+			</description>
+		</method>
+		<method name="set_include_position">
+			<return type="void" />
+			<param index="0" name="include_id" type="int" />
+			<param index="1" name="position" type="Vector2i" />
+			<description>
+			</description>
+		</method>
+		<method name="set_node">
+			<return type="void" />
+			<param index="0" name="node_id" type="int" />
+			<param index="1" name="data" type="FlowScriptNode" />
+			<description>
+			</description>
+		</method>
+		<method name="set_node_connection">
+			<return type="void" />
+			<param index="0" name="from_node_id" type="int" />
+			<param index="1" name="list" type="int" />
+			<param index="2" name="slot" type="int" />
+			<param index="3" name="to_node_id" type="int" />
+			<param index="4" name="to_include_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="set_node_position">
+			<return type="void" />
+			<param index="0" name="node_id" type="int" />
+			<param index="1" name="position" type="Vector2i" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="include_added">
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="include_position_changed">
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="include_removed">
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="node_added">
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="node_connection_changed">
+			<param index="0" name="node_id" type="int" />
+			<param index="1" name="list" type="int" />
+			<param index="2" name="slot" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="node_position_changed">
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="node_removed">
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="removing_include">
+			<param index="0" name="include_id" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="removing_node">
+			<param index="0" name="node_id" type="int" />
+			<description>
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="NODE_ID_INVALID" value="-1">
+		</constant>
+		<constant name="NODE_ID_MIN" value="1">
+		</constant>
+		<constant name="NODE_ID_MAX" value="9999">
+		</constant>
+		<constant name="INCLUDE_FLOW_SCRIPT_ID_INVALID" value="-1">
+		</constant>
+		<constant name="INCLUDE_FLOW_SCRIPT_MAX" value="50">
+		</constant>
+	</constants>
+</class>

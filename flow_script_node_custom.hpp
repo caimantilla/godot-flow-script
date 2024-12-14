@@ -16,6 +16,7 @@ protected:
 	GDVIRTUAL1(_exec_cleanup, FlowScriptNodeContext *);
 	GDVIRTUAL1(_exec_step, FlowScriptNodeContext *);
 	GDVIRTUAL0RC(bool, _can_instantiate_type);
+	GDVIRTUAL0RC(bool, _can_edit_name);
 	GDVIRTUAL0RC(String, _get_type_id);
 	GDVIRTUAL0RC(String, _get_type_name);
 	GDVIRTUAL0RC(String, _get_type_category);
@@ -42,6 +43,7 @@ public:
 	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
 
 	bool can_instantiate_type() const;
+	bool can_edit_name() const;
 	String get_type_id() const;
 	String get_type_name() const;
 	String get_type_category() const;

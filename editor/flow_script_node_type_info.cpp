@@ -65,7 +65,7 @@ FlowScriptNodeTypeInfo::ScriptCreateResult FlowScriptNodeTypeInfo::create_script
 			ret.type.id = node->get_type_id();
 			ret.type.node_class = SNAME("FlowScriptNodeCustom");
 			ret.type.editor_class = SNAME("FlowScriptNodeEditor");
-			ret.type.name_assignable = false;
+			ret.type.name_assignable = node->can_edit_name();
 			ret.type.name = node->get_type_name();
 			ret.type.category = node->get_type_category();
 			ret.type.validate_category(ret.type.category);

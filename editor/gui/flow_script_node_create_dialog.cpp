@@ -1,14 +1,18 @@
 #include "flow_script_node_create_dialog.hpp"
 #include "../flow_script_node_type_db.hpp"
+#include "core/config/project_settings.h"
+#include "scene/gui/split_container.h"
 #include "editor/editor_paths.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
 #include "editor/themes/editor_scale.h"
-#include "scene/gui/split_container.h"
 
 
 void FlowScriptNodeCreateDialog::_bind_methods()
 {
+	GLOBAL_DEF(PropertyInfo(Variant::INT, "flow_script/editor/types/list_mode", PROPERTY_HINT_ENUM, "Blacklist,Whitelist"), CFG_BLACKLIST);
+	GLOBAL_DEF(PropertyInfo(Variant::PACKED_STRING_ARRAY, "flow_script/editor/types/list"), PackedStringArray());
+
 	ADD_SIGNAL(MethodInfo("type_chosen", PropertyInfo(Variant::STRING_NAME, "native_class"), PropertyInfo(Variant::STRING_NAME, "script_class")));
 }
 
@@ -69,15 +73,41 @@ const FlowScriptNodeTypeInfo &FlowScriptNodeCreateDialog::get_selected_node_type
 
 void FlowScriptNodeCreateDialog::reload_local_type_list()
 {
+	local_node_type_list.clear();
+
+	int cfg_types_mode = GLOBAL_GET("flow_script/editor/types/list_mode");
+	PackedStringArray cfg_types_list = GLOBAL_GET("flow_script/editor/types/list");
+
+	HashSet<String> cfg_types_set;
+	cfg_types_set.reserve(cfg_types_list.size());
+
+	for (const String &type : cfg_types_list)
+	{
+		cfg_types_set.insert(type.strip_edges());
+	}
+
 	List<FlowScriptNodeTypeInfo> temp_type_list;
 	FlowScriptNodeTypeDB::get_singleton()->get_node_type_list(&temp_type_list);
-	local_node_type_list.resize(temp_type_list.size());
-	int curr_type_idx = 0;
+
 	for (const FlowScriptNodeTypeInfo &type : temp_type_list)
 	{
-		local_node_type_list.write[curr_type_idx] = type;
-		curr_type_idx++;
+		const String type_name = type.native ? type.node_class : type.node_script_class_name;
+		bool skip_type = false;
+		switch (cfg_types_mode)
+		{
+			case CFG_BLACKLIST: {
+				skip_type = cfg_types_set.has(type_name);
+			} break;
+			case CFG_WHITELIST: {
+				skip_type = !cfg_types_set.has(type_name);
+			} break;
+		}
+		if (!skip_type)
+		{
+			local_node_type_list.push_back(type);
+		}
 	}
+
 	local_node_type_list.sort_custom<NodeTypeAlphaComparator>();
 	refresh_type_tree();
 
@@ -551,23 +581,24 @@ void FlowScriptNodeCreateDialog::on_this_confirmed()
 
 
 // rebuilt the type db if needed otherwise queue it for when the window opens
-void FlowScriptNodeCreateDialog::on_node_type_db_changed()
+void FlowScriptNodeCreateDialog::reload_types_if_visible()
 {
 	if (is_visible())
 	{
-		reload_types_on_open_queued = true;
+		reload_types_on_open_queued = false;
+		reload_local_type_list();
 	}
 	else
 	{
-		reload_types_on_open_queued = false;
-		reload_local_type_list();
+		reload_types_on_open_queued = true;
 	}
 }
 
 
 FlowScriptNodeCreateDialog::FlowScriptNodeCreateDialog()
 {
-	FlowScriptNodeTypeDB::get_singleton()->connect(CoreStringName(changed), callable_mp(this, &FlowScriptNodeCreateDialog::on_node_type_db_changed));
+	FlowScriptNodeTypeDB::get_singleton()->connect(CoreStringName(changed), callable_mp(this, &FlowScriptNodeCreateDialog::reload_types_if_visible));
+	ProjectSettings::get_singleton()->connect("settings_changed", callable_mp(this, &FlowScriptNodeCreateDialog::reload_types_if_visible));
 
 	set_flag(FLAG_RESIZE_DISABLED, false);
 	set_wrap_controls(true);
