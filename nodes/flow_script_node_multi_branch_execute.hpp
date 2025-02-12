@@ -21,19 +21,18 @@ public:
 	};
 
 private:
-	int64_t connection_count = 0;
+	int connection_count = 0;
 
 protected:
 	static void _bind_methods();
 
 public:
-	virtual void set_json_data(const Dictionary &p_data) override;
-	virtual void get_json_data(Dictionary &r_data) const override;
+	virtual void set_data_state(const Dictionary &p_data) override;
+	virtual Dictionary get_data_state() const override;
+	virtual void get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const override;
 
-	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
-
-	void set_connection_count(const int64_t p_count);
-	int64_t get_connection_count() const;
+	void set_connection_count(const int p_count);
+	int get_connection_count() const;
 };
 
 

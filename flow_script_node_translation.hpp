@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef FLOW_SCRIPT_NODE_TRANSLATION_HPP
 #define FLOW_SCRIPT_NODE_TRANSLATION_HPP
 
@@ -11,14 +13,14 @@ class FlowScriptNodeTranslation final : public Resource
 	GDCLASS(FlowScriptNodeTranslation, Resource);
 
 private:
-	struct Entry
+	struct Entry final
 	{
 		String id;
 		String text_original;
 		String text_translated;
 	};
 
-	Vector<Entry> entries;
+	LocalVector<Entry> entries;
 
 	static inline PropertyListHelper base_property_helper;
 	PropertyListHelper property_helper;
@@ -46,3 +48,5 @@ public:
 
 
 #endif // FLOW_SCRIPT_NODE_TRANSLATION_HPP
+
+#endif // 0

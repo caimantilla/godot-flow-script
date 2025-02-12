@@ -15,39 +15,40 @@ void FlowScriptNodeMultiBranchExecute::_bind_methods()
 }
 
 
-void FlowScriptNodeMultiBranchExecute::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeMultiBranchExecute::set_data_state(const Dictionary &p_data)
 {
-	if (p_data.has("connection_count"))
-	{
-		set_connection_count(p_data["connection_count"]);
-	}
+	set_connection_count(p_data.get("connection_count", connection_count));
 }
 
 
-void FlowScriptNodeMultiBranchExecute::get_json_data(Dictionary &r_data) const
+Dictionary FlowScriptNodeMultiBranchExecute::get_data_state() const
 {
-	r_data["connection_count"] = connection_count;
+	Dictionary d;
+	d["connection_count"] = connection_count;
+	return d;
 }
 
 
-void FlowScriptNodeMultiBranchExecute::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
+void FlowScriptNodeMultiBranchExecute::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	r_lengths.push_back(1);
-	r_lengths.push_back(connection_count);
+	p_lengths->push_back(1);
+	p_lengths->push_back(connection_count);
 }
 
 
-void FlowScriptNodeMultiBranchExecute::set_connection_count(const int64_t p_count)
+void FlowScriptNodeMultiBranchExecute::set_connection_count(const int p_count)
 {
-	int64_t new_count = CLAMP(p_count, 0, MAX_CONNECTIONS);
+	const int new_count = CLAMP(p_count, 0, MAX_CONNECTIONS);
 	if (connection_count == new_count)
+	{
 		return;
+	}
 	connection_count = new_count;
 	emit_changed();
 }
 
 
-int64_t FlowScriptNodeMultiBranchExecute::get_connection_count() const
+int FlowScriptNodeMultiBranchExecute::get_connection_count() const
 {
 	return connection_count;
 }

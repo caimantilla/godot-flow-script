@@ -10,20 +10,20 @@ void FlowScriptNodeWaitDurationFixedSeconds::_bind_methods()
 }
 
 
-real_t FlowScriptNodeWaitDurationFixedSeconds::get_initial_duration(FlowScriptNodeContext *p_context) const
+double FlowScriptNodeWaitDurationFixedSeconds::get_initial_duration(FlowScriptNodeContext *p_context) const
 {
 	return duration;
 }
 
 
-void FlowScriptNodeWaitDurationFixedSeconds::set_duration(const real_t &p_duration)
+void FlowScriptNodeWaitDurationFixedSeconds::set_duration(const double p_duration)
 {
 	duration = p_duration;
 	emit_changed();
 }
 
 
-real_t FlowScriptNodeWaitDurationFixedSeconds::get_duration() const
+double FlowScriptNodeWaitDurationFixedSeconds::get_duration() const
 {
 	return duration;
 }

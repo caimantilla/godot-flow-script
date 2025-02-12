@@ -8,7 +8,7 @@ void FlowScriptNodeProcedure::exec_step(FlowScriptNodeContext *p_context)
 }
 
 
-void FlowScriptNodeProcedure::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
+void FlowScriptNodeProcedure::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	r_lengths.push_back(1);
+	p_lengths->push_back(1);
 }

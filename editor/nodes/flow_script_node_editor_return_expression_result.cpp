@@ -5,7 +5,8 @@
 
 void FlowScriptNodeEditorReturnExpressionResult::sync()
 {
-	FlowScriptNodeReturnExpressionResult *node = Object::cast_to<FlowScriptNodeReturnExpressionResult>(get_edited_node_ptr());
+	const Ref<FlowScriptNodeReturnExpressionResult> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
 	expression_box->set_expression(node->get_expression());
 }
 

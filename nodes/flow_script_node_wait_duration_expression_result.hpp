@@ -15,7 +15,7 @@ private:
 protected:
 	static void _bind_methods();
 
-	virtual real_t get_initial_duration(FlowScriptNodeContext *p_context) const override;
+	virtual double get_initial_duration(FlowScriptNodeContext *p_context) const override;
 
 public:
 	void set_expression(const String &p_text);

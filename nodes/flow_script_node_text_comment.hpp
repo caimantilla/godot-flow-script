@@ -16,8 +16,8 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual void set_json_data(const Dictionary &p_data) override;
-	virtual void get_json_data(Dictionary &r_data) const override;
+	virtual void set_data_state(const Dictionary &p_data) override;
+	virtual Dictionary get_data_state() const override;
 
 	void set_comment(const String &p_text);
 	String get_comment() const;

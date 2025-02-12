@@ -2,26 +2,9 @@
 #include "scene/gui/label.h"
 
 
-void FlowScriptNodeEditorProcedure::startup()
-{
-	if (!is_edited_flow_script_root())
-	{
-		set_slot_enabled_left(0, true);
-	}
-}
-
-
 int FlowScriptNodeEditorProcedure::get_input_slot() const
 {
-	if (is_edited_flow_script_root())
-	{
-		return FlowScriptNodeEditor::get_input_slot();
-	}
-	// Support input when in the "include" context
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 
@@ -43,5 +26,6 @@ FlowScriptNodeEditorProcedure::FlowScriptNodeEditorProcedure()
 	label->set_text("Start!");
 	label->set_h_size_flags(SIZE_SHRINK_END);
 	add_child(label);
+	set_slot_enabled_left(0, true);
 	set_slot_enabled_right(0, true);
 }

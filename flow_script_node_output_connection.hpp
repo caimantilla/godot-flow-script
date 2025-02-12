@@ -2,27 +2,36 @@
 #define FLOW_SCRIPT_NODE_OUTPUT_CONNECTION_HPP
 
 
-#include "typedefs.hpp"
+#include "flow_script_typedefs.hpp"
 #include "core/variant/variant.h"
 #include "core/variant/dictionary.h"
 
 
-class FlowScriptNodeOutputConnection
+struct FlowScriptNodeOutputConnection
 {
-public:
-	uint8_t list;
-	int64_t slot;
+	FlowScriptNodeConnectionListNo list = 0;
+	FlowScriptNodeConnectionListSlotNo slot = 0;
 
 	static FlowScriptNodeOutputConnection create_from_dictionary(const Dictionary &p_dictionary);
-	Dictionary to_dictionary();
+	static FlowScriptNodeOutputConnection create_connection(const FlowScriptNodeConnectionListNo p_list, const FlowScriptNodeConnectionListSlotNo p_slot);
+	Dictionary to_dictionary() const;
+	uint32_t hash() const;
 
 	bool operator==(const FlowScriptNodeOutputConnection &p_other) const;
 	bool operator!=(const FlowScriptNodeOutputConnection &p_other) const;
 
 	FlowScriptNodeOutputConnection();
-	FlowScriptNodeOutputConnection(const uint8_t p_list, const int64_t p_slot);
+	FlowScriptNodeOutputConnection(const FlowScriptNodeConnectionListNo p_list, const FlowScriptNodeConnectionListSlotNo p_slot);
+};
+
+
+struct FlowScriptNodeOutputConnectionHasher final
+{
+	static _FORCE_INLINE_ uint32_t hash(const FlowScriptNodeOutputConnection &p_output)
+	{
+		return p_output.hash();
+	}
 };
 
 
 #endif // FLOW_SCRIPT_NODE_OUTPUT_CONNECTION_HPP
-

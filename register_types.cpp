@@ -1,14 +1,20 @@
 #include "register_types.h"
+
+#include <array>
+
+// Core classes
+#include "flow_script_constants.hpp"
 #include "flow_script.hpp"
 #include "flow_script_node.hpp"
-#include "flow_script_node_translation.hpp"
 #include "flow_script_node_custom.hpp"
 #include "flow_script_bridge.hpp"
+#include "flow_script_node_context.hpp"
 
-// Extra classes
-#include "flow_script_timer_proxy.hpp"
+// Built-in interface classes
+#include "flow_script_built_in_node_interface.hpp"
+#include "flow_script_built_in_timer_proxy.hpp"
 
-// Include nodes
+// Built-in node classes
 #include "nodes/flow_script_node_procedure.hpp"
 #include "nodes/flow_script_node_text_comment.hpp"
 #include "nodes/flow_script_node_return_expression_result.hpp"
@@ -23,10 +29,15 @@
 
 #ifdef TOOLS_ENABLED
 
-// Include node editors
+// Editor classes
+#include "editor/flow_script_node_type_info.hpp"
 #include "editor/flow_script_node_type_db.hpp"
 #include "editor/plugins/flow_script_editor_plugin.hpp"
+#include "editor/gui/flow_script_editor_expression_display_box.hpp"
+
+// Built-in node editor classes
 #include "editor/nodes/flow_script_node_editor.hpp"
+#include "editor/nodes/flow_script_node_editor_placeholder.hpp"
 #include "editor/nodes/flow_script_node_editor_procedure.hpp"
 #include "editor/nodes/flow_script_node_editor_text_comment.hpp"
 #include "editor/nodes/flow_script_node_editor_return_expression_result.hpp"
@@ -40,22 +51,121 @@
 #endif // TOOLS_ENABLED
 
 
+#ifdef TOOLS_ENABLED
+
+static const std::array BUILT_IN_FLOW_SCRIPT_NODE_TYPE_LIST = {
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Procedure",
+		.type_category = "Built-In",
+		.type_description = "A named entrypoint into the FlowScript.",
+		.editable_name = true,
+		.node_native_class_name = "FlowScriptNodeProcedure",
+		.editor_native_class_name = "FlowScriptNodeEditorProcedure",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Comment",
+		.type_category = "Built-In",
+		.type_description = "A box to take notes in.",
+		.editable_size = true,
+		.node_native_class_name = "FlowScriptNodeTextComment",
+		.editor_native_class_name = "FlowScriptNodeEditorTextComment",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Evaluate and Return Expression",
+		.type_category = "Built-In/Logic",
+		.type_description = "Returns the result of an expression evaluation to the caller.",
+		.node_native_class_name = "FlowScriptNodeReturnExpressionResult",
+		.editor_native_class_name = "FlowScriptNodeEditorReturnExpressionResult",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "While Loop Expression",
+		.type_category = "Built-In/Logic/Looping",
+		.type_description = "Loops while an expression result is true.",
+		.node_native_class_name = "FlowScriptNodeLoopWhileExpressionResultTrue",
+		.editor_native_class_name = "FlowScriptNodeEditorLoopWhileExpressionResultTrue",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Branch Expression",
+		.type_category = "Built-In/Logic/Branching",
+		.type_description = "Branches based on the result of a list of expression evaluations.",
+		.node_native_class_name = "FlowScriptNodeBooleanBranchExpression",
+		.editor_native_class_name = "FlowScriptNodeEditorBooleanBranchExpression",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Execute Sequential Branches",
+		.type_category = "Built-In/Concurrency",
+		.type_description = "Executes a list of branches in order, one after the other, and then advances.",
+		.node_native_class_name = "FlowScriptNodeMultiBranchExecuteSequential",
+		.editor_native_class_name = "FlowScriptNodeEditorMultiBranchExecute",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Execute Parallel Branches",
+		.type_category = "Built-In/Concurrency",
+		.type_description = "Triggers execution of a list of branches all at once, then advances once all the branches have finished execution.",
+		.node_native_class_name = "FlowScriptNodeMultiBranchExecuteParallel",
+		.editor_native_class_name = "FlowScriptNodeEditorMultiBranchExecute",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Assign Local Variable",
+		.type_category = "Built-In/Variables",
+		.type_description = "Evaluates an expression, then assigns the result to a local variable.",
+		.node_native_class_name = "FlowScriptNodeSetExpressionResultToVariableLocal",
+		.editor_native_class_name = "FlowScriptNodeEditorSetExpressionResultToVariable",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Assign Global Variable",
+		.type_category = "Built-In/Variables",
+		.type_description = "Evaluates an expression, then assigns the result to a global variable.",
+		.node_native_class_name = "FlowScriptNodeSetExpressionResultToVariableGlobal",
+		.editor_native_class_name = "FlowScriptNodeEditorSetExpressionResultToVariable",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Wait Fixed Seconds",
+		.type_category = "Built-In/Timing",
+		.type_description = "Waits a defined amount of time, in seconds.",
+		.node_native_class_name = "FlowScriptNodeWaitDurationFixedSeconds",
+		.editor_native_class_name = "FlowScriptNodeEditorWaitDurationFixedSeconds",
+	},
+	FlowScriptNodeTypeInfo {
+		.enabled = true,
+		.type_name = "Wait Expression",
+		.type_category = "Built-In/Timing",
+		.type_description = "Waits the number of seconds evaluated from an expression.",
+		.node_native_class_name = "FlowScriptNodeWaitDurationExpressionResult",
+		.editor_native_class_name = "FlowScriptNodeEditorWaitDurationExpressionResult",
+	},
+};
+
+#endif // TOOLS_ENABLED
+
+
 void initialize_flow_script_module(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
 		// Non-instantiable core classes
+		GDREGISTER_ABSTRACT_CLASS(FlowScriptConstants);
 		GDREGISTER_ABSTRACT_CLASS(FlowScriptNode);
 		GDREGISTER_ABSTRACT_CLASS(FlowScriptNodeContext);
 
 		// Instantiable core classes
 		GDREGISTER_CLASS(FlowScript);
-		GDREGISTER_CLASS(FlowScriptNodeTranslation);
 		GDREGISTER_CLASS(FlowScriptBridge);
 		GDREGISTER_CLASS(FlowScriptNodeCustom);
 
 		// Extra classes
-		GDREGISTER_CLASS(FlowScriptTimerProxy);
+		GDREGISTER_CLASS(FlowScriptBuiltInNodeInterface);
+		GDREGISTER_CLASS(FlowScriptBuiltInTimerProxy);
 
 		// Register nodes
 		GDREGISTER_CLASS(FlowScriptNodeProcedure);
@@ -75,6 +185,11 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 	}
 
 #ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
+	{
+		// Initialize singleton
+		memnew(FlowScriptNodeTypeDB);
+	}
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
 		// Register node editors
@@ -89,8 +204,14 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 		GDREGISTER_CLASS(FlowScriptNodeEditorReturnExpressionResult);
 		GDREGISTER_CLASS(FlowScriptNodeEditorLoopWhileExpressionResultTrue);
 	}
-	else if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
+	if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR)
 	{
+		// Register built-in node types
+		for (const FlowScriptNodeTypeInfo &curr_type : BUILT_IN_FLOW_SCRIPT_NODE_TYPE_LIST)
+		{
+			FlowScriptNodeTypeDB::get_singleton()->add_type(curr_type);
+		}
+		// And of course create the plugin
 		EditorPlugins::add_by_type<FlowScriptEditorPlugin>();
 	}
 #endif // TOOLS_ENABLED
@@ -99,4 +220,10 @@ void initialize_flow_script_module(ModuleInitializationLevel p_level)
 
 void uninitialize_flow_script_module(ModuleInitializationLevel p_level)
 {
+#ifdef TOOLS_ENABLED
+	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
+	{
+		memdelete(FlowScriptNodeTypeDB::get_singleton());
+	}
+#endif // TOOLS_ENABLED
 }

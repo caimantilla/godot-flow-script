@@ -13,7 +13,7 @@ void FlowScriptNodeContext::_bind_methods()
 	ClassDB::bind_method(D_METHOD("has_variable", "idx"), &FlowScriptNodeContext::has_variable);
 	ClassDB::bind_method(D_METHOD("get_current_flow_script"), &FlowScriptNodeContext::get_current_flow_script_ref);
 	ClassDB::bind_method(D_METHOD("get_current_node_id"), &FlowScriptNodeContext::get_current_node_id);
-	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ref);
+	ClassDB::bind_method(D_METHOD("get_bridge"), &FlowScriptNodeContext::get_bridge_ptr);
 
 	ClassDB::bind_method(D_METHOD("invoke_step"), &FlowScriptNodeContext::invoke_step);
 	ClassDB::bind_method(D_METHOD("advance", "connection_list", "connection_slot"), &FlowScriptNodeContext::bind_advance);
@@ -21,15 +21,17 @@ void FlowScriptNodeContext::_bind_methods()
 	ClassDB::bind_method(D_METHOD("add_await_branch", "connection_list", "connection_slot"), &FlowScriptNodeContext::bind_add_await_branch);
 	ClassDB::bind_method(D_METHOD("execute_await_branches"), &FlowScriptNodeContext::bind_execute_await_branches);
 
+#if 0
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "current_flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "", "get_current_flow_script");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "current_node_id"), "", "get_current_node_id");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "bridge", PROPERTY_HINT_NONE, "FlowScriptBridge", PROPERTY_USAGE_NONE, "FlowScriptBridge"), "", "get_bridge");
+#endif // 0
 }
 
 
 void FlowScriptNodeContext::reset()
 {
-	current_node_id = FlowScript::NODE_ID_INVALID;
+	current_node_id = FlowScriptConstants::NODE_ID_INVALID;
 	awaiting_fibers_bits = 0;
 	finished_callback = Callable();
 	return_variable = VariableSlot();
@@ -39,7 +41,7 @@ void FlowScriptNodeContext::reset()
 
 bool FlowScriptNodeContext::is_active() const
 {
-	return current_node_id != FlowScript::NODE_ID_INVALID;
+	return current_node_id != FlowScriptConstants::NODE_ID_INVALID;
 }
 
 
@@ -114,10 +116,10 @@ void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_conn
 	get_current_node_ptr()->exec_cleanup(this);
 	exec_blocked = false;
 	FlowScriptNodeReference next_node_ref = current_flow_script->get_node_connection(current_node_id, p_connection);
-	if (next_node_ref.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
+	if (next_node_ref.include_id != FlowScriptConstants::INCLUDE_ID_INVALID)
 	{
-		ERR_FAIL_COND(!current_flow_script->has_include_flow_script_instance(next_node_ref.flow_script_id));
-		FlowScript *next_flow_script = current_flow_script->get_include_flow_script(next_node_ref.flow_script_id).ptr();
+		ERR_FAIL_COND(!current_flow_script->has_include(next_node_ref.include_id));
+		FlowScript *next_flow_script = current_flow_script->get_include_flow_script(next_node_ref.include_id).ptr();
 		next_flow_script->reference();
 		current_flow_script->unreference();
 	}
@@ -133,7 +135,7 @@ void FlowScriptNodeContext::advance(const FlowScriptNodeOutputConnection &p_conn
 }
 
 
-void FlowScriptNodeContext::bind_advance(const uint8_t p_connection_list, const int64_t p_connection_slot)
+void FlowScriptNodeContext::bind_advance(const FlowScriptNodeConnectionListNo p_connection_list, const FlowScriptNodeConnectionListSlotNo p_connection_slot)
 {
 	advance(FlowScriptNodeOutputConnection(p_connection_list, p_connection_slot));
 }
@@ -152,13 +154,13 @@ bool FlowScriptNodeContext::add_await_branch(const FlowScriptNodeOutputConnectio
 {
 	FlowScriptNodeReference initial_node_ref = current_flow_script->get_node_connection(current_node_id, p_connection);
 	FlowScriptExecutionFiberID branch_fiber_id = bridge_ptr->internal_init_branch(initial_node_ref);
-	ERR_FAIL_COND_V(branch_fiber_id == FlowScriptBridge::FIBER_ID_INVALID, false);
+	ERR_FAIL_COND_V(branch_fiber_id == FlowScriptConstants::FIBER_ID_INVALID, false);
 	awaiting_fibers_bits |= (1 << branch_fiber_id);
 	return true;
 }
 
 
-void FlowScriptNodeContext::bind_add_await_branch(const uint8_t p_connection_list, const int64_t p_connection_slot)
+void FlowScriptNodeContext::bind_add_await_branch(const FlowScriptNodeConnectionListNo p_connection_list, const FlowScriptNodeConnectionListSlotNo p_connection_slot)
 {
 	add_await_branch(FlowScriptNodeOutputConnection(p_connection_list, p_connection_slot));
 }
@@ -167,7 +169,7 @@ void FlowScriptNodeContext::bind_add_await_branch(const uint8_t p_connection_lis
 bool FlowScriptNodeContext::execute_await_branches()
 {
 	bool exec_ok = false;
-	for (FlowScriptExecutionFiberID curr_fiber_id = 0; curr_fiber_id < FlowScriptBridge::FIBERS_MAX; curr_fiber_id++)
+	for (FlowScriptExecutionFiberID curr_fiber_id = 0; curr_fiber_id < FlowScriptConstants::FIBERS_MAX; curr_fiber_id++)
 	{
 		if (curr_fiber_id == self_id || !(awaiting_fibers_bits & (1 << curr_fiber_id)))
 		{
@@ -195,13 +197,13 @@ void FlowScriptNodeContext::bind_execute_await_branches()
 bool FlowScriptNodeContext::is_node_reference_valid(const FlowScriptNodeReference &p_node_reference) const
 {
 	ERR_FAIL_NULL_V(current_flow_script, false);
-	if (p_node_reference.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
+	if (p_node_reference.include_id != FlowScriptConstants::INCLUDE_ID_INVALID)
 	{
-		if (!current_flow_script->has_include_flow_script_instance(p_node_reference.flow_script_id))
+		if (!current_flow_script->has_include(p_node_reference.include_id))
 		{
 			return false;
 		}
-		return current_flow_script->get_include_flow_script(p_node_reference.flow_script_id)->has_node(p_node_reference.node_id);
+		return current_flow_script->get_include_flow_script(p_node_reference.include_id)->has_node(p_node_reference.node_id);
 	}
 	else
 	{
@@ -260,13 +262,13 @@ FlowScriptNodeID FlowScriptNodeContext::get_current_node_id() const
 
 Ref<FlowScriptNode> FlowScriptNodeContext::get_current_node_ref() const
 {
-	return bridge_ptr->get_flow_script_ptr()->get_node_ref(current_node_id);
+	return bridge_ptr->get_flow_script_ptr()->get_node_data(current_node_id);
 }
 
 
 FlowScriptNode *FlowScriptNodeContext::get_current_node_ptr() const
 {
-	return bridge_ptr->get_flow_script_ptr()->get_node_ptr(current_node_id);
+	return bridge_ptr->get_flow_script_ptr()->get_node_data_ptr(current_node_id);
 }
 
 
@@ -294,12 +296,6 @@ FlowScript *FlowScriptNodeContext::get_flow_script_ptr() const
 }
 
 
-Ref<FlowScriptBridge> FlowScriptNodeContext::get_bridge_ref() const
-{
-	return Ref<FlowScriptBridge>(bridge_ptr);
-}
-
-
 FlowScriptBridge *FlowScriptNodeContext::get_bridge_ptr() const
 {
 	return bridge_ptr;
@@ -310,7 +306,7 @@ void FlowScriptNodeContext::set_state(const Dictionary &p_state)
 {
 	for (const Variant &key : p_state.keys())
 	{
-		const Variant &value = p_state[key];
+		const Variant value = p_state[key];
 		if (key == "current_node")
 		{
 			ERR_CONTINUE(value.get_type() != Variant::INT);
@@ -324,7 +320,7 @@ void FlowScriptNodeContext::set_state(const Dictionary &p_state)
 		else if (key == "node_state")
 		{
 			ERR_CONTINUE(value.get_type() != Variant::DICTIONARY);
-			get_current_node_ptr()->set_state(this, value);
+			get_current_node_ptr()->set_runtime_state(this, value);
 		}
 	}
 }
@@ -332,15 +328,20 @@ void FlowScriptNodeContext::set_state(const Dictionary &p_state)
 
 void FlowScriptNodeContext::get_state(Dictionary &r_state) const
 {
-	if (current_node_id != FlowScript::NODE_ID_INVALID)
+	if (current_node_id != FlowScriptConstants::NODE_ID_INVALID)
+	{
 		r_state["current_node"] = current_node_id;
+	}
 	if (awaiting_fibers_bits != 0)
+	{
 		r_state["awaiting"] = awaiting_fibers_bits;
+	}
 
-	Dictionary state_dict_node;
-	get_current_node_ptr()->get_state(this, state_dict_node);
+	Dictionary state_dict_node = get_current_node_ptr()->get_runtime_state(this);
 	if (!state_dict_node.is_empty())
+	{
 		r_state["node_state"] = state_dict_node;
+	}
 }
 
 
@@ -352,6 +353,6 @@ String FlowScriptNodeContext::create_variable_idx_out_of_range_error(const uint8
 
 FlowScriptNodeContext::FlowScriptNodeContext()
 {
-	self_id = FlowScriptBridge::FIBER_ID_INVALID;
-	current_node_id = FlowScript::NODE_ID_INVALID;
+	self_id = FlowScriptConstants::FIBER_ID_INVALID;
+	current_node_id = FlowScriptConstants::NODE_ID_INVALID;
 }

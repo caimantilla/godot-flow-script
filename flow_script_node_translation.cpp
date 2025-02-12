@@ -1,3 +1,5 @@
+#if 0
+
 #include "flow_script_node_translation.hpp"
 
 
@@ -5,12 +7,12 @@ void FlowScriptNodeTranslation::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("set_entry_count", "count"), &FlowScriptNodeTranslation::set_entry_count);
 	ClassDB::bind_method(D_METHOD("get_entry_count"), &FlowScriptNodeTranslation::get_entry_count);
-	ClassDB::bind_method(D_METHOD("set_entry_id", "idx", "id"), &FlowScriptNodeTranslation::set_entry_id);
-	ClassDB::bind_method(D_METHOD("get_entry_id", "idx"), &FlowScriptNodeTranslation::get_entry_id);
-	ClassDB::bind_method(D_METHOD("set_entry_text_original", "idx", "text"), &FlowScriptNodeTranslation::set_entry_text_original);
-	ClassDB::bind_method(D_METHOD("get_entry_text_original", "idx"), &FlowScriptNodeTranslation::get_entry_text_original);
-	ClassDB::bind_method(D_METHOD("set_entry_text_translated", "idx", "text"), &FlowScriptNodeTranslation::set_entry_text_translated);
-	ClassDB::bind_method(D_METHOD("get_entry_text_translated", "idx"), &FlowScriptNodeTranslation::get_entry_text_translated);
+	ClassDB::bind_method(D_METHOD("set_entry_id", "entry", "id"), &FlowScriptNodeTranslation::set_entry_id);
+	ClassDB::bind_method(D_METHOD("get_entry_id", "entry"), &FlowScriptNodeTranslation::get_entry_id);
+	ClassDB::bind_method(D_METHOD("set_entry_text_original", "entry", "text"), &FlowScriptNodeTranslation::set_entry_text_original);
+	ClassDB::bind_method(D_METHOD("get_entry_text_original", "entry"), &FlowScriptNodeTranslation::get_entry_text_original);
+	ClassDB::bind_method(D_METHOD("set_entry_text_translated", "entry", "text"), &FlowScriptNodeTranslation::set_entry_text_translated);
+	ClassDB::bind_method(D_METHOD("get_entry_text_translated", "entry"), &FlowScriptNodeTranslation::get_entry_text_translated);
 
 	Entry defaults;
 
@@ -19,7 +21,7 @@ void FlowScriptNodeTranslation::_bind_methods()
 	base_property_helper.register_property(PropertyInfo(Variant::STRING, "id"), defaults.id, &FlowScriptNodeTranslation::set_entry_id, &FlowScriptNodeTranslation::get_entry_id);
 	base_property_helper.register_property(PropertyInfo(Variant::STRING, "text_original"), defaults.text_original, &FlowScriptNodeTranslation::set_entry_text_original, &FlowScriptNodeTranslation::get_entry_text_original);
 	base_property_helper.register_property(PropertyInfo(Variant::STRING, "text_translated"), defaults.text_translated, &FlowScriptNodeTranslation::set_entry_text_translated, &FlowScriptNodeTranslation::get_entry_text_translated);
-	// PropertyListHelper::register_base_helper(&base_property_helper);
+	PropertyListHelper::register_base_helper(&base_property_helper);
 }
 
 
@@ -70,9 +72,11 @@ int64_t FlowScriptNodeTranslation::get_entry_count() const
 void FlowScriptNodeTranslation::set_entry_id(const int64_t p_idx, const String &p_id)
 {
 	ERR_FAIL_INDEX(p_idx, entries.size());
-	if (p_id == entries.get(p_idx).id)
+	if (p_id == entries[p_idx].id)
+	{
 		return;
-	entries.write[p_idx].id = p_id;
+	}
+	entries[p_idx].id = p_id;
 	emit_changed();
 }
 
@@ -80,16 +84,18 @@ void FlowScriptNodeTranslation::set_entry_id(const int64_t p_idx, const String &
 String FlowScriptNodeTranslation::get_entry_id(const int64_t p_idx) const
 {
 	ERR_FAIL_INDEX_V(p_idx, entries.size(), String());
-	return entries.get(p_idx).id;
+	return entries[p_idx].id;
 }
 
 
 void FlowScriptNodeTranslation::set_entry_text_original(const int64_t p_idx, const String &p_text)
 {
 	ERR_FAIL_INDEX(p_idx, entries.size());
-	if (p_text == entries.get(p_idx).text_original)
+	if (p_text == entries[p_idx].text_original)
+	{
 		return;
-	entries.write[p_idx].text_original = p_text;
+	}
+	entries[p_idx].text_original = p_text;
 	emit_changed();
 }
 
@@ -97,16 +103,18 @@ void FlowScriptNodeTranslation::set_entry_text_original(const int64_t p_idx, con
 String FlowScriptNodeTranslation::get_entry_text_original(const int64_t p_idx) const
 {
 	ERR_FAIL_INDEX_V(p_idx, entries.size(), String());
-	return entries.get(p_idx).text_original;
+	return entries[p_idx].text_original;
 }
 
 
 void FlowScriptNodeTranslation::set_entry_text_translated(const int64_t p_idx, const String &p_text)
 {
 	ERR_FAIL_INDEX(p_idx, entries.size());
-	if (p_text == entries.get(p_idx).text_translated)
+	if (p_text == entries[p_idx].text_translated)
+	{
 		return;
-	entries.write[p_idx].text_translated = p_text;
+	}
+	entries[p_idx].text_translated = p_text;
 	emit_changed();
 }
 
@@ -114,7 +122,7 @@ void FlowScriptNodeTranslation::set_entry_text_translated(const int64_t p_idx, c
 String FlowScriptNodeTranslation::get_entry_text_translated(const int64_t p_idx) const
 {
 	ERR_FAIL_INDEX_V(p_idx, entries.size(), String());
-	return entries.get(p_idx).text_translated;
+	return entries[p_idx].text_translated;
 }
 
 
@@ -122,3 +130,5 @@ FlowScriptNodeTranslation::FlowScriptNodeTranslation()
 {
 	property_helper.setup_for_instance(base_property_helper, this);
 }
+
+#endif // 0

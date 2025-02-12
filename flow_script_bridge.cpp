@@ -1,157 +1,30 @@
 #include "flow_script_bridge.hpp"
-#include "flow_script.hpp"
+#include "flow_script_built_in_node_interface.hpp"
 
 
-String FlowScriptBridge::ERR_STR_NO_AVAILABLE_FIBERS = "Cannot exceed limit of " + itos(FlowScriptBridge::FIBERS_MAX) + " active fibers.";
+String FlowScriptBridge::ERR_STR_NO_AVAILABLE_FIBERS = "Cannot exceed limit of " + itos(FlowScriptConstants::FIBERS_MAX) + " active fibers.";
 
 
 void FlowScriptBridge::_bind_methods()
 {
-	BIND_CONSTANT(FIBER_ID_INVALID);
-	BIND_CONSTANT(FIBERS_MAX);
-
 	ClassDB::bind_method(D_METHOD("set_flow_script", "flow_script"), &FlowScriptBridge::set_flow_script);
 	ClassDB::bind_method(D_METHOD("get_flow_script"), &FlowScriptBridge::get_flow_script);
+	ClassDB::bind_method(D_METHOD("get_built_in_node_interface"), &FlowScriptBridge::get_built_in_node_interface);
 	ClassDB::bind_method(D_METHOD("execute_branch_with_finish_callback", "initial_node_id", "finish_callback"), &FlowScriptBridge::execute_branch_with_finish_callback);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "flow_script", PROPERTY_HINT_RESOURCE_TYPE, "FlowScript", PROPERTY_USAGE_DEFAULT, "FlowScript"), "set_flow_script", "get_flow_script");
 
-	GDVIRTUAL_BIND(_set_local, "key", "value");
-	GDVIRTUAL_BIND(_get_local, "key");
-	GDVIRTUAL_BIND(_has_local, "key");
-	GDVIRTUAL_BIND(_set_global, "key", "value");
-	GDVIRTUAL_BIND(_get_global, "key");
-	GDVIRTUAL_BIND(_has_global, "key");
-	GDVIRTUAL_BIND(_evaluate_expression, "expression");
-	GDVIRTUAL_BIND(_evaluate_multiline_expression, "expression");
-	GDVIRTUAL_BIND(_evaluate_boolean_expression, "expression", "succeed_with_empty_expression");
-	GDVIRTUAL_BIND(_evaluate_multiline_boolean_expression, "expression", "succeed_with_empty_expression");
-	GDVIRTUAL_BIND(_create_timer_proxy);
-}
-
-
-void FlowScriptBridge::set_local(const String &p_key, const Variant &p_value)
-{
-	if (!GDVIRTUAL_CALL(_set_local, p_key, p_value))
-	{
-		ERR_PRINT("_set_local must be overriden.");
-	}
-}
-
-
-Variant FlowScriptBridge::get_local(const String &p_key) const
-{
-	Variant ret;
-	if (!GDVIRTUAL_CALL(_get_local, p_key, ret))
-	{
-		ERR_PRINT("_get_local must be overriden.");
-	}
-	return ret;
-}
-
-
-bool FlowScriptBridge::has_local(const String &p_key) const
-{
-	bool ret = false;
-	if (!GDVIRTUAL_CALL(_has_local, p_key, ret))
-	{
-		ERR_PRINT("_has_local must be overriden.");
-	}
-	return ret;
-}
-
-
-void FlowScriptBridge::set_global(const String &p_key, const Variant &p_value)
-{
-	if (!GDVIRTUAL_CALL(_set_global, p_key, p_value))
-	{
-		ERR_PRINT("_set_global must be overriden.");
-	}
-}
-
-
-Variant FlowScriptBridge::get_global(const String &p_key) const
-{
-	Variant ret;
-	if (!GDVIRTUAL_CALL(_get_global, p_key, ret))
-	{
-		ERR_PRINT("_get_global must be overriden.");
-	}
-	return ret;
-}
-
-
-bool FlowScriptBridge::has_global(const String &p_key) const
-{
-	bool ret = false;
-	if (!GDVIRTUAL_CALL(_has_global, p_key, ret))
-	{
-		ERR_PRINT("_has_global must be overriden.");
-	}
-	return ret;
-}
-
-
-Variant FlowScriptBridge::evaluate_expression(const String &p_expression)
-{
-	Variant ret;
-	if (!GDVIRTUAL_CALL(_evaluate_expression, p_expression, ret))
-	{
-		ERR_PRINT("_evaluate_expression must be overriden.");
-	}
-	return ret;
-}
-
-
-Array FlowScriptBridge::evaluate_multiline_expression(const String &p_expression)
-{
-	Array ret;
-	if (!GDVIRTUAL_CALL(_evaluate_multiline_expression, p_expression, ret))
-	{
-		ERR_PRINT("_evaluate_multiline_expression must be overriden.");
-	}
-	return ret;
-}
-
-
-bool FlowScriptBridge::evaluate_boolean_expression(const String &p_expression, const bool p_succeed_if_expression_empty)
-{
-	bool ret = p_succeed_if_expression_empty;
-	if (!GDVIRTUAL_CALL(_evaluate_boolean_expression, p_expression, p_succeed_if_expression_empty, ret))
-	{
-		ERR_PRINT("_evaluate_boolean_expression must be overriden.");
-	}
-	return ret;
-}
-
-
-bool FlowScriptBridge::evaluate_multiline_boolean_expression(const String &p_expression, const bool p_succeed_if_expression_empty)	
-{
-	bool ret = p_succeed_if_expression_empty;
-	if (!GDVIRTUAL_CALL(_evaluate_multiline_boolean_expression, p_expression, p_succeed_if_expression_empty, ret))
-	{
-		ERR_PRINT("_evaluate_multiline_boolean_expression must be overriden.");
-	}
-	return ret;
-}
-
-
-FlowScriptTimerProxy *FlowScriptBridge::create_timer_proxy() const
-{
-	FlowScriptTimerProxy *ret = nullptr;
-	if (!GDVIRTUAL_CALL(_create_timer_proxy, ret))
-	{
-		ERR_PRINT("_create_timer_proxy must be overriden.");
-	}
-	return ret;
+	GDVIRTUAL_BIND(_create_built_in_node_interface);
 }
 
 
 void FlowScriptBridge::set_flow_script(const Ref<FlowScript> &p_flow_script)
 {
+	ERR_FAIL_COND_MSG(is_active(), RTR("Cannot change the FlowScript during execution."));
 	if (flow_script == p_flow_script)
+	{
 		return;
-	ERR_FAIL_COND(is_active());
+	}
 	flow_script = p_flow_script;
 }
 
@@ -230,9 +103,34 @@ bool FlowScriptBridge::is_active() const
 }
 
 
+FlowScriptBuiltInNodeInterface *FlowScriptBridge::create_built_in_node_interface()
+{
+	return nullptr;
+}
+
+
+FlowScriptBuiltInNodeInterface *FlowScriptBridge::get_built_in_node_interface()
+{
+	if (built_in_node_interface == nullptr)
+	{
+		GDVIRTUAL_CALL(_create_built_in_node_interface, built_in_node_interface);
+		if (built_in_node_interface == nullptr)
+		{
+			built_in_node_interface = create_built_in_node_interface();
+		}
+		if (built_in_node_interface == nullptr)
+		{
+			ERR_PRINT("Failed to create the built-in node interface; a dummy will be used instead. Please override _create_built_in_node_interface and return a valid extension of FlowScriptBuiltInNodeInterface.");
+			built_in_node_interface = memnew(FlowScriptBuiltInNodeInterface);
+		}
+	}
+	return built_in_node_interface;
+}
+
+
 bool FlowScriptBridge::can_create_fiber() const
 {
-	return cache_next_free_fiber_id != FIBER_ID_INVALID;
+	return cache_next_free_fiber_id != FlowScriptConstants::FIBER_ID_INVALID;
 }
 
 
@@ -250,7 +148,7 @@ void FlowScriptBridge::execute_branch_with_finish_callback(const FlowScriptNodeI
 
 bool FlowScriptBridge::has_fiber(const FlowScriptExecutionFiberID p_fiber_id) const
 {
-	return p_fiber_id > 0 && p_fiber_id < FIBERS_MAX && fiber_list[p_fiber_id].is_active();
+	return p_fiber_id > -1 && p_fiber_id < fiber_list.size() && fiber_list[p_fiber_id].is_active();
 }
 
 
@@ -258,7 +156,7 @@ void FlowScriptBridge::internal_fiber_finish(const FlowScriptExecutionFiberID p_
 {
 	cache_next_free_fiber_id = p_fiber_id;
 
-	for (FlowScriptExecutionFiberID curr_iter_id = 0; curr_iter_id < FIBERS_MAX; curr_iter_id++)
+	for (FlowScriptExecutionFiberID curr_iter_id = 0; curr_iter_id < fiber_list.size(); curr_iter_id++)
 	{
 		if (curr_iter_id != p_fiber_id && fiber_list[curr_iter_id].is_active() && fiber_list[p_fiber_id].awaiting_fibers_bits & (1 << p_fiber_id))
 		{
@@ -297,18 +195,22 @@ void FlowScriptBridge::internal_fiber_finish(const FlowScriptExecutionFiberID p_
 
 FlowScriptExecutionFiberID FlowScriptBridge::internal_init_branch(const FlowScriptNodeReference &p_node_reference)
 {
-	ERR_FAIL_COND_V(!can_create_fiber(), FIBER_ID_INVALID);
+	ERR_FAIL_COND_V(!can_create_fiber(), FlowScriptConstants::FIBER_ID_INVALID);
+
 	Ref<FlowScript> target_flow_script;
-	if (p_node_reference.flow_script_id != FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID)
+
+	if (p_node_reference.include_id != FlowScriptConstants::INCLUDE_ID_INVALID)
 	{
-		ERR_FAIL_COND_V(!flow_script->has_include_flow_script_instance(p_node_reference.flow_script_id), FIBER_ID_INVALID);
-		target_flow_script = flow_script->get_include_flow_script(p_node_reference.flow_script_id);
+		ERR_FAIL_COND_V(!flow_script->has_include_instance(p_node_reference.include_id), FlowScriptConstants::FIBER_ID_INVALID);
+		target_flow_script = flow_script->get_include_flow_script(p_node_reference.include_id);
 	}
 	else
 	{
 		target_flow_script = flow_script;
 	}
-	ERR_FAIL_COND_V(!target_flow_script->has_node(p_node_reference.node_id), FIBER_ID_INVALID);
+
+	ERR_FAIL_COND_V(!target_flow_script->has_node(p_node_reference.node_id), FlowScriptConstants::FIBER_ID_INVALID);
+
 	FlowScriptExecutionFiberID new_fiber_id = cache_next_free_fiber_id;
 	if (fiber_list[new_fiber_id].prepare_for_execution(target_flow_script, p_node_reference.node_id))
 	{
@@ -317,14 +219,14 @@ FlowScriptExecutionFiberID FlowScriptBridge::internal_init_branch(const FlowScri
 	}
 	else
 	{
-		ERR_FAIL_V(FIBER_ID_INVALID);
+		ERR_FAIL_V(FlowScriptConstants::FIBER_ID_INVALID);
 	}
 }
 
 
 bool FlowScriptBridge::internal_exec_branch(const FlowScriptExecutionFiberID p_fiber_id)
 {
-	ERR_FAIL_INDEX_V(p_fiber_id, FIBERS_MAX, false);
+	ERR_FAIL_INDEX_V(p_fiber_id, fiber_list.size(), false);
 	ERR_FAIL_COND_V(!fiber_list[p_fiber_id].is_active(), false);
 	fiber_list[p_fiber_id].execute_current_node();
 	return true;
@@ -333,7 +235,7 @@ bool FlowScriptBridge::internal_exec_branch(const FlowScriptExecutionFiberID p_f
 
 void FlowScriptBridge::update_cache_next_free_fiber_id()
 {
-	for (FlowScriptExecutionFiberID curr_id = 0; curr_id < FIBERS_MAX; curr_id++)
+	for (FlowScriptExecutionFiberID curr_id = 0; curr_id < fiber_list.size(); curr_id++)
 	{
 		if (!fiber_list[curr_id].is_active())
 		{
@@ -341,13 +243,13 @@ void FlowScriptBridge::update_cache_next_free_fiber_id()
 			return;
 		}
 	}
-	cache_next_free_fiber_id = FIBER_ID_INVALID;
+	cache_next_free_fiber_id = FlowScriptConstants::FIBER_ID_INVALID;
 }
 
 
 FlowScriptBridge::FlowScriptBridge()
 {
-	for (FlowScriptExecutionFiberID curr_id = 0; curr_id < FIBERS_MAX; curr_id++)
+	for (FlowScriptExecutionFiberID curr_id = 0; curr_id < fiber_list.size(); curr_id++)
 	{
 		fiber_list[curr_id].self_id = curr_id;
 		fiber_list[curr_id].bridge_ptr = this;

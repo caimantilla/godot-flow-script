@@ -2,64 +2,39 @@
 #define FLOW_SCRIPT_BRIDGE_HPP
 
 
-#include "core/object/ref_counted.h"
+#include <array>
+
 #include "core/object/gdvirtual.gen.inc"
-#include "typedefs.hpp"
+#include "scene/main/node.h"
+#include "flow_script.hpp"
+#include "flow_script_typedefs.hpp"
+#include "flow_script_constants.hpp"
 #include "flow_script_node_context.hpp"
-#include "flow_script_timer_proxy.hpp"
+#include "flow_script_built_in_node_interface.hpp"
 
 
-class FlowScript;
-
-
-class FlowScriptBridge : public RefCounted
+class FlowScriptBridge : public Node
 {
-	GDCLASS(FlowScriptBridge, RefCounted);
-
-public:
-	enum : FlowScriptExecutionFiberID
-	{
-		FIBER_ID_INVALID = -1,
-		FIBERS_MAX = 31,
-	};
+	GDCLASS(FlowScriptBridge, Node);
 
 private:
 	static String ERR_STR_NO_AVAILABLE_FIBERS;
 
 	Ref<FlowScript> flow_script;
-	FlowScriptNodeContext fiber_list[FIBERS_MAX];
+	std::array<FlowScriptNodeContext, FlowScriptConstants::FIBERS_MAX> fiber_list;
 	FlowScriptExecutionFiberID cache_next_free_fiber_id = 0;
+	FlowScriptBuiltInNodeInterface *built_in_node_interface = nullptr;
 
 	void update_cache_next_free_fiber_id();
 
 protected:
 	static void _bind_methods();
 
-	GDVIRTUAL2(_set_local, const String &, const Variant &);
-	GDVIRTUAL1RC(Variant, _get_local, const String &);
-	GDVIRTUAL1RC(bool, _has_local, const String &);
-	GDVIRTUAL2(_set_global, const String &, const Variant &);
-	GDVIRTUAL1RC(Variant, _get_global, const String &);
-	GDVIRTUAL1RC(bool, _has_global, const String &);
-	GDVIRTUAL1R(Variant, _evaluate_expression, const String &);
-	GDVIRTUAL1R(Array, _evaluate_multiline_expression, const String &);
-	GDVIRTUAL2R(bool, _evaluate_boolean_expression, const String &, const bool &);
-	GDVIRTUAL2R(bool, _evaluate_multiline_boolean_expression, const String &, const bool &);
-	GDVIRTUAL0RC(FlowScriptTimerProxy *, _create_timer_proxy);
+	virtual FlowScriptBuiltInNodeInterface *create_built_in_node_interface();
+
+	GDVIRTUAL0R(FlowScriptBuiltInNodeInterface *, _create_built_in_node_interface);
 
 public:
-	virtual void set_local(const String &p_key, const Variant &p_value);
-	virtual Variant get_local(const String &p_key) const;
-	virtual bool has_local(const String &p_key) const;
-	virtual void set_global(const String &p_key, const Variant &p_value);
-	virtual Variant get_global(const String &p_key) const;
-	virtual bool has_global(const String &p_key) const;
-	virtual Variant evaluate_expression(const String &p_expression);
-	virtual Array evaluate_multiline_expression(const String &p_expression);
-	virtual bool evaluate_boolean_expression(const String &p_expression, const bool p_succeed_if_expression_empty);
-	virtual bool evaluate_multiline_boolean_expression(const String &p_expression, const bool p_succeed_if_expression_empty);
-	virtual FlowScriptTimerProxy *create_timer_proxy() const;
-
 	void set_flow_script(const Ref<FlowScript> &p_flow_script);
 	Ref<FlowScript> get_flow_script() const;
 	FlowScript *get_flow_script_ptr() const;
@@ -74,6 +49,8 @@ public:
 	// Initializes a branch for later execution
 	FlowScriptExecutionFiberID internal_init_branch(const FlowScriptNodeReference &p_node_reference);
 	bool internal_exec_branch(const FlowScriptExecutionFiberID p_fiber_id);
+
+	FlowScriptBuiltInNodeInterface *get_built_in_node_interface();
 
 	FlowScriptBridge();
 	~FlowScriptBridge();

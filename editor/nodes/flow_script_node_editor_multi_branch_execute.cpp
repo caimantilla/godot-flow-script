@@ -3,14 +3,16 @@
 
 void FlowScriptNodeEditorMultiBranchExecute::sync()
 {
-	FlowScriptNodeMultiBranchExecute *node = Object::cast_to<FlowScriptNodeMultiBranchExecute>(get_edited_node_ptr());
-	int branch_count = MIN(node->get_connection_count(), FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS);
+	const Ref<FlowScriptNodeMultiBranchExecute> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
+
+	const int branch_count = MIN(node->get_connection_count(), output_control_list.size());
 
 	for (int i = 0; i < branch_count; i++)
 	{
 		output_control_show(i);
 	}
-	for (int i = branch_count; i < FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS; i++)
+	for (int i = branch_count; i < output_control_list.size(); i++)
 	{
 		output_control_hide(i);
 	}
@@ -88,7 +90,7 @@ FlowScriptNodeEditorMultiBranchExecute::FlowScriptNodeEditorMultiBranchExecute()
 	set_slot_enabled_left(0, true);
 	set_slot_enabled_right(0, true);
 
-	for (int i = 0; i < FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS; i++)
+	for (int i = 0; i < output_control_list.size(); i++)
 	{
 		HSeparator *separator = memnew(HSeparator);
 		separator->hide();
@@ -103,7 +105,7 @@ FlowScriptNodeEditorMultiBranchExecute::FlowScriptNodeEditorMultiBranchExecute()
 		output_control_list[i].separator = separator;
 		output_control_list[i].label = label;
 	}
-	for (int i = 0; i < FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS; i++)
+	for (int i = 0; i < output_control_list.size(); i++)
 	{
 		output_control_hide(i);
 	}

@@ -10,12 +10,12 @@ void FlowScriptNodeWaitDurationExpressionResult::_bind_methods()
 }
 
 
-real_t FlowScriptNodeWaitDurationExpressionResult::get_initial_duration(FlowScriptNodeContext *p_context) const
+double FlowScriptNodeWaitDurationExpressionResult::get_initial_duration(FlowScriptNodeContext *p_context) const
 {
-	ERR_FAIL_COND_V_MSG(expression.strip_edges().is_empty(), real_t(0), RTR("No expression has been written."));
-	Variant result = p_context->get_bridge_ptr()->evaluate_expression(expression);
-	ERR_FAIL_COND_V_MSG(result.get_type() != Variant::INT && result.get_type() != Variant::FLOAT, real_t(0), vformat(RTR("The evaluated expression:\n%s\ndid not evaluate to a number, and therefor cannot be used as a duration."), expression));
-	return real_t(result);
+	ERR_FAIL_COND_V_MSG(expression.strip_edges().is_empty(), 0.0, RTR("No expression has been written."));
+	Variant result = p_context->get_bridge_ptr()->get_built_in_node_interface()->evaluate_expression(expression);
+	ERR_FAIL_COND_V_MSG(result.get_type() != Variant::INT && result.get_type() != Variant::FLOAT, 0.0, vformat(RTR("The evaluated expression:\n%s\ndid not evaluate to a number, and therefor cannot be used as a duration."), expression));
+	return double(result);
 }
 
 

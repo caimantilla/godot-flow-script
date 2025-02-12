@@ -10,7 +10,7 @@ class FlowScriptNodeSetExpressionResultToVariableLocal : public FlowScriptNodeSe
 	GDCLASS(FlowScriptNodeSetExpressionResultToVariableLocal, FlowScriptNodeSetExpressionResultToVariable);
 
 protected:
-	virtual bool exec_variable_assignment(FlowScriptNodeContext *p_context, const String &p_key, const Variant &p_value) override;
+	virtual bool exec_variable_assignment(FlowScriptNodeContext *p_context, const StringName &p_key, const Variant &p_value) override;
 };
 
 

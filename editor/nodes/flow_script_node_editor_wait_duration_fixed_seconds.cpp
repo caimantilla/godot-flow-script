@@ -4,19 +4,21 @@
 
 void FlowScriptNodeEditorWaitDurationFixedSeconds::sync()
 {
-	FlowScriptNodeWaitDurationFixedSeconds *node = Object::cast_to<FlowScriptNodeWaitDurationFixedSeconds>(get_edited_node_ptr());
-	real_t duration = node->get_duration();
-	bool defined_duration_ok = duration > real_t(0);
+	const Ref<FlowScriptNodeWaitDurationFixedSeconds> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
+
+	const double duration = node->get_duration();
+	const bool defined_duration_ok = duration > 0.0;
 
 	if (defined_duration_ok)
 	{
 		label->set_modulate(Color::named("white"));
-		label->set_text(vformat(TTR("Wait %f seconds."), duration));
+		label->set_text(vformat(TTR("Wait %s seconds."), String::num_real(duration, false)));
 	}
 	else
 	{
 		label->set_modulate(Color::named("red"));
-		label->set_text(vformat(TTR("Invalid duration of %f seconds defined."), duration));
+		label->set_text(vformat(TTR("Invalid duration of %s seconds defined."), String::num_real(duration, false)));
 	}
 }
 

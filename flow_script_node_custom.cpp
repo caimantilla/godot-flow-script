@@ -1,27 +1,26 @@
-#include "flow_script.hpp"
 #include "flow_script_node_custom.hpp"
 #include "core/object/script_language.h"
 
 
 void FlowScriptNodeCustom::_bind_methods()
 {
+	GDVIRTUAL_BIND(_exec_startup, "context");
+	GDVIRTUAL_BIND(_exec_cleanup, "context");
+	GDVIRTUAL_BIND(_exec_step, "context");
+	GDVIRTUAL_BIND(_set_runtime_state, "context", "state");
+	GDVIRTUAL_BIND(_get_runtime_state, "context");
+	GDVIRTUAL_BIND(_set_data_state, "data");
+	GDVIRTUAL_BIND(_get_data_state);
+	GDVIRTUAL_BIND(_get_output_connection_list_lengths);
+#ifdef TOOLS_ENABLED
 	GDVIRTUAL_BIND(_can_instantiate_type);
 	GDVIRTUAL_BIND(_can_edit_name);
-	GDVIRTUAL_BIND(_get_type_id);
+	GDVIRTUAL_BIND(_can_edit_size);
 	GDVIRTUAL_BIND(_get_type_name);
 	GDVIRTUAL_BIND(_get_type_category);
 	GDVIRTUAL_BIND(_get_type_description);
 	GDVIRTUAL_BIND(_get_type_editor);
-	GDVIRTUAL_BIND(_exec_startup, "context");
-	GDVIRTUAL_BIND(_exec_cleanup, "context");
-	GDVIRTUAL_BIND(_exec_step, "context");
-	GDVIRTUAL_BIND(_can_translate_text);
-	GDVIRTUAL_BIND(_init_text_translation, "node_id", "translation");
-	GDVIRTUAL_BIND(_set_state, "context", "state");
-	GDVIRTUAL_BIND(_get_state, "context");
-	GDVIRTUAL_BIND(_set_json_data, "data");
-	GDVIRTUAL_BIND(_get_json_data);
-	GDVIRTUAL_BIND(_get_output_connection_list_lengths);
+#endif // TOOLS_ENABLED
 }
 
 
@@ -43,58 +42,47 @@ void FlowScriptNodeCustom::exec_step(FlowScriptNodeContext *p_context)
 }
 
 
-bool FlowScriptNodeCustom::can_translate_text() const
+void FlowScriptNodeCustom::set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
 {
-	bool ret = false;
-	GDVIRTUAL_CALL(_can_translate_text, ret);
-	return ret;
+	GDVIRTUAL_CALL(_set_runtime_state, p_context, p_state);
 }
 
 
-void FlowScriptNodeCustom::init_text_translation(const FlowScriptNodeID p_node_id, FlowScriptNodeTranslation *p_translation)
+Dictionary FlowScriptNodeCustom::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
-	Ref<FlowScriptNodeTranslation> translation_ref = Ref<FlowScriptNodeTranslation>(p_translation);
-	if (!GDVIRTUAL_CALL(_init_text_translation, p_node_id, translation_ref))
-	{
-		ERR_PRINT("_init_text_translation must be overriden.");
-	}
+	Dictionary d;
+	GDVIRTUAL_CALL(_get_runtime_state, p_context, d);
+	return d;
 }
 
 
-void FlowScriptNodeCustom::set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
+void FlowScriptNodeCustom::set_data_state(const Dictionary &p_state)
 {
-	GDVIRTUAL_CALL(_set_state, p_context, p_state);
+	GDVIRTUAL_CALL(_get_data_state, p_state);
 }
 
 
-void FlowScriptNodeCustom::get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const
+Dictionary FlowScriptNodeCustom::get_data_state() const
 {
-	GDVIRTUAL_CALL(_get_state, p_context, r_state);
+	Dictionary d;
+	GDVIRTUAL_CALL(_get_data_state, d);
+	return d;
 }
 
 
-void FlowScriptNodeCustom::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeCustom::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	GDVIRTUAL_CALL(_set_json_data, p_data);
-}
-
-
-void FlowScriptNodeCustom::get_json_data(Dictionary &r_data) const
-{
-	GDVIRTUAL_CALL(_get_json_data, r_data);
-}
-
-
-void FlowScriptNodeCustom::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
-{
-	PackedInt64Array virtual_lengths;
+	PackedInt32Array virtual_lengths;
 	GDVIRTUAL_CALL(_get_output_connection_list_lengths, virtual_lengths);
-	for (const int64_t curr_length : virtual_lengths)
+	for (const int32_t curr_length : virtual_lengths)
 	{
-		r_lengths.push_back(curr_length);
+		ERR_FAIL_INDEX(curr_length, FlowScriptConstants::NODE_CONNECTION_LIST_LENGTH_MAX);
+		p_lengths->push_back(curr_length);
 	}
 }
 
+
+#ifdef TOOLS_ENABLED
 
 bool FlowScriptNodeCustom::can_instantiate_type() const
 {
@@ -112,22 +100,10 @@ bool FlowScriptNodeCustom::can_edit_name() const
 }
 
 
-String FlowScriptNodeCustom::get_type_id() const
+bool FlowScriptNodeCustom::can_edit_size() const
 {
-	String ret;
-	GDVIRTUAL_CALL(_get_type_id, ret);
-	if (ret.is_empty())
-	{
-		Variant var_script = get_script();
-		if (var_script.get_type() == Variant::OBJECT)
-		{
-			Ref<Script> ref_script = var_script;
-			if (ref_script.is_valid())
-			{
-				ret = ref_script->get_path().get_basename().get_file();
-			}
-		}
-	}
+	bool ret = false;
+	GDVIRTUAL_CALL(_can_edit_size, ret);
 	return ret;
 }
 
@@ -169,3 +145,5 @@ String FlowScriptNodeCustom::get_type_editor() const
 	}
 	return ret;
 }
+
+#endif // TOOLS_ENABLED

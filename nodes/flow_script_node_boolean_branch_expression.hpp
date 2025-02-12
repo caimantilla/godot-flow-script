@@ -3,8 +3,6 @@
 
 
 #include "common.hpp"
-#include "scene/gui/label.h"
-#include "scene/gui/rich_text_label.h"
 
 
 class FlowScriptNodeBooleanBranchExpression final : public FlowScriptNode
@@ -26,11 +24,9 @@ protected:
 
 public:
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
-
-	virtual void set_json_data(const Dictionary &p_data) override;
-	virtual void get_json_data(Dictionary &r_data) const override;
-
-	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
+	virtual void set_data_state(const Dictionary &p_data) override;
+	virtual Dictionary get_data_state() const override;
+	virtual void get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const override;
 
 	void set_expression(const String &p_expression);
 	String get_expression() const;

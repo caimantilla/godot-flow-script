@@ -5,6 +5,7 @@
 #include "common.hpp"
 
 
+// THIS CLASS IS NOT FUNCTIONAL
 class FlowScriptNodeLoopWhileExpressionResultTrue : public FlowScriptNode
 {
 	GDCLASS(FlowScriptNodeLoopWhileExpressionResultTrue, FlowScriptNode);
@@ -31,14 +32,11 @@ protected:
 public:
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
-
-	virtual void set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
-	virtual void get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const override;
-
-	virtual void set_json_data(const Dictionary &p_data) override;
-	virtual void get_json_data(Dictionary &r_data) const override;
-
-	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
+	virtual void set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
+	virtual Dictionary get_runtime_state(const FlowScriptNodeContext *p_context) const override;
+	virtual void set_data_state(const Dictionary &p_data) override;
+	virtual Dictionary get_data_state() const override;
+	virtual void get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const override;
 
 	void set_expression(const String &p_text);
 	String get_expression() const;

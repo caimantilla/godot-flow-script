@@ -2,34 +2,30 @@
 #define FLOW_SCRIPT_NODE_EDITOR_HPP
 
 
-#include "scene/gui/graph_node.h"
-#include "scene/gui/button.h"
-#include "../../typedefs.hpp"
+#include "../flow_script_node_type_info.hpp"
 #include "../../flow_script.hpp"
 #include "../../flow_script_node.hpp"
-#include "../../flow_script_node_output_connection.hpp"
+#include "../../flow_script_node_reference.hpp"
+#include "../../flow_script_typedefs.hpp"
+#include "scene/gui/graph_node.h"
 
 
-class FlowScriptEditorPlugin;
+class Button;
 
 
 class FlowScriptNodeEditor : public GraphNode
 {
 	GDCLASS(FlowScriptNodeEditor, GraphNode);
 
-	friend class FlowScriptEditorPlugin;
-
 private:
-	FlowScriptEditorPlugin *plugin = nullptr;
+	FlowScriptNodeTypeInfo type_info;
 	Ref<FlowScript> root_flow_script;
-	Ref<FlowScript> parent_flow_script;
-	Ref<FlowScript> edited_flow_script;
+	Ref<FlowScript> owner_flow_script;
+	FlowScriptNodeReference edited_node_reference = FlowScriptNodeReference::create_null_reference();
 	Ref<FlowScriptNode> edited_node;
-	FlowScriptNodeID edited_node_id = FlowScript::NODE_ID_INVALID;
-	FlowScriptIncludeID edited_include_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
+
 	Button *rename_button;
 	Button *delete_button;
-	bool current_editable = false;
 
 	void on_rename_button_pressed();
 	void on_delete_button_pressed();
@@ -41,36 +37,36 @@ protected:
 	GDVIRTUAL0(_startup);
 	GDVIRTUAL0(_cleanup);
 	GDVIRTUAL0(_sync);
-	GDVIRTUAL0(_update_theme);
-	GDVIRTUAL0RC(String, _get_new_title);
-	GDVIRTUAL0RC(String, _get_new_tooltip_text);
 	GDVIRTUAL0RC(int, _get_input_slot);
 	GDVIRTUAL1RC(Dictionary, _output_graph_slot_to_connection, int);
-	GDVIRTUAL2RC(int, _output_connection_to_graph_slot, int, int);
+	GDVIRTUAL2RC(int, _output_connection_to_graph_slot, FlowScriptNodeConnectionListNo, FlowScriptNodeConnectionListSlotNo);
 
 public:
-	void block_editing();
-	void permit_editing();
-	bool is_editable() const;
 
-	Ref<FlowScript> get_root_flow_script_ref() const;
-	FlowScript *get_root_flow_script_ptr() const;
-	Ref<FlowScript> get_edited_flow_script_ref() const;
-	FlowScript *get_edited_flow_script_ptr() const;
-	bool is_edited_flow_script_root() const;
+	bool is_include() const;
+
+	Button *get_rename_button() const;
+	Button *get_delete_button() const;
+
+	FlowScriptNodeTypeInfo get_type_info() const;
+	Ref<FlowScript> get_root_flow_script() const;
+	Ref<FlowScript> get_owner_flow_script() const;
+	FlowScriptNodeReference get_edited_node_reference() const;
+	FlowScriptIncludeID get_edited_include_id() const;
 	FlowScriptNodeID get_edited_node_id() const;
-	Ref<FlowScriptNode> get_edited_node_ref() const;
-	FlowScriptNode *get_edited_node_ptr() const;
+	Ref<FlowScriptNode> get_edited_node() const;
 
+	virtual bool is_placeholder() const;
 	virtual void startup();
 	virtual void cleanup();
 	virtual void sync();
-	virtual void update_theme();
-	virtual String get_new_title() const;
-	virtual String get_new_tooltip_text() const;
 	virtual FlowScriptNodeOutputConnection output_graph_slot_to_connection(const int p_graph_slot) const;
 	virtual int output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const;
 	virtual int get_input_slot() const;
+
+	void init_dependencies(const FlowScriptNodeTypeInfo &p_type_info, const Ref<FlowScript> &p_root_flow_script, const FlowScriptNodeReference &p_edited_node_reference, const Ref<Theme> &p_msdf_theme);
+	void set_show_rename_button(const bool p_visible);
+	void set_show_delete_button(const bool p_visible);
 
 	FlowScriptNodeEditor();
 };

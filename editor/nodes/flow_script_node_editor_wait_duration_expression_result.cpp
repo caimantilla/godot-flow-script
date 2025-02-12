@@ -6,7 +6,8 @@
 
 void FlowScriptNodeEditorWaitDurationExpressionResult::sync()
 {
-	FlowScriptNodeWaitDurationExpressionResult *node = Object::cast_to<FlowScriptNodeWaitDurationExpressionResult>(get_edited_node_ptr());
+	const Ref<FlowScriptNodeWaitDurationExpressionResult> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
 	expression_box->set_expression(node->get_expression());
 }
 

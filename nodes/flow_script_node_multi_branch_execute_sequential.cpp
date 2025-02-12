@@ -38,17 +38,16 @@ void FlowScriptNodeMultiBranchExecuteSequential::exec_step(FlowScriptNodeContext
 }
 
 
-void FlowScriptNodeMultiBranchExecuteSequential::set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
+void FlowScriptNodeMultiBranchExecuteSequential::set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
 {
 	p_context->set_variable(VARIABLE_SAVE_RESTORE, true);
-	if (p_state.has("current_branch_index"))
-	{
-		p_context->set_variable(VARIABLE_CURRENT_BRANCH, p_state["current_branch_index"]);
-	}
+	p_context->set_variable(VARIABLE_CURRENT_BRANCH, p_state.get("current_branch_index", -1));
 }
 
 
-void FlowScriptNodeMultiBranchExecuteSequential::get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const
+Dictionary FlowScriptNodeMultiBranchExecuteSequential::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
-	r_state["current_branch_index"] = p_context->get_variable(VARIABLE_CURRENT_BRANCH);
+	Dictionary d;
+	d["current_branch_index"] = p_context->get_variable(VARIABLE_CURRENT_BRANCH);
+	return d;
 }

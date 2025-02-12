@@ -1,51 +1,79 @@
 #include "flow_script_node_reference.hpp"
-#include "flow_script.hpp"
+
+
+bool FlowScriptNodeReference::operator==(const FlowScriptNodeReference &p_other) const
+{
+	return include_id == p_other.include_id && node_id == p_other.node_id;
+}
+
+
+bool FlowScriptNodeReference::operator!=(const FlowScriptNodeReference &p_other) const
+{
+	return include_id != p_other.include_id || node_id != p_other.node_id;
+}
 
 
 bool FlowScriptNodeReference::is_valid() const
 {
-	return flow_script_id != FlowScript::NODE_ID_INVALID;
+	return node_id != FlowScriptConstants::NODE_ID_INVALID;
 }
 
 
 Dictionary FlowScriptNodeReference::to_dictionary() const
 {
 	Dictionary ret;
-	ret["flow_script_id"] = flow_script_id;
+	ret["include_id"] = include_id;
 	ret["node_id"] = node_id;
 	return ret;
 }
 
 
-bool FlowScriptNodeReference::operator==(const FlowScriptNodeReference &p_other) const
+uint32_t FlowScriptNodeReference::hash() const
 {
-	return flow_script_id == p_other.flow_script_id && node_id == p_other.node_id;
+	uint32_t h = hash_murmur3_one_32(include_id);
+	h = hash_murmur3_one_32(node_id, h);
+	return hash_fmix32(h);
 }
 
 
-bool FlowScriptNodeReference::operator!=(const FlowScriptNodeReference &p_other) const
+FlowScriptNodeReference FlowScriptNodeReference::create_from_dictionary(const Dictionary &p_dictionary)
 {
-	return flow_script_id != p_other.flow_script_id || node_id != p_other.node_id;
+	FlowScriptNodeReference ret;
+
+	ret.include_id = p_dictionary.get("include_id", FlowScriptConstants::INCLUDE_ID_INVALID);
+	ret.node_id = p_dictionary.get("node_id", FlowScriptConstants::NODE_ID_INVALID);
+
+	return ret;
+}
+
+
+FlowScriptNodeReference FlowScriptNodeReference::create_null_reference()
+{
+	FlowScriptNodeReference ret;
+	ret.include_id = FlowScriptConstants::INCLUDE_ID_INVALID;
+	ret.node_id = FlowScriptConstants::NODE_ID_INVALID;
+	return ret;
+}
+
+
+FlowScriptNodeReference FlowScriptNodeReference::create_same_script_reference(const FlowScriptNodeID p_node_id)
+{
+	FlowScriptNodeReference ret;
+	ret.include_id = FlowScriptConstants::INCLUDE_ID_INVALID;
+	ret.node_id = p_node_id;
+	return ret;
+}
+
+
+FlowScriptNodeReference FlowScriptNodeReference::create_include_script_reference(const FlowScriptIncludeID p_include_id, const FlowScriptNodeID p_node_id)
+{
+	FlowScriptNodeReference ret;
+	ret.include_id = p_include_id;
+	ret.node_id = p_node_id;
+	return ret;
 }
 
 
 FlowScriptNodeReference::FlowScriptNodeReference()
 {
-	flow_script_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
-	node_id = FlowScript::NODE_ID_INVALID;
-}
-
-
-FlowScriptNodeReference::FlowScriptNodeReference(const FlowScriptNodeID p_node_id)
-{
-	flow_script_id = FlowScript::INCLUDE_FLOW_SCRIPT_ID_INVALID;
-	node_id = p_node_id;
-}
-
-
-
-FlowScriptNodeReference::FlowScriptNodeReference(const FlowScriptIncludeID p_flow_script_id, const FlowScriptNodeID p_node_id)
-{
-	flow_script_id = p_flow_script_id;
-	node_id = p_node_id;
 }

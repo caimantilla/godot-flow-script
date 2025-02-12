@@ -2,11 +2,12 @@
 #define FLOW_SCRIPT_NODE_CONTEXT_HPP
 
 
-#include "typedefs.hpp"
-#include "core/object/object.h"
-#include "core/object/class_db.h"
+#include "flow_script_typedefs.hpp"
+#include "flow_script_constants.hpp"
 #include "flow_script_node_reference.hpp"
 #include "flow_script_node_output_connection.hpp"
+#include "core/object/object.h"
+#include "core/object/class_db.h"
 
 
 class FlowScript;
@@ -21,7 +22,10 @@ class FlowScriptNodeContext final : public Object
 	GDCLASS(FlowScriptNodeContext, Object);
 
 public:
-	static const uint8_t VARIABLES_MAX = 31;
+	enum : uint8_t
+	{
+		VARIABLES_MAX = 31,
+	};
 
 private:
 	struct VariableSlot
@@ -30,11 +34,11 @@ private:
 		Variant value;
 	};
 
-	FlowScriptExecutionFiberID self_id;
+	FlowScriptExecutionFiberID self_id = FlowScriptConstants::FIBER_ID_INVALID;
 	FlowScriptBridge *bridge_ptr = nullptr;
 
-	FlowScript *current_flow_script;
-	FlowScriptNodeID current_node_id;
+	FlowScript *current_flow_script = nullptr;
+	FlowScriptNodeID current_node_id = FlowScriptConstants::NODE_ID_INVALID;
 	bool exec_blocked = false;
 	VariableSlot variables[VARIABLES_MAX];
 	VariableSlot return_variable;
@@ -42,8 +46,8 @@ private:
 	Callable cb_on_external_branch_finish;
 
 	String create_variable_idx_out_of_range_error(const uint8_t p_idx) const;
-	void bind_advance(const uint8_t p_connection_list, const int64_t p_connection_slot);
-	void bind_add_await_branch(const uint8_t p_connection_list, const int64_t p_connection_slot);
+	void bind_advance(const FlowScriptNodeConnectionListNo connection_list, const FlowScriptNodeConnectionListSlotNo p_connection_slot);
+	void bind_add_await_branch(const FlowScriptNodeConnectionListNo p_connection_list, const FlowScriptNodeConnectionListSlotNo p_connection_slot);
 	void bind_execute_await_branches();
 
 protected:
@@ -80,7 +84,6 @@ public:
 	FlowScript *get_current_flow_script_ptr() const;
 	Ref<FlowScript> get_flow_script_ref() const;
 	FlowScript *get_flow_script_ptr() const;
-	Ref<FlowScriptBridge> get_bridge_ref() const;
 	FlowScriptBridge *get_bridge_ptr() const;
 	void set_state(const Dictionary &p_state);
 	void get_state(Dictionary &r_state) const;

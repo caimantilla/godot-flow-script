@@ -1,9 +1,7 @@
 #include "flow_script_node_type_db.hpp"
 #include "flow_script_node_type_info.hpp"
-#include "../flow_script_node.hpp"
+#include "flow_script_node_editor.hpp"
 #include "../flow_script_node_custom.hpp"
-#include "plugins/flow_script_editor_plugin.hpp"
-#include "nodes/flow_script_node_editor.hpp"
 #include "core/error/error_macros.h"
 #include "core/object/script_language.h"
 #include "scene/resources/packed_scene.h"
@@ -17,20 +15,12 @@ FlowScriptNodeTypeDB *FlowScriptNodeTypeDB::singleton = nullptr;
 
 void FlowScriptNodeTypeDB::_bind_methods()
 {
+	ClassDB::bind_method(D_METHOD("get_type_count"), &FlowScriptNodeTypeDB::bind_get_type_count);
+	ClassDB::bind_method(D_METHOD("get_node_type_list"), &FlowScriptNodeTypeDB::bind_get_node_type_list);
+	ClassDB::bind_method(D_METHOD("get_type_by_index", "index"), &FlowScriptNodeTypeDB::bind_get_type_by_index);
+	ClassDB::bind_method(D_METHOD("refresh_types"), &FlowScriptNodeTypeDB::refresh_types);
+
 	ADD_SIGNAL(MethodInfo("changed"));
-}
-
-
-void FlowScriptNodeTypeDB::_notification(int p_what)
-{
-	if (p_what == NOTIFICATION_READY)
-	{
-		EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
-		FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));
-		FileSystemDock::get_singleton()->get_script_create_dialog()->connect("script_created", callable_mp(this, &FlowScriptNodeTypeDB::on_script_created));
-
-		refresh_custom_script_types();
-	}
 }
 
 
@@ -42,117 +32,162 @@ FlowScriptNodeTypeDB *FlowScriptNodeTypeDB::get_singleton()
 
 void FlowScriptNodeTypeDB::refresh_types()
 {
-	refresh_custom_script_types();
-}
+	has_ever_refreshed_types = true;
+	cache_types_dirty = true;
 
+	list_script_types.clear();
 
-void FlowScriptNodeTypeDB::get_node_type_list(List<FlowScriptNodeTypeInfo> *p_list) const
-{
-	for (const FlowScriptNodeTypeInfo &native_info : native_types)
+	List<StringName> global_script_name_list;
+	ScriptServer::get_global_class_list(&global_script_name_list);
+
+	for (const StringName &global_script_sn : global_script_name_list)
 	{
-		p_list->push_back(native_info);
-	}
-	for (const FlowScriptNodeTypeInfo &script_info : custom_script_types)
-	{
-		if (script_info.enabled)
+		const String global_script_str = global_script_sn;
+		if (ScriptServer::get_global_class_native_base(global_script_str) != SNAME("FlowScriptNodeCustom"))
 		{
-			p_list->push_back(script_info);
+			continue;
+		}
+		const String path = ScriptServer::get_global_class_path(global_script_str);
+		ERR_CONTINUE(!ResourceLoader::exists(path, "Script"));
+
+		const Ref<Script> script = ResourceLoader::load(path, "Script");
+		ERR_CONTINUE(script.is_null());
+
+		FlowScriptNodeTypeInfo::CreateError type_create_err = FlowScriptNodeTypeInfo::CREATE_OK;
+		const FlowScriptNodeTypeInfo type = FlowScriptNodeTypeInfo::create_from_script(script, type_create_err);
+
+		if (type_create_err == FlowScriptNodeTypeInfo::CREATE_OK)
+		{
+			add_type(type);
 		}
 	}
+
+	emit_changed();
 }
 
 
-void FlowScriptNodeTypeDB::add_type(const FlowScriptNodeTypeInfo &p_type)
+int FlowScriptNodeTypeDB::get_type_count() const
 {
-	ERR_FAIL_COND(!p_type.native);
-	native_types.push_back(p_type);
-	native_node_info_map_dirty = true;
-	emit_changed();
+	update_type_cache();
+	return cache_complete_type_list.size();
+}
+
+
+int FlowScriptNodeTypeDB::bind_get_type_count() const
+{
+	update_type_cache();
+	return cache_complete_type_list_bind.size();
+}
+
+
+Vector<FlowScriptNodeTypeInfo> FlowScriptNodeTypeDB::get_node_type_list() const
+{
+	update_type_cache();
+	return cache_complete_type_list;
+}
+
+
+TypedArray<Dictionary> FlowScriptNodeTypeDB::bind_get_node_type_list() const
+{
+	update_type_cache();
+	return cache_complete_type_list_bind;
+}
+
+
+FlowScriptNodeTypeInfo FlowScriptNodeTypeDB::get_type_by_class_name(const StringName &p_class_name) const
+{
+	update_type_cache();
+
+	if (cache_map_native_class_to_type_idx.has(p_class_name))
+	{
+		return list_native_types[cache_map_native_class_to_type_idx[p_class_name]];
+	}
+	else if (cache_map_custom_node_script_class_name_to_type_idx.has(p_class_name))
+	{
+		return list_script_types[cache_map_custom_node_script_class_name_to_type_idx[p_class_name]];
+	}
+	else
+	{
+		return FlowScriptNodeTypeInfo();
+	}
+}
+
+
+FlowScriptNodeTypeInfo FlowScriptNodeTypeDB::get_type_by_index(const int p_index) const
+{
+	update_type_cache();
+	ERR_FAIL_INDEX_V_MSG(p_index, cache_complete_type_list.size(), FlowScriptNodeTypeInfo(), vformat(TTR("Index %d is out of range."), p_index));
+	return cache_complete_type_list[p_index];
+}
+
+
+Dictionary FlowScriptNodeTypeDB::bind_get_type_by_index(const int p_index) const
+{
+	update_type_cache();
+	ERR_FAIL_INDEX_V_MSG(p_index, cache_complete_type_list_bind.size(), FlowScriptNodeTypeInfo().to_dictionary(), vformat(TTR("Index %d is out of range."), p_index));
+	return cache_complete_type_list_bind[p_index];
+}
+
+
+void FlowScriptNodeTypeDB::add_type(FlowScriptNodeTypeInfo p_type)
+{
+	switch (p_type.impl_type)
+	{
+		case FlowScriptNodeTypeInfo::IMPL_NATIVE: {
+			cache_types_dirty = true;
+
+			p_type.type_id = p_type.node_native_class_name;
+			list_native_types.push_back(p_type);
+
+			emit_changed();
+		} break;
+		case FlowScriptNodeTypeInfo::IMPL_SCRIPTABLE: {
+			cache_types_dirty = true;
+
+			p_type.type_id = p_type.node_script_class_name;
+			list_script_types.push_back(p_type);
+
+			emit_changed();
+		}
+		default: {
+			ERR_FAIL();
+		} break;
+	}
 }
 
 
 Ref<FlowScriptNode> FlowScriptNodeTypeDB::instantiate_node_for_type(const FlowScriptNodeTypeInfo &p_type)
 {
 	ERR_FAIL_COND_V(!p_type.enabled, Ref<FlowScriptNode>());
-	Object *obj = ClassDB::instantiate(p_type.node_class);
-	ERR_FAIL_NULL_V(obj, Ref<FlowScriptNode>());
-	FlowScriptNode *node_ptr = Object::cast_to<FlowScriptNode>(obj);
-	if (node_ptr == nullptr)
-	{
-		memdelete(obj);
-		ERR_FAIL_V(Ref<FlowScriptNode>());
-	}
-	Ref<FlowScriptNode> node_ref = Ref<FlowScriptNode>(node_ptr);
+	ERR_FAIL_COND_V(!ClassDB::class_exists(p_type.node_native_class_name), Ref<FlowScriptNode>());
+
+	Ref<FlowScriptNode> node = Ref<FlowScriptNode>(ClassDB::instantiate(p_type.node_native_class_name));
+	ERR_FAIL_COND_V(node.is_null(), Ref<FlowScriptNode>());
+
 	if (p_type.node_script.is_valid())
 	{
-		node_ref->set_script(p_type.node_script);
+		node->set_script(p_type.node_script);
 	}
-	return node_ref;
+
+	return node;
 }
 
 
-const FlowScriptNodeTypeInfo &FlowScriptNodeTypeDB::get_type_of_node(FlowScriptNode *p_node) const
+FlowScriptNodeEditor *FlowScriptNodeTypeDB::instantiate_editor_for_type(const FlowScriptNodeTypeInfo &p_type)
 {
-	ERR_FAIL_NULL_V(p_node, dummy_type_info);
+	ERR_FAIL_COND_V(!p_type.enabled, nullptr);
 
-	update_native_node_info_map();
-	update_script_node_info_map();
-
-	Ref<Script> script = p_node->get_script();
-	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
-
-	if (custom_node == nullptr || !script.is_valid())
+	if (p_type.editor_scene.is_valid())
 	{
-		StringName native_class = p_node->get_class_name();
-		ERR_FAIL_COND_V(!map_native_class_to_type_idx.has(native_class), dummy_type_info);
-		int idx = map_native_class_to_type_idx[native_class];
-		return native_types[idx];
-	}
-	else
-	{
-		ERR_FAIL_COND_V(!map_custom_node_script_to_type_idx.has(script), dummy_type_info);
-		int idx = map_custom_node_script_to_type_idx[script];
-		return custom_script_types[idx];
-	}
-}
-
-
-FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(FlowScriptNode *p_node)
-{
-	ERR_FAIL_NULL_V(p_node, nullptr);
-
-	update_native_node_info_map();
-	update_script_node_info_map();
-
-	FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node);
-	if (custom_node == nullptr)
-	{
-		StringName node_class_name = p_node->get_class_name();
-		if (!map_native_class_to_type_idx.has(node_class_name))
+		if (p_type.editor_scene->can_instantiate())
 		{
-			CRASH_NOW_MSG(vformat(TTR("Invalid FlowScriptNode class: \"%s\""), node_class_name));
-			return nullptr;
-		}
-		int idx = map_native_class_to_type_idx[node_class_name];
-		Object *editor_obj = ClassDB::instantiate(native_types[idx].editor_class);
-		FlowScriptNodeEditor *editor = Object::cast_to<FlowScriptNodeEditor>(editor_obj);
-		CRASH_COND_MSG(editor == nullptr, vformat(TTR("Failed to instantiate editor for FlowScriptNode class: \"%s\""), node_class_name));
-		return editor;
-	}
-	else
-	{
-		Ref<Script> script = custom_node->get_script();
-		ERR_FAIL_COND_V(!script.is_valid(), nullptr);
-		ERR_FAIL_COND_V(!map_custom_node_script_to_type_idx.has(script), nullptr);
-		int idx = map_custom_node_script_to_type_idx[script];
-		if (custom_script_types[idx].editor_scene.is_valid() && custom_script_types[idx].editor_scene->can_instantiate())
-		{
-			Node *instance = custom_script_types[idx].editor_scene->instantiate();
-			ERR_FAIL_NULL_V(instance, nullptr);
-			FlowScriptNodeEditor *editor = Object::cast_to<FlowScriptNodeEditor>(instance);
+			Node *inst = p_type.editor_scene->instantiate();
+			ERR_FAIL_NULL_V(inst, nullptr);
+
+			FlowScriptNodeEditor *editor = Object::cast_to<FlowScriptNodeEditor>(inst);
 			if (editor == nullptr)
 			{
-				memdelete(instance);
+				memdelete(inst);
 				ERR_FAIL_V(nullptr);
 			}
 			else
@@ -160,10 +195,13 @@ FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(FlowScriptNod
 				return editor;
 			}
 		}
-		else if (custom_script_types[idx].editor_script->is_valid())
+	}
+	else if (p_type.editor_script.is_valid())
+	{
+		if (p_type.editor_script->can_instantiate() && p_type.editor_script->get_instance_base_type() == SNAME("FlowScriptNodeEditor"))
 		{
 			FlowScriptNodeEditor *editor = memnew(FlowScriptNodeEditor);
-			editor->set_script(custom_script_types[idx].editor_script);
+			editor->set_script(p_type.editor_script);
 			return editor;
 		}
 		else
@@ -171,105 +209,136 @@ FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(FlowScriptNod
 			ERR_FAIL_V(nullptr);
 		}
 	}
-}
-
-
-void FlowScriptNodeTypeDB::refresh_custom_script_types()
-{
-	script_node_info_map_dirty = true;
-	custom_script_types.clear();
-
-	List<StringName> global_script_name_list;
-	ScriptServer::get_global_class_list(&global_script_name_list);
-
-	for (const StringName &global_script_sn : global_script_name_list)
+	else if (ClassDB::class_exists(p_type.editor_native_class_name))
 	{
-		String global_script_str = global_script_sn;
-		if (ScriptServer::get_global_class_native_base(global_script_str) != SNAME("FlowScriptNodeCustom"))
-		{
-			continue;
-		}
-		String path = ScriptServer::get_global_class_path(global_script_str);
-		ERR_CONTINUE(!ResourceLoader::exists(path, "Script"));
-		Ref<Script> script = ResourceLoader::load(path, "Script");
-		ERR_CONTINUE(!script.is_valid());
-		FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(script);
-		if (create_result.error != FlowScriptNodeTypeInfo::ScriptCreateResult::OK)
-		{
-			continue;
-		}
-		custom_script_types.push_back(create_result.type);
+		FlowScriptNodeEditor *editor = Object::cast_to<FlowScriptNodeEditor>(ClassDB::instantiate(p_type.editor_native_class_name));
+		DEV_ASSERT(editor != nullptr); // A native type should never extend something other than FlowScriptNodeEditor.
+		return editor;
 	}
-	emit_changed();
+
+	ERR_FAIL_V(nullptr);
 }
 
 
-void FlowScriptNodeTypeDB::update_native_node_info_map() const
+FlowScriptNodeTypeInfo FlowScriptNodeTypeDB::get_type_of_node(const Ref<FlowScriptNode> &p_node) const
 {
-	if (!native_node_info_map_dirty)
+	ERR_FAIL_COND_V(p_node.is_null(), FlowScriptNodeTypeInfo());
+
+	update_type_cache();
+
+	const Ref<Script> script = p_node->get_script();
+	const FlowScriptNodeCustom *custom_node = Object::cast_to<FlowScriptNodeCustom>(p_node.ptr());
+
+	if (custom_node == nullptr || script.is_null())
+	{
+		const StringName native_class = p_node->get_class_name();
+
+		ERR_FAIL_COND_V(!cache_map_native_class_to_type_idx.has(native_class), FlowScriptNodeTypeInfo());
+		const int idx = cache_map_native_class_to_type_idx[native_class];
+		return list_native_types[idx];
+	}
+	else
+	{
+		ERR_FAIL_COND_V(!cache_map_custom_node_script_to_type_idx.has(script), FlowScriptNodeTypeInfo());
+		const int idx = cache_map_custom_node_script_to_type_idx[script];
+		return list_script_types[idx];
+	}
+}
+
+
+FlowScriptNodeEditor *FlowScriptNodeTypeDB::create_editor_for_node(const Ref<FlowScriptNode> &p_node)
+{
+	ERR_FAIL_COND_V(p_node.is_null(), nullptr);
+
+	const FlowScriptNodeTypeInfo type = get_type_of_node(p_node);
+	ERR_FAIL_COND_V(!type.is_valid(), nullptr);
+
+	FlowScriptNodeEditor *editor = instantiate_editor_for_type(type);
+	return editor;
+}
+
+
+void FlowScriptNodeTypeDB::update_type_cache() const
+{
+	if (!has_ever_refreshed_types)
+	{
+		WARN_PRINT(TTR("The FlowScriptNode type list has never been refreshed, so script types will likely be missing."));
+	}
+
+	if (!cache_types_dirty)
 	{
 		return;
 	}
-	native_node_info_map_dirty = false;
-	map_native_class_to_type_idx.clear();
-	for (int i = 0; i < native_types.size(); i++)
-	{
-		map_native_class_to_type_idx.insert(native_types[i].node_class, i);
-	}
-}
 
+	cache_types_dirty = false;
 
-void FlowScriptNodeTypeDB::update_script_node_info_map() const
-{
-	if (!script_node_info_map_dirty)
+	cache_complete_type_list.resize(list_native_types.size() + list_script_types.size());
+	cache_complete_type_list_bind.resize(cache_complete_type_list.size());
+
+	int curr_complete_type_idx = 0;
+
+	for (const FlowScriptNodeTypeInfo &type : list_native_types)
 	{
-		return;
+		cache_complete_type_list.write[curr_complete_type_idx] = type;
+		cache_complete_type_list_bind[curr_complete_type_idx] = type.to_dictionary();
+		curr_complete_type_idx++;
 	}
-	script_node_info_map_dirty = false;
-	map_custom_node_script_to_type_idx.clear();
-	for (int i = 0; i < custom_script_types.size(); i++)
+	for (const FlowScriptNodeTypeInfo &type : list_script_types)
 	{
-		map_custom_node_script_to_type_idx.insert(custom_script_types[i].node_script, i);
+		cache_complete_type_list.write[curr_complete_type_idx] = type;
+		cache_complete_type_list_bind[curr_complete_type_idx] = type.to_dictionary();
+		curr_complete_type_idx++;
+	}
+
+	cache_map_native_class_to_type_idx.clear();
+	cache_map_custom_node_script_to_type_idx.clear();
+	cache_map_custom_node_script_class_name_to_type_idx.clear();
+
+	for (int i = 0; i < list_native_types.size(); i++)
+	{
+		cache_map_native_class_to_type_idx.insert(list_native_types[i].node_native_class_name, i);
+	}
+	for (int i = 0; i < list_script_types.size(); i++)
+	{
+		const FlowScriptNodeTypeInfo &type = list_script_types[i];
+
+		cache_map_custom_node_script_to_type_idx.insert(type.node_script, i);
+		if (type.node_script_class_name != StringName())
+		{
+			cache_map_custom_node_script_class_name_to_type_idx.insert(type.node_script_class_name, i);
+		}
 	}
 }
 
 
 void FlowScriptNodeTypeDB::process_custom_node_script_delete_queue()
 {
-	// i don't feel like writing this code better so basically resize the type idx vector all zeroed
-	// and store the type idx as +1 to accommodate that
-	// when actually removing the types just subtract 1 for the actual type idx
-	update_script_node_info_map();
-	Vector<int> delete_idx_list;
-	delete_idx_list.resize_zeroed(custom_node_script_delete_queue.size());
-	int script_ok_counter = 0;
+	update_type_cache();
+
+	LocalVector<int> delete_idx_list;
+
 	for (const Ref<Script> &script : custom_node_script_delete_queue)
 	{
-		if (map_custom_node_script_to_type_idx.has(script))
+		if (cache_map_custom_node_script_to_type_idx.has(script))
 		{
-			delete_idx_list.write[script_ok_counter] = map_custom_node_script_to_type_idx[script] + 1;
-			script_ok_counter++;
+			delete_idx_list.push_back(cache_map_custom_node_script_to_type_idx[script]);
 		}
 	}
+
 	custom_node_script_delete_queue.clear();
+
 	if (!delete_idx_list.is_empty())
 	{
-		script_node_info_map_dirty = true;
+		cache_types_dirty = true;
 		delete_idx_list.sort();
-		bool any_deleted = false;
+
 		for (int i = delete_idx_list.size() - 1; i > -1; i--)
 		{
-			int type_idx = delete_idx_list[i] - 1;
-			if (type_idx != -1)
-			{
-				custom_script_types.remove_at(delete_idx_list[i] - 1);
-				any_deleted = true;
-			}
+			const int type_idx = delete_idx_list[i];
+			list_script_types.remove_at(type_idx);
 		}
-		if (any_deleted)
-		{
-			emit_changed();
-		}
+
+		emit_changed();
 	}
 }
 
@@ -283,18 +352,37 @@ void FlowScriptNodeTypeDB::queue_process_custom_node_script_delete_queue()
 }
 
 
+void FlowScriptNodeTypeDB::init_editor()
+{
+	DEV_ASSERT(Engine::get_singleton()->is_editor_hint());
+
+	EditorNode::get_singleton()->connect("resource_saved", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_saved));
+	FileSystemDock::get_singleton()->connect("resource_removed", callable_mp(this, &FlowScriptNodeTypeDB::on_resource_removed));
+	FileSystemDock::get_singleton()->get_script_create_dialog()->connect("script_created", callable_mp(this, &FlowScriptNodeTypeDB::on_script_created));
+
+	refresh_types();
+}
+
+
 void FlowScriptNodeTypeDB::on_resource_saved(const Ref<Resource> &p_resource)
 {
 	Ref<Script> script = p_resource;
-	if (!script.is_valid())
+
+	if (script.is_null())
 	{
 		return;
 	}
-	update_script_node_info_map();
-	if (map_custom_node_script_to_type_idx.has(script))
+
+	update_type_cache();
+
+	if (cache_map_custom_node_script_to_type_idx.has(script))
 	{
-		FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(script);
-		custom_script_types.write[map_custom_node_script_to_type_idx[script]] = create_result.type;
+		FlowScriptNodeTypeInfo::CreateError type_err;
+		const int type_idx = cache_map_custom_node_script_to_type_idx[script];
+		const FlowScriptNodeTypeInfo type = FlowScriptNodeTypeInfo::create_from_script(script, type_err);
+
+		list_script_types[type_idx] = type;
+
 		emit_changed();
 	}
 	else
@@ -303,10 +391,9 @@ void FlowScriptNodeTypeDB::on_resource_saved(const Ref<Resource> &p_resource)
 		{
 			return;
 		}
-		script_node_info_map_dirty = true;
-		FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(script);
-		custom_script_types.push_back(create_result.type);
-		emit_changed();
+
+		const FlowScriptNodeTypeInfo type = FlowScriptNodeTypeInfo::create_from_script_no_check(script);
+		add_type(type);
 	}
 }
 
@@ -314,10 +401,12 @@ void FlowScriptNodeTypeDB::on_resource_saved(const Ref<Resource> &p_resource)
 void FlowScriptNodeTypeDB::on_resource_removed(const Ref<Resource> &p_resource)
 {
 	Ref<Script> script = p_resource;
-	if (!script.is_valid() || script->get_instance_base_type() != SNAME("FlowScriptNodeCustom"))
+
+	if (script.is_null() || script->get_instance_base_type() != SNAME("FlowScriptNodeCustom"))
 	{
 		return;
 	}
+
 	queue_process_custom_node_script_delete_queue();
 	custom_node_script_delete_queue.push_back(script);
 }
@@ -325,14 +414,13 @@ void FlowScriptNodeTypeDB::on_resource_removed(const Ref<Resource> &p_resource)
 
 void FlowScriptNodeTypeDB::on_script_created(const Ref<Script> &p_script)
 {
-	if (!p_script.is_valid() || p_script->get_instance_base_type() != SNAME("FlowScriptNodeCustom"))
+	if (p_script.is_null() || p_script->get_instance_base_type() != SNAME("FlowScriptNodeCustom"))
 	{
 		return;
 	}
-	script_node_info_map_dirty = true;
-	FlowScriptNodeTypeInfo::ScriptCreateResult create_result = FlowScriptNodeTypeInfo::create_script_type(p_script);
-	custom_script_types.push_back(create_result.type);
-	emit_changed();
+
+	const FlowScriptNodeTypeInfo type = FlowScriptNodeTypeInfo::create_from_script_no_check(p_script);
+	add_type(type);
 }
 
 
@@ -346,22 +434,6 @@ FlowScriptNodeTypeDB::FlowScriptNodeTypeDB()
 {
 	CRASH_COND_MSG(singleton != nullptr, "FlowScriptNodeTypeDB is a singleton. Do not instantiate it multiple times.");
 	singleton = this;
-
-	add_type(FlowScriptNodeTypeInfo::create_native_type("procedure", "FlowScriptNodeProcedure", "FlowScriptNodeEditorProcedure", true, "Procedure", "", "A named entrypoint into the FlowScript."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("text_comment", "FlowScriptNodeTextComment", "FlowScriptNodeEditorTextComment", false, "Comment", "", "A box to take notes in."));
-
-	add_type(FlowScriptNodeTypeInfo::create_native_type("return_expression_result", "FlowScriptNodeReturnExpressionResult", "FlowScriptNodeEditorReturnExpressionResult", false, "Evaluate and Return Expression", "Logic", "Returns the result of an expression evaluation to the caller."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("loop_while_expression_result_true", "FlowScriptNodeLoopWhileExpressionResultTrue", "FlowScriptNodeEditorLoopWhileExpressionResultTrue", false, "While Loop Expression", "Logic/Loops", "Loops while an expression result is true."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("boolean_branch_expression", "FlowScriptNodeBooleanBranchExpression", "FlowScriptNodeEditorBooleanBranchExpression", false, "Branch Expression", "Logic/Branching", "Branches based on the result of a list of expression evaluations."));
-
-	add_type(FlowScriptNodeTypeInfo::create_native_type("multi_branch_execute_sequential", "FlowScriptNodeMultiBranchExecuteSequential", "FlowScriptNodeEditorMultiBranchExecute", false, "Execute Sequential Branches", "Concurrency", "Executes a list of branches in order, then advances."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("multi_branch_execute_parallel", "FlowScriptNodeMultiBranchExecuteParallel", "FlowScriptNodeEditorMultiBranchExecute", false, "Execute Parallel Branches", "Concurrency", "Triggers execution of a list of branches all at once, then advances once all the branches have finished execution."));
-
-	add_type(FlowScriptNodeTypeInfo::create_native_type("set_expression_result_to_variable_local", "FlowScriptNodeSetExpressionResultToVariableLocal", "FlowScriptNodeEditorSetExpressionResultToVariable", false, "Assign Local Variable", "Variables", "Evaluates an expression, then assigns the result to a local variable."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("set_expression_result_to_variable_global", "FlowScriptNodeSetExpressionResultToVariableGlobal", "FlowScriptNodeEditorSetExpressionResultToVariable", false, "Assign Global Variable", "Variables", "Evaluates an expression, then assigns the result to a global variable."));
-
-	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_fixed_seconds", "FlowScriptNodeWaitDurationFixedSeconds", "FlowScriptNodeEditorWaitDurationFixedSeconds", false, "Wait Fixed Seconds", "Timing", "Waits a defined amount of time."));
-	add_type(FlowScriptNodeTypeInfo::create_native_type("wait_duration_expression_result", "FlowScriptNodeWaitDurationExpressionResult", "FlowScriptNodeEditorWaitDurationExpressionResult", false, "Wait Expression", "Timing", "Waits the number of seconds evaluated from an expression."));
 }
 
 

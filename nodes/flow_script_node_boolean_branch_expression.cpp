@@ -15,40 +15,33 @@ void FlowScriptNodeBooleanBranchExpression::_bind_methods()
 
 void FlowScriptNodeBooleanBranchExpression::exec_step(FlowScriptNodeContext *p_context)
 {
-	bool result = p_context->get_bridge_ptr()->evaluate_multiline_boolean_expression(expression, true);
-	FlowScriptNodeOutputConnection connection;
-	connection.slot = 0;
-	if (result)
-	{
-		connection.list = CONNECTION_LIST_TRUE;
-	}
-	else
-	{
-		connection.list = CONNECTION_LIST_FALSE;
-	}
-	p_context->advance(connection);
+	const bool result = p_context->get_bridge_ptr()->get_built_in_node_interface()->evaluate_multiline_boolean_expression(expression, true);
+	const FlowScriptNodeOutputConnection destination = FlowScriptNodeOutputConnection::create_connection(
+			result ? CONNECTION_LIST_TRUE : CONNECTION_LIST_FALSE,
+			0
+	);
+	p_context->advance(destination);
 }
 
 
-void FlowScriptNodeBooleanBranchExpression::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeBooleanBranchExpression::set_data_state(const Dictionary &p_data)
 {
-	if (p_data.has("condition"))
-	{
-		expression = p_data["condition"];
-	}
+	set_expression(p_data.get("condition", expression));
 }
 
 
-void FlowScriptNodeBooleanBranchExpression::get_json_data(Dictionary &r_data) const
+Dictionary FlowScriptNodeBooleanBranchExpression::get_data_state() const
 {
-	r_data["condition"] = expression;
+	Dictionary d;
+	d["condition"] = expression;
+	return d;
 }
 
 
-void FlowScriptNodeBooleanBranchExpression::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
+void FlowScriptNodeBooleanBranchExpression::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	r_lengths.push_back(1);
-	r_lengths.push_back(1);
+	p_lengths->push_back(1);
+	p_lengths->push_back(1);
 }
 
 

@@ -40,12 +40,14 @@ void FlowScriptNodeMultiBranchExecuteParallel::exec_step(FlowScriptNodeContext *
 }
 
 
-void FlowScriptNodeMultiBranchExecuteParallel::set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
+void FlowScriptNodeMultiBranchExecuteParallel::set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
 {
 	p_context->set_variable(VARIABLE_AWAIT_STATE, AWAIT_STATE_RESTORE_SAVE);
 }
 
 
-void FlowScriptNodeMultiBranchExecuteParallel::get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const
+Dictionary FlowScriptNodeMultiBranchExecuteParallel::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
+	Dictionary d;
+	return d;
 }

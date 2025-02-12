@@ -2,6 +2,8 @@
 #define FLOW_SCRIPT_NODE_EDITOR_MULTI_BRANCH_EXECUTE_HPP
 
 
+#include <array>
+
 #include "flow_script_node_editor.hpp"
 #include "../../nodes/flow_script_node_multi_branch_execute.hpp"
 #include "scene/gui/label.h"
@@ -20,7 +22,7 @@ private:
 	};
 
 private:
-	OutputControlData output_control_list[FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS];
+	std::array<OutputControlData, FlowScriptNodeMultiBranchExecute::MAX_CONNECTIONS> output_control_list;
 
 	int output_control_get_graph_slot(const int p_idx) const;
 	int graph_slot_get_output_control(const int p_graph_slot) const;

@@ -10,18 +10,17 @@ void FlowScriptNodeTextComment::_bind_methods()
 }
 
 
-void FlowScriptNodeTextComment::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeTextComment::set_data_state(const Dictionary &p_data)
 {
-	if (p_data.has("comment"))
-	{
-		comment = p_data["comment"];
-	}
+	set_comment(p_data.get("comment", String()));
 }
 
 
-void FlowScriptNodeTextComment::get_json_data(Dictionary &r_data) const
+Dictionary FlowScriptNodeTextComment::get_data_state() const
 {
-	r_data["comment"] = comment;
+	Dictionary d;
+	d["comment"] = comment;
+	return d;
 }
 
 

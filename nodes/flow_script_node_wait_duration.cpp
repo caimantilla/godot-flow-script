@@ -1,5 +1,4 @@
 #include "flow_script_node_wait_duration.hpp"
-#include "../flow_script_timer_proxy.hpp"
 
 
 void FlowScriptNodeWaitDuration::_bind_methods()
@@ -15,7 +14,7 @@ void FlowScriptNodeWaitDuration::_bind_methods()
 
 void FlowScriptNodeWaitDuration::exec_startup(FlowScriptNodeContext *p_context)
 {
-	FlowScriptTimerProxy *timer = p_context->get_bridge_ptr()->create_timer_proxy();
+	FlowScriptBuiltInTimerProxy *timer = p_context->get_bridge_ptr()->get_built_in_node_interface()->create_timer_proxy();
 	if (timer != nullptr)
 	{
 		// i don't totally understand why this has to be deferred but whatever
@@ -25,13 +24,13 @@ void FlowScriptNodeWaitDuration::exec_startup(FlowScriptNodeContext *p_context)
 	p_context->set_variable(VARIABLE_TIMER, timer);
 	p_context->set_variable(VARIABLE_FINISH_NEXT_STEP, false);
 	p_context->set_variable(VARIABLE_LOAD_SAVE_FLAG, false);
-	p_context->set_variable(VARIABLE_LOAD_SAVE_DURATION, real_t(0));
+	p_context->set_variable(VARIABLE_LOAD_SAVE_DURATION, 0.0);
 }
 
 
 void FlowScriptNodeWaitDuration::exec_step(FlowScriptNodeContext *p_context)
 {
-	FlowScriptTimerProxy *timer = get_timer(p_context);
+	FlowScriptBuiltInTimerProxy *timer = get_timer(p_context);
 
 	if (timer == nullptr)
 	{
@@ -46,7 +45,7 @@ void FlowScriptNodeWaitDuration::exec_step(FlowScriptNodeContext *p_context)
 	}
 	else
 	{
-		real_t duration;
+		double duration;
 		if (p_context->get_variable(VARIABLE_LOAD_SAVE_FLAG))
 		{
 			duration = p_context->get_variable(VARIABLE_LOAD_SAVE_DURATION);
@@ -56,7 +55,7 @@ void FlowScriptNodeWaitDuration::exec_step(FlowScriptNodeContext *p_context)
 			duration = get_initial_duration(p_context);
 		}
 		p_context->set_variable(VARIABLE_FINISH_NEXT_STEP, true);
-		if (duration > real_t(0))
+		if (duration > 0.0)
 		{
 			timer->start(duration);
 		}
@@ -71,47 +70,43 @@ void FlowScriptNodeWaitDuration::exec_step(FlowScriptNodeContext *p_context)
 
 void FlowScriptNodeWaitDuration::exec_cleanup(FlowScriptNodeContext *p_context)
 {
-	FlowScriptTimerProxy *timer = get_timer(p_context);
+	FlowScriptBuiltInTimerProxy *timer = get_timer(p_context);
 	if (timer != nullptr)
 	{
 		timer->disconnect(SNAME("finished"), callable_mp(p_context, &FlowScriptNodeContext::invoke_step));
-		memdelete(timer);
+		timer->finish();
 	}
 }
 
 
-void FlowScriptNodeWaitDuration::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
+void FlowScriptNodeWaitDuration::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	r_lengths.push_back(1);
+	p_lengths->push_back(1);
 }
 
 
-void FlowScriptNodeWaitDuration::set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
+void FlowScriptNodeWaitDuration::set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
 {
-	if (p_state.has("time_remaining"))
-	{
-		real_t time_remaining = p_state["time_remaining"];
-		p_context->set_variable(VARIABLE_LOAD_SAVE_FLAG, true);
-		p_context->set_variable(VARIABLE_LOAD_SAVE_DURATION, time_remaining);
-	}
+	const double time_remaining = p_state.get("time_remaining", 0.0);
+	p_context->set_variable(VARIABLE_LOAD_SAVE_FLAG, true);
+	p_context->set_variable(VARIABLE_LOAD_SAVE_DURATION, time_remaining);
 }
 
 
-void FlowScriptNodeWaitDuration::get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const
+Dictionary FlowScriptNodeWaitDuration::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
-	FlowScriptTimerProxy *timer = get_timer(p_context);
-	if (timer != nullptr)
-	{
-		r_state["time_remaining"] = timer->get_time_remaining();
-	}
+	Dictionary d;
+	const FlowScriptBuiltInTimerProxy *timer = get_timer(p_context);
+	d["time_remaining"] = timer->get_time_remaining();
+	return d;
 }
 
 
-FlowScriptTimerProxy *FlowScriptNodeWaitDuration::get_timer(const FlowScriptNodeContext *p_context) const
+FlowScriptBuiltInTimerProxy *FlowScriptNodeWaitDuration::get_timer(const FlowScriptNodeContext *p_context) const
 {
 	Object *timer_obj = p_context->get_variable(VARIABLE_TIMER);
 	ERR_FAIL_NULL_V(timer_obj, nullptr);
-	FlowScriptTimerProxy *timer = Object::cast_to<FlowScriptTimerProxy>(timer_obj);
+	FlowScriptBuiltInTimerProxy *timer = Object::cast_to<FlowScriptBuiltInTimerProxy>(timer_obj);
 	ERR_FAIL_NULL_V(timer, nullptr);
 	return timer;
 }

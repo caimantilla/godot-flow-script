@@ -11,7 +11,7 @@ class FlowScriptNodeProcedure final : public FlowScriptNode
 
 public:
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
-	virtual void get_output_connection_list_lengths(List<int64_t> &r_lengths) const override;
+	virtual void get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const override;
 };
 
 

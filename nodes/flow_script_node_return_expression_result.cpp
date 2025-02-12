@@ -12,24 +12,23 @@ void FlowScriptNodeReturnExpressionResult::_bind_methods()
 
 void FlowScriptNodeReturnExpressionResult::exec_step(FlowScriptNodeContext *p_context)
 {
-	Variant result = p_context->get_bridge_ptr()->evaluate_expression(expression);
+	Variant result = p_context->get_bridge_ptr()->get_built_in_node_interface()->evaluate_expression(expression);
 	p_context->set_return_value(result);
 	p_context->finish();
 }
 
 
-void FlowScriptNodeReturnExpressionResult::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeReturnExpressionResult::set_data_state(const Dictionary &p_data)
 {
-	if (p_data.has("expression"))
-	{
-		expression = p_data["expression"];
-	}
+	set_expression(p_data.get("expression", String()));
 }
 
 
-void FlowScriptNodeReturnExpressionResult::get_json_data(Dictionary &r_data) const
+Dictionary FlowScriptNodeReturnExpressionResult::get_data_state() const
 {
-	r_data["expression"] = expression;
+	Dictionary d;
+	d["expression"] = expression;
+	return d;
 }
 
 

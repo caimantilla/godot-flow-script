@@ -6,7 +6,8 @@
 
 void FlowScriptNodeEditorLoopWhileExpressionResultTrue::sync()
 {
-	FlowScriptNodeLoopWhileExpressionResultTrue *node = Object::cast_to<FlowScriptNodeLoopWhileExpressionResultTrue>(get_edited_node_ptr());
+	const Ref<FlowScriptNodeLoopWhileExpressionResultTrue> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
 	expression_box->set_expression(node->get_expression());
 }
 

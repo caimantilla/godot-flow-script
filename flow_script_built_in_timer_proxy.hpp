@@ -1,5 +1,5 @@
-#ifndef FLOW_SCRIPT_TIMER_PROXY_HPP
-#define FLOW_SCRIPT_TIMER_PROXY_HPP
+#ifndef FLOW_SCRIPT_BUILT_IN_TIMER_PROXY_HPP
+#define FLOW_SCRIPT_BUILT_IN_TIMER_PROXY_HPP
 
 
 #include "core/object/object.h"
@@ -7,9 +7,12 @@
 #include "core/object/gdvirtual.gen.inc"
 
 
-class FlowScriptTimerProxy : public Object
+class FlowScriptBuiltInTimerProxy : public Object
 {
-	GDCLASS(FlowScriptTimerProxy, Object);
+	GDCLASS(FlowScriptBuiltInTimerProxy, Object);
+
+private:
+	bool has_finished_already = false;
 
 protected:
 	static void _bind_methods();
@@ -23,8 +26,9 @@ public:
 	virtual real_t get_time_remaining() const;
 	virtual bool is_active() const;
 
-	void emit_finished();
+	bool is_finished() const;
+	void finish();
 };
 
 
-#endif // FLOW_SCRIPT_TIMER_PROXY_HPP
+#endif // FLOW_SCRIPT_BUILT_IN_TIMER_PROXY_HPP

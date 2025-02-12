@@ -1,27 +1,30 @@
 #include "flow_script_node_output_connection.hpp"
+#include "core/templates/hashfuncs.h"
 
 
 FlowScriptNodeOutputConnection FlowScriptNodeOutputConnection::create_from_dictionary(const Dictionary &p_dictionary)
 {
 	FlowScriptNodeOutputConnection ret;
-	if (p_dictionary.has("list"))
-	{
-		ret.list = p_dictionary["list"];
-	}
-	if (p_dictionary.has("slot"))
-	{
-		ret.slot = p_dictionary["slot"];
-	}
+	ret.list = p_dictionary.get("list", 0);
+	ret.slot = p_dictionary.get("slot", 0);
 	return ret;
 }
 
 
-Dictionary FlowScriptNodeOutputConnection::to_dictionary()
+Dictionary FlowScriptNodeOutputConnection::to_dictionary() const
 {
 	Dictionary ret;
 	ret["list"] = list;
 	ret["slot"] = slot;
 	return ret;
+}
+
+
+uint32_t FlowScriptNodeOutputConnection::hash() const
+{
+	uint32_t h = hash_murmur3_one_32(list);
+	h = hash_murmur3_one_32(slot, h);
+	return hash_fmix32(h);
 }
 
 
@@ -39,12 +42,10 @@ bool FlowScriptNodeOutputConnection::operator!=(const FlowScriptNodeOutputConnec
 
 FlowScriptNodeOutputConnection::FlowScriptNodeOutputConnection()
 {
-	list = 0;
-	slot = 0;
 }
 
 
-FlowScriptNodeOutputConnection::FlowScriptNodeOutputConnection(const uint8_t p_list, const int64_t p_slot)
+FlowScriptNodeOutputConnection::FlowScriptNodeOutputConnection(const FlowScriptNodeConnectionListNo p_list, const FlowScriptNodeConnectionListSlotNo p_slot)
 {
 	list = p_list;
 	slot = p_slot;

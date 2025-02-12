@@ -4,7 +4,8 @@
 
 void FlowScriptNodeEditorBooleanBranchExpression::sync()
 {
-	FlowScriptNodeBooleanBranchExpression *node = Object::cast_to<FlowScriptNodeBooleanBranchExpression>(get_edited_node_ptr());
+	const Ref<FlowScriptNodeBooleanBranchExpression> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
 	expression_box->set_expression(node->get_expression());
 }
 

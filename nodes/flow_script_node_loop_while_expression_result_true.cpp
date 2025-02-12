@@ -30,50 +30,48 @@ void FlowScriptNodeLoopWhileExpressionResultTrue::exec_step(FlowScriptNodeContex
 		p_context->set_variable(VARIABLE_RESTORE_SAVE, false);
 		return;
 	}
-	int64_t curr_step_count = p_context->get_variable(VARIABLE_STEP_COUNT);
+	int curr_step_count = p_context->get_variable(VARIABLE_STEP_COUNT);
 	curr_step_count++;
 	p_context->set_variable(VARIABLE_STEP_COUNT, curr_step_count);
+
+	// did i never write this ???
+	const bool result = p_context->get_bridge_ptr()->get_built_in_node_interface()->evaluate_multiline_boolean_expression(expression, false);
 }
 
 
-void FlowScriptNodeLoopWhileExpressionResultTrue::set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
+void FlowScriptNodeLoopWhileExpressionResultTrue::set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state)
 {
 	p_context->set_variable(VARIABLE_RESTORE_SAVE, true);
-	if (p_state.has("step_count"))
-	{
-		p_context->set_variable(VARIABLE_STEP_COUNT, p_state["step_count"]);
-	}
+	p_context->set_variable(VARIABLE_STEP_COUNT, p_state.get("step_count", -1));
 }
 
 
-void FlowScriptNodeLoopWhileExpressionResultTrue::get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const
+Dictionary FlowScriptNodeLoopWhileExpressionResultTrue::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
-	r_state["step_count"] = p_context->get_variable(VARIABLE_STEP_COUNT);
+	Dictionary d;
+	d["step_count"] = p_context->get_variable(VARIABLE_STEP_COUNT);
+	return d;
 }
 
 
-void FlowScriptNodeLoopWhileExpressionResultTrue::set_json_data(const Dictionary &p_data)
+void FlowScriptNodeLoopWhileExpressionResultTrue::set_data_state(const Dictionary &p_data)
 {
-	if (p_data.has("expression"))
-	{
-		set_expression(p_data["expression"]);
-	}
+	set_expression(p_data.get("expression", String()));
 }
 
 
-void FlowScriptNodeLoopWhileExpressionResultTrue::get_json_data(Dictionary &r_data) const
+Dictionary FlowScriptNodeLoopWhileExpressionResultTrue::get_data_state() const
 {
-	if (!expression.is_empty())
-	{
-		r_data["expression"] = expression;
-	}
+	Dictionary d;
+	d["expression"] = expression;
+	return d;
 }
 
 
-void FlowScriptNodeLoopWhileExpressionResultTrue::get_output_connection_list_lengths(List<int64_t> &r_lengths) const
+void FlowScriptNodeLoopWhileExpressionResultTrue::get_output_connection_list_lengths(List<FlowScriptNodeConnectionListLength> *p_lengths) const
 {
-	r_lengths.push_back(1);
-	r_lengths.push_back(1);
+	p_lengths->push_back(1);
+	p_lengths->push_back(1);
 }
 
 

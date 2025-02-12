@@ -4,7 +4,8 @@
 
 void FlowScriptNodeEditorTextComment::sync()
 {
-	FlowScriptNodeTextComment *node = Object::cast_to<FlowScriptNodeTextComment>(get_edited_node_ptr());
+	const Ref<FlowScriptNodeTextComment> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
 	// no reason to keep right edge but maybe left edge should be stripped?
 	// though that depends on the user's language...
 	comment_box->set_text(node->get_comment().strip_edges(false, true));

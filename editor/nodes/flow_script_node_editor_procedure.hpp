@@ -10,7 +10,6 @@ class FlowScriptNodeEditorProcedure final : public FlowScriptNodeEditor
 	GDCLASS(FlowScriptNodeEditorProcedure, FlowScriptNodeEditor);
 
 public:
-	virtual void startup() override;
 	virtual int get_input_slot() const override;
 	virtual FlowScriptNodeOutputConnection output_graph_slot_to_connection(const int p_graph_slot) const override;
 	virtual int output_connection_to_graph_slot(const FlowScriptNodeOutputConnection &p_connection) const override;

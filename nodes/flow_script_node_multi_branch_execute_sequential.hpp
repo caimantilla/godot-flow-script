@@ -22,8 +22,8 @@ protected:
 public:
 	virtual void exec_startup(FlowScriptNodeContext *p_context) override;
 	virtual void exec_step(FlowScriptNodeContext *p_context) override;
-	virtual void set_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
-	virtual void get_state(const FlowScriptNodeContext *p_context, Dictionary &r_state) const override;
+	virtual void set_runtime_state(FlowScriptNodeContext *p_context, const Dictionary &p_state) override;
+	virtual Dictionary get_runtime_state(const FlowScriptNodeContext *p_context) const override;
 };
 
 

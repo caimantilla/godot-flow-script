@@ -6,16 +6,20 @@
 
 void FlowScriptNodeEditorSetExpressionResultToVariable::sync()
 {
-	FlowScriptNodeSetExpressionResultToVariable *node = Object::cast_to<FlowScriptNodeSetExpressionResultToVariable>(get_edited_node_ptr());
-	lbl_whitespace_warning->set_visible(node->get_variable() != node->get_variable().strip_edges());
-	if (node->get_variable().is_empty())
+	const Ref<FlowScriptNodeSetExpressionResultToVariable> node = get_edited_node();
+	ERR_FAIL_COND(node.is_null());
+
+	const String variable_name = String(node->get_variable());
+
+	lbl_whitespace_warning->set_visible(variable_name != variable_name.strip_edges());
+	if (variable_name.is_empty())
 	{
 		lbl_variable->set_text("Undefined Variable");
 		lbl_variable->set_modulate(Color::named("red"));
 	}
 	else
 	{
-		lbl_variable->set_text(node->get_variable());
+		lbl_variable->set_text(variable_name);
 		lbl_variable->set_modulate(Color::named("white"));
 	}
 	expression_box->set_expression(node->get_expression());
