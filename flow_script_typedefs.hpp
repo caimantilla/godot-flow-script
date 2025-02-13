@@ -3,6 +3,7 @@
 
 
 #include "core/typedefs.h"
+#include "core/templates/vector.h"
 
 
 typedef int32_t FlowScriptIncludeID;

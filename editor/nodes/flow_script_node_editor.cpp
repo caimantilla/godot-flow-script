@@ -138,6 +138,12 @@ Ref<FlowScriptNode> FlowScriptNodeEditor::get_edited_node() const
 }
 
 
+FlowScriptNodeTypeInfo FlowScriptNodeEditor::get_type_info() const
+{
+	return type_info;
+}
+
+
 Ref<FlowScript> FlowScriptNodeEditor::get_root_flow_script() const
 {
 	return root_flow_script;

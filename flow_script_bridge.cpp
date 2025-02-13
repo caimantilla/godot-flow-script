@@ -201,7 +201,7 @@ FlowScriptExecutionFiberID FlowScriptBridge::internal_init_branch(const FlowScri
 
 	if (p_node_reference.include_id != FlowScriptConstants::INCLUDE_ID_INVALID)
 	{
-		ERR_FAIL_COND_V(!flow_script->has_include_instance(p_node_reference.include_id), FlowScriptConstants::FIBER_ID_INVALID);
+		ERR_FAIL_COND_V(!flow_script->has_include(p_node_reference.include_id), FlowScriptConstants::FIBER_ID_INVALID);
 		target_flow_script = flow_script->get_include_flow_script(p_node_reference.include_id);
 	}
 	else

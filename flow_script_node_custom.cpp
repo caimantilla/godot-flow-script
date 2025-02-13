@@ -58,7 +58,7 @@ Dictionary FlowScriptNodeCustom::get_runtime_state(const FlowScriptNodeContext *
 
 void FlowScriptNodeCustom::set_data_state(const Dictionary &p_state)
 {
-	GDVIRTUAL_CALL(_get_data_state, p_state);
+	GDVIRTUAL_CALL(_set_data_state, p_state);
 }
 
 
@@ -114,7 +114,7 @@ String FlowScriptNodeCustom::get_type_name() const
 	GDVIRTUAL_CALL(_get_type_name, ret);
 	if (ret.is_empty())
 	{
-		ret = get_type_id();
+		ret = get_path().get_file().get_basename();
 	}
 	return ret;
 }

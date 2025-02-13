@@ -27,8 +27,8 @@ void FlowScript::_bind_methods()
 	BIND_ENUM_CONSTANT(ERR_NAME_EMPTY);
 
 	ClassDB::bind_method(D_METHOD("clear_references_to_include", "include_id"), &FlowScript::clear_references_to_include);
-	ClassDB::bind_method(D_METHOD("clear_references_to_node", "include_id", "node_id"), &FlowScript::clear_references_to_node);
-	ClassDB::bind_method(D_METHOD("has_target", "include_id", "node_id"), &FlowScript::has_target);
+	ClassDB::bind_method(D_METHOD("clear_references_to_node", "include_id", "node_id"), &FlowScript::bind_clear_references_to_node);
+	ClassDB::bind_method(D_METHOD("has_target", "include_id", "node_id"), &FlowScript::bind_has_target);
 	ClassDB::bind_method(D_METHOD("get_include_count"), &FlowScript::get_include_count);
 	ClassDB::bind_method(D_METHOD("contains_include_flow_script_recursive", "flow_script"), &FlowScript::contains_include_flow_script_recursive);
 	ClassDB::bind_method(D_METHOD("can_include_flow_script", "flow_script"), &FlowScript::can_include_flow_script);
@@ -426,8 +426,8 @@ FlowScript::IncludeAddError FlowScript::get_can_include_flow_script_error(const 
 			{
 				return ERR_INCLUDE_ALREADY_PRESENT;
 			}
-			return ERR_INCLUDE_OK;
 		}
+		return ERR_INCLUDE_OK;
 	}
 }
 
@@ -648,7 +648,7 @@ FlowScriptNodeConnectionListLength FlowScript::get_node_connection_list_length(c
 void FlowScript::set_node_connection(const FlowScriptNodeID p_node_id, const FlowScriptNodeOutputConnection &p_connection, const FlowScriptNodeReference &p_target_node)
 {
 	ERR_FAIL_COND(!has_node(p_node_id));
-	ERR_FAIL_COND(!has_target(p_target_node));
+	ERR_FAIL_COND(p_target_node != FlowScriptNodeReference::create_null_reference() && !has_target(p_target_node));
 
 	NodeInstance &node_instance = map_nodes[p_node_id];
 	ERR_FAIL_INDEX(p_connection.list, node_instance.connection_lists.size());
@@ -1028,7 +1028,7 @@ TypedArray<FlowScriptNode> FlowScript::bind_get_every_node_resource_recursive() 
 	ret.resize(node_list.size());
 
 	int i = 0;
-	for (const Ref<FlowScriptNode> node_ref : node_list)
+	for (const Ref<FlowScriptNode> &node_ref : node_list)
 	{
 		ret[i++] = node_ref;
 	}
@@ -1046,7 +1046,7 @@ TypedArray<FlowScriptNode> FlowScript::bind_get_every_node_resource_connected_to
 	ret.resize(node_list.size());
 
 	int i = 0;
-	for (const Ref<FlowScriptNode> node_ref : node_list)
+	for (const Ref<FlowScriptNode> &node_ref : node_list)
 	{
 		ret[i++] = node_ref;
 	}

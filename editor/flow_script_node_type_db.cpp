@@ -1,7 +1,8 @@
 #include "flow_script_node_type_db.hpp"
 #include "flow_script_node_type_info.hpp"
-#include "flow_script_node_editor.hpp"
+#include "nodes/flow_script_node_editor.hpp"
 #include "../flow_script_node_custom.hpp"
+
 #include "core/error/error_macros.h"
 #include "core/object/script_language.h"
 #include "scene/resources/packed_scene.h"

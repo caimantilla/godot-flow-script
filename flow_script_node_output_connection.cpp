@@ -11,6 +11,15 @@ FlowScriptNodeOutputConnection FlowScriptNodeOutputConnection::create_from_dicti
 }
 
 
+FlowScriptNodeOutputConnection FlowScriptNodeOutputConnection::create_connection(const FlowScriptNodeConnectionListNo p_list, const FlowScriptNodeConnectionListSlotNo p_slot)
+{
+	FlowScriptNodeOutputConnection ret;
+	ret.list = p_list;
+	ret.slot = p_slot;
+	return ret;
+}
+
+
 Dictionary FlowScriptNodeOutputConnection::to_dictionary() const
 {
 	Dictionary ret;

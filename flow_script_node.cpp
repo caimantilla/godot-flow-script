@@ -23,6 +23,7 @@ void FlowScriptNode::set_runtime_state(FlowScriptNodeContext *p_context, const D
 
 Dictionary FlowScriptNode::get_runtime_state(const FlowScriptNodeContext *p_context) const
 {
+	return Dictionary();
 }
 
 
@@ -33,6 +34,7 @@ void FlowScriptNode::set_data_state(const Dictionary &p_data)
 
 Dictionary FlowScriptNode::get_data_state() const
 {
+	return Dictionary();
 }
 
 

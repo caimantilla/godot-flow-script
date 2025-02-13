@@ -17,9 +17,11 @@
 #include "scene/gui/graph_node.h"
 #include "scene/gui/dialogs.h"
 #include "editor/editor_inspector.h"
+#include "editor/editor_undo_redo_manager.h"
 #include "editor/plugins/editor_plugin.h"
 
 
+class FlowScriptNodeEditor;
 class Timer;
 class Button;
 class MenuButton;
@@ -58,7 +60,7 @@ private:
 	};
 
 private:
-	struct NodeTypeAlphaComparator final
+	struct NodeTypeAlphaComparatorCategorized final
 	{
 		_FORCE_INLINE_ bool operator()(const FlowScriptNodeTypeInfo &p_a, const FlowScriptNodeTypeInfo &p_b) const
 		{
@@ -66,6 +68,13 @@ private:
 				p_a.type_category.count("/") > p_b.type_category.count("/")
 				|| (p_a.type_category + "/" + p_a.type_name).naturalnocasecmp_to(p_b.type_category + "/" + p_b.type_name) < 0
 			);
+		}
+	};
+	struct NodeTypeAlphaComparatorUncategorized final
+	{
+		_FORCE_INLINE_ bool operator()(const FlowScriptNodeTypeInfo &p_a, const FlowScriptNodeTypeInfo &p_b) const
+		{
+			return p_a.type_name.naturalnocasecmp_to(p_b.type_name) < 0;
 		}
 	};
 
@@ -217,8 +226,10 @@ public:
 };
 
 
-class FlowScriptEditorClipboard final
+class FlowScriptEditorClipboard final : public Object
 {
+	GDCLASS(FlowScriptEditorClipboard, Object);
+
 public:
 	struct Node final
 	{
@@ -252,8 +263,10 @@ public:
 };
 
 
-class FlowScriptEditorDialogs final
+class FlowScriptEditorDialogs final : public Object
 {
+	GDCLASS(FlowScriptEditorDialogs, Object);
+
 private:
 #if 0
 	const Window *main_window = nullptr;
@@ -303,11 +316,11 @@ public:
 	const Window *get_main_window() const;
 #endif // 0
 
-	void popup_create_node(Callable p_create_node_callback, const Ref<FlowScript> &p_flow_script, const FlowScriptNodeID p_node_id, const Point2 &p_at_position);
-	void popup_rename_node(Callable p_rename_node_callback, const Ref<FlowScript> &p_flow_script, const FlowScriptNodeID p_node_id);
-	void popup_add_include(Callable p_add_include_callback, const Ref<FlowScript> &p_root_flow_script, const FlowScriptIncludeID p_include_id, const Point2 &p_at_position);
-	void confirm_close_unsaved_flow_script(Callable p_save_callback, Callable p_discard_callback, const Ref<FlowScript> &p_flow_script, const double p_last_save_time, const double p_last_edit_time);
-	void confirm_delete_elements(Callable p_delete_confirmed_callback, const Ref<FlowScript> &p_flow_script, const PackedFlowScriptIncludeIDArray &p_include_id_list, const PackedFlowScriptNodeIDArray &p_node_id_list);
+	void popup_create_node(Callable p_create_node_callback, const Ref<FlowScript> p_flow_script, const FlowScriptNodeID p_node_id, const Point2 &p_at_position);
+	void popup_rename_node(Callable p_rename_node_callback, const Ref<FlowScript> p_flow_script, const FlowScriptNodeID p_node_id);
+	void popup_add_include(Callable p_add_include_callback, const Ref<FlowScript> p_root_flow_script, const FlowScriptIncludeID p_include_id, const Point2 &p_at_position);
+	void confirm_close_unsaved_flow_script(Callable p_save_callback, Callable p_discard_callback, const Ref<FlowScript> p_flow_script, const double p_last_save_time, const double p_last_edit_time);
+	void confirm_delete_elements(Callable p_delete_confirmed_callback, const Ref<FlowScript> p_flow_script, const PackedFlowScriptIncludeIDArray &p_include_id_list, const PackedFlowScriptNodeIDArray &p_node_id_list);
 
 	void set_window_layout(Ref<ConfigFile> p_layout);
 	void get_window_layout(Ref<ConfigFile> p_layout);
@@ -458,6 +471,7 @@ private:
 	void immediate_process_deferred_ops();
 	// void draw_node_connections_break(const FlowScriptNodeReference &p_from);
 	// void draw_node_connections_create(const FlowScriptNodeReference &p_from);
+	void clear_rf_queue();
 
 	void queue_op_include_move(const IncludeMoveOp &p_op);
 	void queue_op_node_move(const NodeMoveOp &p_op);
@@ -509,7 +523,7 @@ private:
 	void on_graph_disconnection_request(const StringName &p_from_node, const int p_from_port, const StringName &p_to_node, const int p_to_port);
 	void on_graph_duplicate_nodes_request();
 	void on_graph_end_node_move();
-	void on_graph_frame_rect_changed(GraphFrame *p_frame, const Size2 &p_new_rect);
+	void on_graph_frame_rect_changed(GraphFrame *p_frame, const Rect2 &p_new_rect);
 	void on_graph_graph_elements_linked_to_frame_request(const Array &p_elements, const StringName &p_frame);
 	void on_graph_nodes_arranged();
 	void on_graph_node_deselected(Node *p_node);
@@ -521,8 +535,8 @@ private:
 	void on_node_resized(const FlowScriptNodeID p_node_id);
 	void on_node_delete_request(const FlowScriptNodeID p_node_id);
 	void on_node_dragged(const Point2 &p_from, const Point2 &p_to, const FlowScriptNodeID p_node_id);
-	void on_node_deselected(const FlowScriptNodeID p_node_id);
-	void on_node_selected(const FlowScriptNodeID p_node_id);
+	void on_node_node_deselected(const FlowScriptNodeID p_node_id);
+	void on_node_node_selected(const FlowScriptNodeID p_node_id);
 	void on_node_position_offset_changed(const FlowScriptNodeID p_node_id);
 	void on_node_raise_request(const FlowScriptNodeID p_node_id);
 	void on_node_resize_end(const Size2 &p_new_size, const FlowScriptNodeID p_node_id);
@@ -532,8 +546,8 @@ private:
 	void on_include_resized(const FlowScriptIncludeID p_include_id);
 	void on_include_delete_request(const FlowScriptIncludeID p_include_id);
 	void on_include_dragged(const Point2 &p_from, const Point2 &p_to, const FlowScriptIncludeID p_include_id);
-	void on_include_deselected(const FlowScriptIncludeID p_include_id);
-	void on_include_selected(const FlowScriptIncludeID p_include_id);
+	void on_include_node_deselected(const FlowScriptIncludeID p_include_id);
+	void on_include_node_selected(const FlowScriptIncludeID p_include_id);
 	void on_include_position_offset_changed(const FlowScriptIncludeID p_include_id);
 	void on_include_raise_request(const FlowScriptIncludeID p_include_id);
 	void on_include_resize_end(const Size2 &p_new_size, const FlowScriptIncludeID p_include_id);
@@ -571,7 +585,7 @@ public:
 	Point2 convert_point_screen_to_graph(const Point2 &p_screen_point) const;
 	Point2i convert_point_screen_to_data(const Point2 &p_screen_point) const;
 
-	bool op_instantiate_include(const FlowScriptIncludeID p_include_id, const Ref<FlowScript> &p_include_flow_script, const Point2i &p_position);
+	bool op_instantiate_include(const FlowScriptIncludeID p_include_id, const Ref<FlowScript> p_include_flow_script, const Point2i &p_position);
 	bool op_create_node(const FlowScriptNodeID p_node_id, const Ref<FlowScriptNode> &p_data, const Point2i &p_position);
 	bool op_delete_include(const FlowScriptIncludeID p_include_id);
 	bool op_delete_node(const FlowScriptNodeID p_node_id);
@@ -663,14 +677,17 @@ private:
 	HashMap<Ref<FlowScript>, EditedRoot> map_edited_roots;
 	Ref<FlowScript> current_selected_flow_script;
 	FlowScriptFileDialogMode current_flow_script_file_dialog_mode = FS_FILE_MODE_NONE;
+
 	bool flow_script_item_list_dirty = false;
 	bool visible_tab_dirty = false;
+	bool file_menu_update_queued = false;
 
 	void submit_file_option(const int p_option);
-	void update_file_menu();
+	void queue_update_file_menu();
+	void immediate_update_file_menu();
 	// void open_file_at_path(const String &p_path);
-	bool add_flow_script_to_edited_list(const Ref<FlowScript> &p_flow_script);
-	void select_flow_script(const Ref<FlowScript> &p_flow_script);
+	bool add_flow_script_to_edited_list(const Ref<FlowScript> p_flow_script);
+	void select_flow_script(const Ref<FlowScript> p_flow_script);
 	void update_theme();
 	Vector<Ref<FlowScript>> get_alpha_sorted_edited_flow_script_list() const;
 	void queue_refresh_flow_script_item_list();
@@ -678,10 +695,10 @@ private:
 	void queue_update_visible_tab();
 	void immediate_update_visible_tab();
 	void trigger_flow_script_edit_sync_timer();
-	void handle_flow_script_saved(const Ref<FlowScript> &p_flow_script);
+	void handle_flow_script_saved(const Ref<FlowScript> p_flow_script);
 	bool save_flow_script(Ref<FlowScript> p_flow_script);
 	void save_all_flow_scripts();
-	bool close_flow_script(const Ref<FlowScript> &p_flow_script, const bool p_ignore_unsaved);
+	bool close_flow_script(const Ref<FlowScript> p_flow_script, const bool p_ignore_unsaved);
 	void close_all_flow_scripts(const bool p_ignore_unsaved);
 	void clear_edit_history();
 
@@ -717,9 +734,9 @@ public:
 	virtual String get_unsaved_status(const String &p_for_scene = "") const override;
 	virtual void save_external_data() override;
 
-	bool is_flow_script_open(const Ref<FlowScript> &p_flow_script) const;
-	bool is_flow_script_selected(const Ref<FlowScript> &p_flow_script) const;
-	void edit_flow_script(const Ref<FlowScript> &p_flow_script);
+	bool is_flow_script_open(const Ref<FlowScript> p_flow_script) const;
+	bool is_flow_script_selected(const Ref<FlowScript> p_flow_script) const;
+	void edit_flow_script(const Ref<FlowScript> p_flow_script);
 
 	FlowScriptEditorPlugin();
 	~FlowScriptEditorPlugin();
