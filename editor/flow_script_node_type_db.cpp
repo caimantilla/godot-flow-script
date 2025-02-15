@@ -149,7 +149,7 @@ void FlowScriptNodeTypeDB::add_type(FlowScriptNodeTypeInfo p_type)
 			list_script_types.push_back(p_type);
 
 			emit_changed();
-		}
+		} break;
 		default: {
 			ERR_FAIL();
 		} break;
