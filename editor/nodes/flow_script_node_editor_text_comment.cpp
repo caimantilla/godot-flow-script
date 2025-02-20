@@ -16,9 +16,11 @@ FlowScriptNodeEditorTextComment::FlowScriptNodeEditorTextComment()
 {
 	comment_box = memnew(RichTextLabel);
 	comment_box->set_auto_translate(false);
-	comment_box->set_fit_content(true);
-	comment_box->set_autowrap_mode(TextServer::AUTOWRAP_OFF);
-	comment_box->set_scroll_active(false);
+	comment_box->set_fit_content(false);
+	comment_box->set_autowrap_mode(TextServer::AUTOWRAP_WORD_SMART);
+	comment_box->set_scroll_active(true);
 	comment_box->set_use_bbcode(true);
+	comment_box->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	comment_box->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	add_child(comment_box);
 }

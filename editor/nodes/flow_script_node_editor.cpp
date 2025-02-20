@@ -8,6 +8,8 @@
 
 void FlowScriptNodeEditor::_bind_methods()
 {
+	ClassDB::bind_method(D_METHOD("is_edited"), &FlowScriptNodeEditor::is_edited);
+	ClassDB::bind_method(D_METHOD("is_include"), &FlowScriptNodeEditor::is_include);
 	ClassDB::bind_method(D_METHOD("get_root_flow_script"), &FlowScriptNodeEditor::get_root_flow_script);
 	ClassDB::bind_method(D_METHOD("get_owner_flow_script"), &FlowScriptNodeEditor::get_owner_flow_script);
 	ClassDB::bind_method(D_METHOD("get_edited_include_id"), &FlowScriptNodeEditor::get_edited_include_id);
@@ -32,6 +34,12 @@ void FlowScriptNodeEditor::_bind_methods()
 
 	ADD_SIGNAL(MethodInfo("rename_request"));
 	// NOTE: The delete_request signal is already a part of GraphElement, so don't add it.
+}
+
+
+bool FlowScriptNodeEditor::is_edited() const
+{
+	return edited_node.is_valid();
 }
 
 

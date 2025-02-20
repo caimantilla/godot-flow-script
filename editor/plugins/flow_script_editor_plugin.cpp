@@ -141,7 +141,6 @@ void FlowScriptEditorNodeCreateDialog::rebuild_type_tree_gui()
 	}
 
 	HashSet<String> category_set;
-
 	for (const int type_index : displayed_type_index_list)
 	{
 		const FlowScriptNodeTypeInfo &type_info = local_type_info_list[type_index];
@@ -151,27 +150,42 @@ void FlowScriptEditorNodeCreateDialog::rebuild_type_tree_gui()
 		}
 	}
 
+	LocalVector<String> category_list;
+	category_list.reserve(category_set.size());
+	for (const String &category : category_set)
+	{
+		category_list.push_back(category);
+	}
+	category_list.sort();
+
 	HashMap<String, TreeItem *> category_item_map;
 	category_item_map.reserve(category_set.size());
 
-	for (const String &category : category_set)
+	for (const String &category : category_list)
 	{
-		TreeItem *super_item = type_tree->get_root();
+		TreeItem *super_item = root_item;
 		PackedStringArray split = category.split("/", false, 0);
 
-		for (int i = 1; i < split.size(); i++)
+		for (int super_category_index = 0; super_category_index < split.size() - 1; super_category_index++)
 		{
-			const String super_category = String::chr('/').join(split.slice(0, i - 1));
+			const String super_category = String("/").join(split.slice(0, super_category_index));
 
-			if (!super_category.is_empty() && !category_item_map.has(super_category))
+			if (!super_category.is_empty())
 			{
-				const String super_item_name = split[i - 1];
-
-				super_item = super_item->create_child();
-				super_item->set_selectable(0, false);
-				super_item->set_text(0, super_item_name);
-
-				category_item_map.insert(super_category, super_item);
+				if (category_item_map.has(super_category))
+				{
+					super_item = category_item_map[super_category];
+				}
+				else
+				{
+					const String super_item_name = split[super_category_index];
+	
+					super_item = super_item->create_child();
+					super_item->set_selectable(0, false);
+					super_item->set_text(0, super_item_name);
+	
+					category_item_map.insert(super_category, super_item);
+				}
 			}
 		}
 
@@ -562,6 +576,7 @@ void FlowScriptEditorNodeCreateDialog::on_type_tree_item_activated()
 void FlowScriptEditorNodeCreateDialog::on_type_tree_item_selected()
 {
 	update_type_description();
+	update_mark_type_favorite_button();
 }
 
 
@@ -616,6 +631,7 @@ void FlowScriptEditorNodeCreateDialog::_bind_methods()
 
 FlowScriptEditorNodeCreateDialog::FlowScriptEditorNodeCreateDialog()
 {
+	set_title(TTR("Create FlowScript Node"));
 	set_flag(Window::FLAG_RESIZE_DISABLED, false);
 	set_wrap_controls(true);
 	set_min_size(Size2i((Size2(250, 400) * EDSCALE).round()));
@@ -898,6 +914,9 @@ void FlowScriptEditorGraph::_notification(int p_what)
 FlowScriptEditorGraph::FlowScriptEditorGraph()
 {
 	set_grid_pattern(GraphEdit::GRID_PATTERN_DOTS);
+	set_snapping_enabled(false);
+	set_show_arrange_button(false);
+	set_show_grid_buttons(false);
 }
 
 
@@ -1810,6 +1829,9 @@ FlowScriptNodeEditor *FlowScriptEditor::create_node_editor_instance(const FlowSc
 
 		node_editor->set_show_delete_button(true);
 		node_editor->set_show_rename_button(type_info.editable_name);
+		node_editor->set_resizable(type_info.editable_size);
+		node_editor->set_draggable(true);
+		node_editor->set_selectable(true);
 
 		node_editor->startup();
 		update_editor_node(p_target);
@@ -3528,14 +3550,12 @@ FlowScriptEditor::FlowScriptEditor()
 	graph->get_menu_hbox()->move_child(graph_submenu, 0);
 
 	btn_create_node = memnew(Button);
-	btn_create_node->set_tooltip_text(TTR("Create Node..."));
-	btn_create_node->set_flat(true);
+	btn_create_node->set_tooltip_text(TTR("Create Node."));
 	btn_create_node->connect(SceneStringName(pressed), callable_mp(this, &FlowScriptEditor::on_btn_create_node_pressed));
 	graph_submenu->add_child(btn_create_node);
 
 	btn_instantiate_include = memnew(Button);
-	btn_instantiate_include->set_tooltip_text(TTR("Instantiate Include..."));
-	btn_instantiate_include->set_flat(true);
+	btn_instantiate_include->set_tooltip_text(TTR("Instantiate Include."));
 	btn_instantiate_include->connect(SceneStringName(pressed), callable_mp(this, &FlowScriptEditor::on_btn_instantiate_include_pressed));
 	graph_submenu->add_child(btn_instantiate_include);
 
@@ -4249,6 +4269,7 @@ FlowScriptEditorPlugin::FlowScriptEditorPlugin()
 	bottom_panel_button = EditorNode::get_bottom_panel()->add_item(TTR("FlowScript Editor"), window_wrapper, ED_SHORTCUT_AND_COMMAND("bottom_panels/toggle_flow_script_editor_bottom_panel", TTR("Toggle FlowScript Editor Bottom Panel")));
 
 	main_control = memnew(HSplitContainer);
+	main_control->connect(SceneStringName(theme_changed), callable_mp(this, &FlowScriptEditorPlugin::update_theme));
 	Ref<Shortcut> make_floating_shortcut = ED_SHORTCUT_AND_COMMAND("flow_script_editor/make_floating", TTR("Make Floating"));
 	window_wrapper->set_wrapped_control(main_control, make_floating_shortcut);
 

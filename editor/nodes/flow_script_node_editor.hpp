@@ -42,7 +42,7 @@ protected:
 	GDVIRTUAL2RC(int, _output_connection_to_graph_slot, FlowScriptNodeConnectionListNo, FlowScriptNodeConnectionListSlotNo);
 
 public:
-
+	bool is_edited() const;
 	bool is_include() const;
 
 	Button *get_rename_button() const;
