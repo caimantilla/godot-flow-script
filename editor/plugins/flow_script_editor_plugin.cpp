@@ -1623,7 +1623,9 @@ void FlowScriptEditor::update_editor_node_rect(const FlowScriptNodeReference &p_
 
 	if (node_editor->get_type_info().editable_size)
 	{
-		node_editor->set_size(EDSCALE * (Size2)data_rect.size);
+		Size2 disp_size = EDSCALE * (Size2)data_rect.size;
+		disp_size.height += node_editor->get_titlebar_hbox()->get_size().height;
+		node_editor->set_size(disp_size);
 	}
 	else
 	{
@@ -2833,9 +2835,24 @@ void FlowScriptEditor::on_node_resize_end(const Size2 &p_new_size, const FlowScr
 	const FlowScriptNodeTypeInfo type_info = node_editor->get_type_info();
 	ERR_FAIL_COND(!type_info.editable_size);
 
+	Size2i new_data_size;
+
+	const Size2 min_size = node_editor->get_combined_minimum_size();
+	if (p_new_size < min_size || p_new_size.is_equal_approx(min_size))
+	{
+		new_data_size = Size2i(0, 0);
+	}
+	else
+	{
+		Size2 new_panel_size = p_new_size;
+		new_panel_size.height -= node_editor->get_titlebar_hbox()->get_size().height;
+
+		new_data_size = (Size2i)(new_panel_size / EDSCALE).round();
+	}
+
 	const Rect2i new_data_rect = Rect2i(
 		convert_point_graph_to_data(get_element_graph_center(node_editor)),
-		convert_point_graph_to_data((p_new_size / EDSCALE).round())
+		new_data_size
 	);
 
 	op_resize_node(p_node_id, new_data_rect);

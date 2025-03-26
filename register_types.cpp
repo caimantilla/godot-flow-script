@@ -70,7 +70,6 @@ static Vector<FlowScriptNodeTypeInfo> _GET_BUILT_IN_FLOW_SCRIPT_TYPE_LIST()
 			.type_name = "Comment",
 			.type_category = "Built-In",
 			.type_description = "A box to take notes in.",
-			.editable_size = true,
 			.node_native_class_name = "FlowScriptNodeTextComment",
 			.editor_native_class_name = "FlowScriptNodeEditorTextComment",
 		},
